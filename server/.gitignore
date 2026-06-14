@@ -1,0 +1,22 @@
+n# dependencies
+node_modules/
+
+# build output
+dist/
+
+# environment variables
+.env
+
+# logs
+*.log
+
+# prisma sqlite database
+*.db
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+
+/src/generated/prisma
