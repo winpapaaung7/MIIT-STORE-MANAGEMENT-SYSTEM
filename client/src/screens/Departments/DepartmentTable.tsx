@@ -20,12 +20,14 @@ interface Department {
 
 interface DepartmentTableProps {
   data: Department[];
+  onOpen: (department: Department) => void;
   onEdit: (department: Department) => void;
   onDelete: (department: Department) => void;
 }
 
 export default function DepartmentTable({
   data,
+  onOpen,
   onEdit,
   onDelete,
 }: DepartmentTableProps) {
@@ -63,35 +65,56 @@ export default function DepartmentTable({
               </TableRow>
             ) : (
               data.map((department) => (
-                <TableRow key={department.id}>
-                  <TableCell className="px-4 py-3">{department.id}</TableCell>
+                <TableRow
+                  key={department.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onOpen(department)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onOpen(department);
+                    }
+                  }}
+                  className="cursor-pointer hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                >
+                  <TableCell className="px-4 py-4 text-left font-mono text-sm font-medium text-slate-950 sm:py-5 sm:text-base">
+                    {department.id}
+                  </TableCell>
 
-                  <TableCell className="px-4 py-3 font-medium">
+                  <TableCell className="px-4 py-4 text-left font-semibold text-slate-950 sm:py-5">
                     {department.department}
                   </TableCell>
 
-                  <TableCell className="px-4 py-3">
+                  <TableCell className="px-4 py-4 text-left text-sm text-slate-500 sm:py-5">
                     {department.classroom}
                   </TableCell>
 
-                  <TableCell className="px-4 py-3">
+                  <TableCell className="px-4 py-4 text-left sm:py-5">
                     <Badge
                       variant={
                         department.status === "Available"
                           ? "default"
                           : "secondary"
                       }
+                      className="h-7 rounded-full px-3 text-sm font-semibold"
                     >
                       {department.status}
                     </Badge>
                   </TableCell>
 
-                  <TableCell className="px-4 py-3">
+                  <TableCell
+                    className="px-4 py-4 text-center sm:py-5"
+                    onClick={(event) => event.stopPropagation()}
+                  >
                     <div className="flex justify-center gap-2">
                       <Button
                         size="icon"
                         variant="outline"
-                        onClick={() => onEdit(department)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onEdit(department);
+                        }}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -99,7 +122,10 @@ export default function DepartmentTable({
                       <Button
                         size="icon"
                         variant="destructive"
-                        onClick={() => onDelete(department)}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onDelete(department);
+                        }}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>

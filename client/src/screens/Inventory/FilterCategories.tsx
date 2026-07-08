@@ -78,8 +78,8 @@ export default function FilterCategories({
 
   return (
     <>
-      <div className="space-y-3">
-        <div className="flex flex-wrap gap-3">
+      <div className="w-full min-w-0 max-w-full space-y-3 overflow-hidden">
+        <div className="flex w-full min-w-0 max-w-full gap-3 overflow-x-auto pb-2 [scrollbar-color:#cbd5e1_transparent] [scrollbar-width:thin]">
           {categories.map((category) => {
             const active = selectedCategory === category;
 
@@ -87,7 +87,7 @@ export default function FilterCategories({
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`flex items-center gap-2 rounded-full px-4 py-2 border transition-all
+                className={`flex shrink-0 items-center gap-2 rounded-full px-4 py-2 border transition-all
                 ${
                   active
                     ? "bg-slate-900 text-white border-slate-900"
