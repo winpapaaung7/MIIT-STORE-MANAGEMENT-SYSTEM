@@ -3,11 +3,15 @@ import MainLayout from "../components/layout/MainLayout";
 import InventoryPage from "../screens/Inventory/InventoryPage";
 import DepartmentPage from "../screens/Departments/DepartmentPage";
 import AccessoryDetailsPage from "../screens/AccessoryDetails/AccessoryDetailsPage";
-import LaptopRentalPage from "../screens/LaptopRental/LaptopRentalpage";
+import LaptopRentalPage from "../screens/LaptopRental/LaptopRentalPage";
+// import LoginPage from "../screens/Login/LoginPage";
+import SettingsPage from "../screens/Settings/SettingsPage";
 
 const AppRoutes = () => {
   return (
     <Routes>
+      {/* <Route path="login" element={<LoginPage />} /> */}
+
       {/* Layout wrapper */}
       <Route path="/" element={<MainLayout />}>
         {/* if we have a dashboard page, we will add the following route */}
@@ -21,6 +25,7 @@ const AppRoutes = () => {
         <Route path="departments" element={<DepartmentPage />} />
         <Route path="accessories" element={<AccessoryDetailsPage />} />
         <Route path="laptop-rental" element={<LaptopRentalPage />} />
+        <Route path="settings" element={<SettingsPage />} />
       </Route>
     </Routes>
   );

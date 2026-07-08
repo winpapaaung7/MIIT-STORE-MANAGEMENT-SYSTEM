@@ -8,6 +8,7 @@ import {
   ChevronRight,
   User,
   LogOut,
+  Building2,
 } from "lucide-react";
 
 // Note:alert
@@ -28,6 +29,11 @@ const menuItems = [
     title: "Laptop Rental Service",
     icon: Laptop,
     to: "/laptop-rental",
+  },
+  {
+    title: "Department",
+    icon: Building2,
+    to: "/departments",
   },
 ];
 
