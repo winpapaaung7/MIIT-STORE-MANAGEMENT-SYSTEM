@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import * as XLSX from "xlsx";
 
 import ExportButton from "@/components/buttons/ExportButton";
@@ -11,20 +12,22 @@ import InventoryTable from "./InventoryTable";
 import { Search } from "lucide-react";
 
 import {
+  dummyCategories,
   dummyInventory,
   type InventoryItem,
 } from "./data/inventoryData";
 
 export default function InventoryPage() {
+  const navigate = useNavigate();
+
   const [inventory, setInventory] =
     useState<InventoryItem[]>(dummyInventory);
 
   const [categories, setCategories] = useState([
     "All",
-    "Laptop & Computer",
-    "Electronic",
-    "Furniture",
-    "Cleaning Tools",
+    ...dummyCategories
+      .filter((category) => category.name !== "All")
+      .map((category) => category.name),
   ]);
 
   const [selectedCategory, setSelectedCategory] =
@@ -201,31 +204,41 @@ export default function InventoryPage() {
     );
   };
 
+  const handleOpenItemDetails = (item: InventoryItem) => {
+    const params = new URLSearchParams({
+      category: item.category,
+      item: item.name,
+    });
+
+    navigate(`/accessories?${params.toString()}`);
+  };
+
   return (
-    <div className="flex h-[calc(100vh-3rem)] min-h-0 flex-col gap-6 overflow-hidden">
+    <div className="flex h-[calc(100vh-3rem)] min-h-0 w-full min-w-0 flex-col gap-6 overflow-hidden">
 
       {/* Header */}
 
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <header className="shrink-0">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
 
         <div>
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-2xl font-bold tracking-normal text-slate-950 sm:text-3xl">
             Inventory
           </h1>
 
-          <p className="text-sm text-muted-foreground">
+          <p className="mt-1 text-sm text-slate-500">
             {filteredInventory.length} Items
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3">
-
-          <ExportButton
-            onClick={handleExport}
-          />
+        <div className="flex flex-wrap items-center gap-3">
 
           <ImportButton
             onClick={handleImport}
+          />
+
+          <ExportButton
+            onClick={handleExport}
           />
 
           <AddItemButton
@@ -235,6 +248,7 @@ export default function InventoryPage() {
         </div>
 
       </div>
+      </header>
 
       {/* Category Filter */}
 
@@ -281,6 +295,7 @@ export default function InventoryPage() {
 
       <InventoryTable
         items={filteredInventory}
+        onOpenItem={handleOpenItemDetails}
         onDeleteItem={
           handleDeleteItem
         }

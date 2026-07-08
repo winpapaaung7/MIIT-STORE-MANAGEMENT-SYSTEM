@@ -41,19 +41,31 @@ export const EditItemModal: React.FC<EditItemModalProps> = ({ item, onDelete, on
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="h-8 w-8 p-0 rounded-full border border-slate-200 bg-white shadow-sm hover:bg-slate-50">
-            <MoreHorizontal className="h-4 w-4 text-slate-500" />
+          <Button
+            variant="outline"
+            size="icon"
+            className="size-9 rounded-lg border-slate-200 bg-white shadow-sm hover:bg-slate-50"
+          >
+            <MoreHorizontal className="size-4 text-slate-500" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-40">
-          <DropdownMenuLabel className="text-xs text-slate-400 font-normal">Actions</DropdownMenuLabel>
+        <DropdownMenuContent align="end" className="w-44 rounded-xl border-slate-200 p-1 shadow-lg">
+          <DropdownMenuLabel className="px-2 py-1.5 text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400">
+            Actions
+          </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-slate-700 text-xs cursor-pointer" onClick={() => setIsEditDialogOpen(true)}>
-            <Edit3 className="mr-2 h-3.5 w-3.5 text-slate-400" /> Edit Item
+          <DropdownMenuItem
+            className="cursor-pointer rounded-lg px-2.5 py-2 text-sm text-slate-700 focus:bg-slate-50 focus:text-slate-900"
+            onClick={() => setIsEditDialogOpen(true)}
+          >
+            <Edit3 className="mr-2 h-4 w-4 text-sky-600" /> Edit Item
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem className="text-rose-600 focus:text-rose-600 focus:bg-rose-50 text-xs cursor-pointer" onClick={() => onDelete(item.id)}>
-            <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete
+          <DropdownMenuItem
+            className="cursor-pointer rounded-lg px-2.5 py-2 text-sm text-rose-600 focus:bg-rose-50 focus:text-rose-600"
+            onClick={() => onDelete(item.id)}
+          >
+            <Trash2 className="mr-2 h-4 w-4" /> Delete
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

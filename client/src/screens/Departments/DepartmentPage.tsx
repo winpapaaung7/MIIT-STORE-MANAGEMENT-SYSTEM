@@ -1,7 +1,9 @@
 import { Search } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { Input } from "@/components/ui/input";
+import { departmentRoomMap } from "@/screens/AccessoryDetails/accessoryData";
 import AddDepartmentModal from "./AddDepartmentModal";
 import AddNewDeptButton from "./AddNewDeptButton";
 import DepartmentTable from "./DepartmentTable";
@@ -13,17 +15,21 @@ interface Department {
   status: "Available" | "Closed";
 }
 
-const initialDepartments: Department[] = [
-  {
-    id: 1,
-    department: "Computer Science",
-    classroom: "101",
-    status: "Available",
-  },
-  { id: 2, department: "Mathematics", classroom: "202", status: "Closed" },
-];
+const initialDepartments: Department[] = Object.entries(departmentRoomMap).flatMap(
+  ([department, rooms]) =>
+    rooms.map((room) => ({
+      id: 0,
+      department,
+      classroom: room,
+      status: "Available" as const,
+    })),
+).map((department, index) => ({
+  ...department,
+  id: index + 1,
+}));
 
 export default function DepartmentPage() {
+  const navigate = useNavigate();
   const [departments, setDepartments] =
     useState<Department[]>(initialDepartments);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -96,6 +102,15 @@ export default function DepartmentPage() {
     );
   };
 
+  const handleOpenDepartmentDetails = (department: Department) => {
+    const params = new URLSearchParams({
+      department: department.department,
+      room: department.classroom,
+    });
+
+    navigate(`/accessories?${params.toString()}`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4">
@@ -123,6 +138,7 @@ export default function DepartmentPage() {
 
       <DepartmentTable
         data={filteredDepartments}
+        onOpen={handleOpenDepartmentDetails}
         onEdit={handleEditDepartment}
         onDelete={handleDeleteDepartment}
       />

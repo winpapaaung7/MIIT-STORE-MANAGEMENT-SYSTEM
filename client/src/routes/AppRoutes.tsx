@@ -3,7 +3,7 @@ import MainLayout from "../components/layout/MainLayout";
 import InventoryPage from "../screens/Inventory/InventoryPage";
 import DepartmentPage from "../screens/Departments/DepartmentPage";
 import AccessoryDetailsPage from "../screens/AccessoryDetails/AccessoryDetailsPage";
-import LaptopRentalPage from "../screens/LaptopRental/LaptopRentalPage";
+import LaptopRentalPage from "../screens/LaptopRental/LaptopRentalpage";
 // import LoginPage from "../screens/Login/LoginPage";
 import SettingsPage from "../screens/Settings/SettingsPage";
 

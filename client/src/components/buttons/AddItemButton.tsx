@@ -9,7 +9,7 @@ const AddItemButton = ({ onClick }: AddItemButtonProps) => {
   return (
     <Button
       onClick={onClick}
-      className="h-11 px-6 rounded-xl gap-2 bg-slate-900 hover:bg-slate-800"
+      className="h-10 gap-2 rounded-xl bg-slate-900 px-4 text-white shadow-sm hover:bg-slate-800 hover:shadow-md sm:px-5"
     >
       <Plus className="h-4 w-4" />
       Add Item
