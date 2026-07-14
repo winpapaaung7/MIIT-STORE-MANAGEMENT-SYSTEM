@@ -79,7 +79,7 @@ export default function FilterCategories({
   return (
     <>
       <div className="w-full min-w-0 max-w-full space-y-3 overflow-hidden">
-        <div className="flex w-full min-w-0 max-w-full gap-3 overflow-x-auto pb-2 [scrollbar-color:#cbd5e1_transparent] [scrollbar-width:thin]">
+        <div className="flex w-full min-w-0 max-w-full gap-3 overflow-x-auto pb-2 [scrollbar-color:#cbd5e1_transparent] [scrollbar-thin]">
           {categories.map((category) => {
             const active = selectedCategory === category;
 
@@ -96,17 +96,11 @@ export default function FilterCategories({
               >
                 {getIcon(category)}
 
-                <span className="text-sm font-medium">
-                  {category}
-                </span>
+                <span className="text-sm font-medium">{category}</span>
 
                 <span
                   className={`text-xs rounded-full px-2 py-0.5
-                  ${
-                    active
-                      ? "bg-white/20"
-                      : "bg-slate-100"
-                  }`}
+                  ${active ? "bg-white/20" : "bg-slate-100"}`}
                 >
                   {getCount(category)}
                 </span>
@@ -138,16 +132,11 @@ export default function FilterCategories({
           />
 
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
 
-            <Button onClick={handleAdd}>
-              Add
-            </Button>
+            <Button onClick={handleAdd}>Add</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

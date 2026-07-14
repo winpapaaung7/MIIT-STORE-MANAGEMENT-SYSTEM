@@ -1,9 +1,9 @@
-import { type ReactNode } from "react"
+import { type ReactNode } from "react";
 
 export interface AccessoryDetailTileProps {
-  label: string
-  value?: string
-  children?: ReactNode
+  label: string;
+  value?: string;
+  children?: ReactNode;
 }
 
 export default function AccessoryDetailTile({
@@ -18,5 +18,5 @@ export default function AccessoryDetailTile({
         {children ?? value}
       </div>
     </div>
-  )
+  );
 }

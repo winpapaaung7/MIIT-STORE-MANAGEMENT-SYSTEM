@@ -7,10 +7,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 import { useState } from "react";
 
@@ -34,23 +31,33 @@ export default function InventoryTable({
 
   return (
     <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
-      <div className="h-full overflow-y-auto overflow-x-hidden [scrollbar-color:#cbd5e1_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-white [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb:hover]:bg-slate-400 [&::-webkit-scrollbar-track]:bg-transparent">
+      <div className="h-full overflow-y-auto overflow-x-hidden [scrollbar-color:#cbd5e1_transparent] [scrollbar-thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-white [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb:hover]:bg-slate-400 [&::-webkit-scrollbar-track]:bg-transparent">
         <Table className="w-full table-fixed">
           <colgroup>
-            <col className="w-[110px]" />
-            <col className="w-[260px]" />
-            <col className="w-[140px]" />
-            <col className="w-[140px]" />
-            <col className="w-[120px]" />
+            <col className="w-27.5" />
+            <col className="w-65" />
+            <col className="w-35" />
+            <col className="w-35" />
+            <col className="w-30" />
           </colgroup>
 
           <TableHeader className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/90 backdrop-blur">
             <TableRow className="h-14 hover:bg-transparent">
-              <TableHead className="px-4 py-4 text-left text-sm font-semibold text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-8">ID</TableHead>
-              <TableHead className="px-4 py-4 text-left text-sm font-semibold text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-8">Item</TableHead>
-              <TableHead className="px-4 py-4 text-left text-sm font-semibold text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-8">Image</TableHead>
-              <TableHead className="px-4 py-4 text-left text-sm font-semibold text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-8">Quantity</TableHead>
-              <TableHead className="px-4 py-4 text-center text-sm font-semibold text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-8">Actions</TableHead>
+              <TableHead className="px-4 py-4 text-left text-sm font-semibold text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-8">
+                ID
+              </TableHead>
+              <TableHead className="px-4 py-4 text-left text-sm font-semibold text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-8">
+                Item
+              </TableHead>
+              <TableHead className="px-4 py-4 text-left text-sm font-semibold text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-8">
+                Image
+              </TableHead>
+              <TableHead className="px-4 py-4 text-left text-sm font-semibold text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-8">
+                Quantity
+              </TableHead>
+              <TableHead className="px-4 py-4 text-center text-sm font-semibold text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-8">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
 
@@ -120,7 +127,9 @@ export default function InventoryTable({
                           : "bg-rose-50 text-rose-600"
                       }`}
                     >
-                      {item.quantity > 0 ? `${item.quantity} Units` : "Out of Stock"}
+                      {item.quantity > 0
+                        ? `${item.quantity} Units`
+                        : "Out of Stock"}
                     </span>
                   </TableCell>
 

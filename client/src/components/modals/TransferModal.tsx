@@ -1,5 +1,5 @@
-import { useMemo, useState, type FormEvent } from "react"
-import { ChevronDown, X } from "lucide-react"
+import { useMemo, useState, type FormEvent } from "react";
+import { ChevronDown, X } from "lucide-react";
 
 import {
   type TransferCategory,
@@ -9,8 +9,8 @@ import {
   transferItemNamesByCategory,
   transferRooms,
   transferSerialItems,
-} from "@/constants/transferData"
-import { Button } from "@/components/ui/button"
+} from "@/constants/transferData";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -18,66 +18,66 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuLabel,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 interface TransferModalProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 interface TransferFormState {
-  fromDepartment: TransferLocationDepartmentId
-  fromRoom: string
-  toDepartment: TransferLocationDepartmentId
-  toRoom: string
-  category: TransferCategory
-  itemName: string
-  selectedItems: string[]
-  transferDate: string
+  fromDepartment: TransferLocationDepartmentId;
+  fromRoom: string;
+  toDepartment: TransferLocationDepartmentId;
+  toRoom: string;
+  category: TransferCategory;
+  itemName: string;
+  selectedItems: string[];
+  transferDate: string;
 }
 
 type TransferLocationDepartmentId = Exclude<
   TransferDepartmentId,
   "all" | "none"
->
+>;
 
 const locationDepartments: readonly {
-  id: TransferLocationDepartmentId
-  label: string
+  id: TransferLocationDepartmentId;
+  label: string;
 }[] = transferDepartments
   .filter((department) => department.id !== "all" && department.id !== "none")
   .map((department) => ({
     id: department.id as TransferLocationDepartmentId,
     label: department.label,
-  }))
+  }));
 
 function formatDate(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, "0")
-  const day = String(date.getDate()).padStart(2, "0")
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
 
-  return `${year}-${month}-${day}`
+  return `${year}-${month}-${day}`;
 }
 
 function buildInitialFormState(): TransferFormState {
-  const firstCategory = transferCategories[0]
+  const firstCategory = transferCategories[0];
 
   return {
     fromDepartment: "ict",
@@ -88,131 +88,136 @@ function buildInitialFormState(): TransferFormState {
     itemName: transferItemNamesByCategory[firstCategory][0],
     selectedItems: [],
     transferDate: formatDate(new Date()),
-  }
+  };
 }
 
 export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
-  const [formState, setFormState] =
-    useState<TransferFormState>(buildInitialFormState)
-  const [itemsOpen, setItemsOpen] = useState(false)
+  const [formState, setFormState] = useState<TransferFormState>(
+    buildInitialFormState,
+  );
+  const [itemsOpen, setItemsOpen] = useState(false);
 
   const fromRoomOptions = useMemo(
     () => getRoomsForDepartment(formState.fromDepartment),
-    [formState.fromDepartment]
-  )
+    [formState.fromDepartment],
+  );
   const toRoomOptions = useMemo(
     () => getRoomsForDepartment(formState.toDepartment),
-    [formState.toDepartment]
-  )
+    [formState.toDepartment],
+  );
   const itemNameOptions = useMemo(
     () => transferItemNamesByCategory[formState.category] ?? [],
-    [formState.category]
-  )
+    [formState.category],
+  );
   const itemPieceOptions = useMemo(
     () =>
-      transferSerialItems.filter((item) => item.itemName === formState.itemName),
-    [formState.itemName]
-  )
+      transferSerialItems.filter(
+        (item) => item.itemName === formState.itemName,
+      ),
+    [formState.itemName],
+  );
   const selectedSerialItems = useMemo(
     () =>
       transferSerialItems.filter((item) =>
-        formState.selectedItems.includes(item.serial)
+        formState.selectedItems.includes(item.serial),
       ),
-    [formState.selectedItems]
-  )
+    [formState.selectedItems],
+  );
 
   const updateValue = <Key extends keyof TransferFormState>(
     key: Key,
-    value: TransferFormState[Key]
+    value: TransferFormState[Key],
   ) => {
-    setFormState((current) => ({ ...current, [key]: value }))
-  }
+    setFormState((current) => ({ ...current, [key]: value }));
+  };
 
   const selectDepartment = (
     departmentKey: "fromDepartment" | "toDepartment",
     roomKey: "fromRoom" | "toRoom",
-    department: TransferLocationDepartmentId
+    department: TransferLocationDepartmentId,
   ) => {
-    const departmentRooms = getRoomsForDepartment(department)
+    const departmentRooms = getRoomsForDepartment(department);
 
     setFormState((current) => ({
       ...current,
       [departmentKey]: department,
       [roomKey]: departmentRooms.some((room) => room.id === current[roomKey])
         ? current[roomKey]
-        : departmentRooms[0]?.id ?? "",
-    }))
-  }
+        : (departmentRooms[0]?.id ?? ""),
+    }));
+  };
 
   const selectRoom = (
     departmentKey: "fromDepartment" | "toDepartment",
     roomKey: "fromRoom" | "toRoom",
-    roomId: string
+    roomId: string,
   ) => {
-    const selectedRoom = transferRooms.find((room) => room.id === roomId)
+    const selectedRoom = transferRooms.find((room) => room.id === roomId);
 
     if (!selectedRoom) {
-      return
+      return;
     }
 
     setFormState((current) => ({
       ...current,
       [departmentKey]: selectedRoom.deptId,
       [roomKey]: roomId,
-    }))
-  }
+    }));
+  };
 
   const selectCategory = (category: TransferCategory) => {
-    const nextItemName = transferItemNamesByCategory[category]?.[0] ?? ""
+    const nextItemName = transferItemNamesByCategory[category]?.[0] ?? "";
 
     setFormState((current) => ({
       ...current,
       category,
       itemName: nextItemName,
       selectedItems: [],
-    }))
-    setItemsOpen(false)
-  }
+    }));
+    setItemsOpen(false);
+  };
 
   const selectItemName = (itemName: string) => {
     setFormState((current) => ({
       ...current,
       itemName,
       selectedItems: [],
-    }))
-    setItemsOpen(false)
-  }
+    }));
+    setItemsOpen(false);
+  };
 
   const toggleSelectedItem = (serial: string) => {
     setFormState((current) => {
       const selectedItems = current.selectedItems.includes(serial)
-        ? current.selectedItems.filter((selectedItem) => selectedItem !== serial)
-        : [...current.selectedItems, serial]
+        ? current.selectedItems.filter(
+            (selectedItem) => selectedItem !== serial,
+          )
+        : [...current.selectedItems, serial];
 
       return {
         ...current,
         selectedItems,
-      }
-    })
-  }
+      };
+    });
+  };
 
   const removeSelectedItem = (serial: string) => {
     setFormState((current) => ({
       ...current,
       selectedItems: current.selectedItems.filter(
-        (selectedItem) => selectedItem !== serial
+        (selectedItem) => selectedItem !== serial,
       ),
-    }))
-  }
+    }));
+  };
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+    event.preventDefault();
     console.log("Transfer form data:", {
       ...formState,
       quantity: formState.selectedItems.length,
-    })
-    onClose()
-  }
+    });
+    onClose();
+  };
 
   const canSubmit =
     formState.fromDepartment.length > 0 &&
@@ -222,7 +227,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
     formState.category.length > 0 &&
     formState.itemName.length > 0 &&
     formState.selectedItems.length > 0 &&
-    formState.transferDate.length > 0
+    formState.transferDate.length > 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -255,7 +260,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                   selectDepartment(
                     "fromDepartment",
                     "fromRoom",
-                    department as TransferLocationDepartmentId
+                    department as TransferLocationDepartmentId,
                   )
                 }
               />
@@ -280,7 +285,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                   selectDepartment(
                     "toDepartment",
                     "toRoom",
-                    department as TransferLocationDepartmentId
+                    department as TransferLocationDepartmentId,
                   )
                 }
               />
@@ -289,7 +294,9 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                 value={formState.toRoom}
                 options={toSelectOptions(toRoomOptions)}
                 placeholder="Select room"
-                onValueChange={(room) => selectRoom("toDepartment", "toRoom", room)}
+                onValueChange={(room) =>
+                  selectRoom("toDepartment", "toRoom", room)
+                }
               />
             </div>
 
@@ -344,9 +351,13 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
                         {itemPieceOptions.map((item) => (
                           <DropdownMenuCheckboxItem
                             key={item.id}
-                            checked={formState.selectedItems.includes(item.serial)}
+                            checked={formState.selectedItems.includes(
+                              item.serial,
+                            )}
                             onSelect={(event) => event.preventDefault()}
-                            onCheckedChange={() => toggleSelectedItem(item.serial)}
+                            onCheckedChange={() =>
+                              toggleSelectedItem(item.serial)
+                            }
                             className="font-mono"
                           >
                             {item.serial}
@@ -371,7 +382,7 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
               </div>
 
               {selectedSerialItems.length > 0 && (
-                <div className="max-h-32 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-2 sm:mr-[calc(9rem+1rem)]">
+                <div className="max-h-32 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-2 sm:mr-40">
                   <div className="space-y-1">
                     {selectedSerialItems.map((item) => (
                       <div
@@ -429,15 +440,15 @@ export default function TransferModal({ isOpen, onClose }: TransferModalProps) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
 interface SelectFieldProps {
-  label: string
-  value: string
-  options: readonly { id: string; label: string }[]
-  placeholder: string
-  onValueChange: (value: string) => void
+  label: string;
+  value: string;
+  options: readonly { id: string; label: string }[];
+  placeholder: string;
+  onValueChange: (value: string) => void;
 }
 
 function SelectField({
@@ -454,7 +465,7 @@ function SelectField({
         <SelectTrigger
           className={cn(
             "h-10 w-full border-slate-300 bg-white",
-            options.length === 1 && "border-slate-200 bg-slate-50"
+            options.length === 1 && "border-slate-200 bg-slate-50",
           )}
         >
           <SelectValue placeholder={placeholder} />
@@ -468,17 +479,19 @@ function SelectField({
         </SelectContent>
       </Select>
     </div>
-  )
+  );
 }
 
 function getRoomsForDepartment(departmentId: TransferLocationDepartmentId) {
-  return transferRooms.filter((room) => room.deptId === departmentId)
+  return transferRooms.filter((room) => room.deptId === departmentId);
 }
 
-function getDefaultRoomForDepartment(departmentId: TransferLocationDepartmentId) {
-  return getRoomsForDepartment(departmentId)[0]?.id ?? ""
+function getDefaultRoomForDepartment(
+  departmentId: TransferLocationDepartmentId,
+) {
+  return getRoomsForDepartment(departmentId)[0]?.id ?? "";
 }
 
 function toSelectOptions(rooms: readonly { id: string; name: string }[]) {
-  return rooms.map((room) => ({ id: room.id, label: room.name }))
+  return rooms.map((room) => ({ id: room.id, label: room.name }));
 }

@@ -1,6 +1,7 @@
-import { useMemo, useState, type FormEvent } from "react"
+import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import type { InventoryItem } from "@/screens/Inventory/data/inventoryData";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,102 +9,105 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 export interface ItemFormValues {
-  id: string
-  itemName: string
-  category: string
-  status: string
-  department: string
-  room: string
-  createdDate: string
-  remark: string
+  id: string;
+  itemName: string;
+  category: string;
+  status: string;
+  department: string;
+  room: string;
+  createdDate: string;
+  remark: string;
+  image?: string;
 }
 
 export interface ItemSubmitPayload extends ItemFormValues {
-  quantity: number
-  idRange: string
+  quantity: number;
+  idRange: string;
+  image?: string;
 }
 
 export interface ItemModalProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  defaultValues: ItemFormValues
-  mode?: "add" | "edit"
-  categories: readonly string[]
-  statuses: readonly string[]
-  departments: readonly string[]
-  departmentRoomMap: Record<string, string | readonly string[]>
-  onConfirm: (payload: ItemSubmitPayload) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  defaultValues: ItemFormValues;
+  mode?: "add" | "edit";
+  categories: readonly string[];
+  statuses: readonly string[];
+  departments: readonly string[];
+  departmentRoomMap: Record<string, string | readonly string[]>;
+  existingInventory?: readonly InventoryItem[];
+  onConfirm: (payload: ItemSubmitPayload) => void;
 }
 
 interface ItemModalState {
-  values: Omit<ItemFormValues, "id">
-  quantity: number
+  values: Omit<ItemFormValues, "id">;
+  quantity: number;
 }
 
-const idPattern = /^\d{3}-\d{6}$/
+const idPattern = /^\d{3}-\d{6}$/;
 
 function formatDate(date: Date) {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, "0")
-  const day = String(date.getDate()).padStart(2, "0")
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
 
-  return `${year}-${month}-${day}`
+  return `${year}-${month}-${day}`;
 }
 
 function incrementAccessoryId(id: string, offset: number) {
   if (!idPattern.test(id)) {
-    return id
+    return id;
   }
 
-  const [prefix, serial] = id.split("-")
-  const numericValue = Number(prefix) * 1_000_000 + Number(serial) + offset
-  const nextPrefix = Math.floor(numericValue / 1_000_000)
-  const nextSerial = numericValue % 1_000_000
+  const [prefix, serial] = id.split("-");
+  const numericValue = Number(prefix) * 1_000_000 + Number(serial) + offset;
+  const nextPrefix = Math.floor(numericValue / 1_000_000);
+  const nextSerial = numericValue % 1_000_000;
 
   return `${String(nextPrefix).padStart(3, "0")}-${String(nextSerial).padStart(
     6,
-    "0"
-  )}`
+    "0",
+  )}`;
 }
 
 function getCategoryPrefix(category: string) {
-  return dummyData.categoryPrefixMap[category] ?? "000"
+  return dummyData.categoryPrefixMap[category] ?? "000";
 }
 
 function buildAccessoryId(
   category: string,
-  serialNumber = dummyData.initialSerialNumber
+  serialNumber = dummyData.initialSerialNumber,
 ) {
   return `${getCategoryPrefix(category)}-${String(serialNumber).padStart(
     6,
-    "0"
-  )}`
+    "0",
+  )}`;
 }
 
 function toRoomList(rooms: string | readonly string[] | undefined) {
   if (!rooms) {
-    return []
+    return [];
   }
 
-  return Array.isArray(rooms) ? [...rooms] : [rooms]
+  return Array.isArray(rooms) ? [...rooms] : [rooms];
 }
 
 function buildInitialState(
   defaultValues: ItemFormValues,
-  mode: ItemModalProps["mode"]
+  mode: ItemModalProps["mode"],
 ) {
   return {
     values: {
@@ -112,16 +116,16 @@ function buildInitialState(
         mode === "edit" ? defaultValues.createdDate : formatDate(new Date()),
     },
     quantity: 1,
-  }
+  };
 }
 
 function getInitialStateKey(
   defaultValues: ItemFormValues,
   mode: ItemModalProps["mode"],
-  open: boolean
+  open: boolean,
 ) {
   if (!open) {
-    return "closed"
+    return "closed";
   }
 
   return [
@@ -134,7 +138,7 @@ function getInitialStateKey(
     defaultValues.room,
     defaultValues.createdDate,
     defaultValues.remark,
-  ].join("|")
+  ].join("|");
 }
 
 export default function ItemModal(props: ItemModalProps) {
@@ -143,7 +147,7 @@ export default function ItemModal(props: ItemModalProps) {
       key={getInitialStateKey(props.defaultValues, props.mode, props.open)}
       {...props}
     />
-  )
+  );
 }
 
 function ItemModalContent({
@@ -155,70 +159,74 @@ function ItemModalContent({
   statuses,
   departments,
   departmentRoomMap,
+  existingInventory,
   onConfirm,
 }: ItemModalProps) {
   const [formState, setFormState] = useState<ItemModalState>(() =>
-    buildInitialState(defaultValues, mode)
-  )
+    buildInitialState(defaultValues, mode),
+  );
+  const [image, setImage] = useState(defaultValues.image ?? "");
 
   const departmentRooms = useMemo<Record<string, string[]>>(() => {
     const entries = Object.entries(departmentRoomMap).map(
-      ([department, rooms]) => [department, toRoomList(rooms)] as const
-    )
+      ([department, rooms]) => [department, toRoomList(rooms)] as const,
+    );
     const defaultRooms = Object.fromEntries(
       Object.entries(dummyData.departmentRoomMap).map(([department, rooms]) => [
         department,
         [...rooms],
-      ])
-    ) as Record<string, string[]>
+      ]),
+    ) as Record<string, string[]>;
 
     return entries.reduce<Record<string, string[]>>(
       (result, [department, rooms]) => ({
         ...result,
         [department]: Array.from(
-          new Set([...(result[department] ?? []), ...rooms])
+          new Set([...(result[department] ?? []), ...rooms]),
         ),
       }),
-      defaultRooms
-    )
-  }, [departmentRoomMap])
+      defaultRooms,
+    );
+  }, [departmentRoomMap]);
 
   const departmentOptions = useMemo(
-    () => Array.from(new Set([...departments, ...Object.keys(departmentRooms)])),
-    [departmentRooms, departments]
-  )
+    () =>
+      Array.from(new Set([...departments, ...Object.keys(departmentRooms)])),
+    [departmentRooms, departments],
+  );
 
   const roomOptions = useMemo<string[]>(() => {
-    const selectedDepartmentRooms = departmentRooms[formState.values.department]
+    const selectedDepartmentRooms =
+      departmentRooms[formState.values.department];
 
     if (selectedDepartmentRooms?.length) {
-      return selectedDepartmentRooms
+      return selectedDepartmentRooms;
     }
 
-    return Array.from(new Set(Object.values(departmentRooms).flat()))
-  }, [departmentRooms, formState.values.department])
+    return Array.from(new Set(Object.values(departmentRooms).flat()));
+  }, [departmentRooms, formState.values.department]);
 
   const generatedId = useMemo(
     () =>
       mode === "edit"
         ? defaultValues.id
         : buildAccessoryId(formState.values.category),
-    [defaultValues.id, formState.values.category, mode]
-  )
+    [defaultValues.id, formState.values.category, mode],
+  );
   const idRange = useMemo(() => {
-    const startId = generatedId
-    const endId = incrementAccessoryId(startId, formState.quantity - 1)
+    const startId = generatedId;
+    const endId = incrementAccessoryId(startId, formState.quantity - 1);
 
     if (formState.quantity <= 1 || startId === endId) {
-      return startId
+      return startId;
     }
 
-    return `${startId} to ${endId}`
-  }, [formState.quantity, generatedId])
+    return `${startId} to ${endId}`;
+  }, [formState.quantity, generatedId]);
 
   const updateValue = <Key extends keyof ItemModalState["values"]>(
     key: Key,
-    value: ItemModalState["values"][Key]
+    value: ItemModalState["values"][Key],
   ) => {
     setFormState((current) => ({
       ...current,
@@ -226,11 +234,23 @@ function ItemModalContent({
         ...current.values,
         [key]: value,
       },
-    }))
-  }
+    }));
+  };
+
+  const existingMatch = useMemo(() => {
+    if (!existingInventory) return undefined;
+    const name = formState.values.itemName.trim().toLowerCase();
+    return existingInventory.find(
+      (it) =>
+        it.name.trim().toLowerCase() === name &&
+        it.category === formState.values.category,
+    );
+  }, [existingInventory, formState.values.itemName, formState.values.category]);
+
+  const previewImage = image || existingMatch?.image || "";
 
   const selectDepartment = (department: string) => {
-    const rooms = departmentRooms[department] ?? []
+    const rooms = departmentRooms[department] ?? [];
 
     setFormState((current) => ({
       ...current,
@@ -239,15 +259,15 @@ function ItemModalContent({
         department,
         room: rooms.includes(current.values.room)
           ? current.values.room
-          : rooms[0] ?? current.values.room,
+          : (rooms[0] ?? current.values.room),
       },
-    }))
-  }
+    }));
+  };
 
   const selectRoom = (room: string) => {
-    const matchingDepartment = Object.entries(departmentRooms).find(([, rooms]) =>
-      rooms.includes(room)
-    )?.[0]
+    const matchingDepartment = Object.entries(departmentRooms).find(
+      ([, rooms]) => rooms.includes(room),
+    )?.[0];
 
     setFormState((current) => ({
       ...current,
@@ -256,27 +276,44 @@ function ItemModalContent({
         room,
         department: matchingDepartment ?? current.values.department,
       },
-    }))
-  }
+    }));
+  };
 
   const updateQuantity = (value: string) => {
-    const quantity = Math.max(1, Number(value) || 1)
+    const quantity = Math.max(1, Number(value) || 1);
 
     setFormState((current) => ({
       ...current,
       quantity,
-    }))
-  }
+    }));
+  };
+
+  const updateImage = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      setImage("");
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      setImage(typeof reader.result === "string" ? reader.result : "");
+    };
+
+    reader.readAsDataURL(file);
+  };
 
   const submitForm = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+    event.preventDefault();
 
     if (
       !idPattern.test(generatedId) ||
       !formState.values.itemName.trim() ||
       !formState.values.room.trim()
     ) {
-      return
+      return;
     }
 
     onConfirm({
@@ -287,14 +324,15 @@ function ItemModalContent({
       room: formState.values.room.trim(),
       remark: formState.values.remark.trim(),
       quantity: formState.quantity,
-    })
-  }
+      image,
+    });
+  };
 
   const canSubmit =
     idPattern.test(generatedId) &&
     formState.values.itemName.trim().length > 0 &&
-    formState.values.room.trim().length > 0
-  const formId = mode === "edit" ? "edit-accessory-form" : "add-accessory-form"
+    formState.values.room.trim().length > 0;
+  const formId = mode === "edit" ? "edit-accessory-form" : "add-accessory-form";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -349,6 +387,13 @@ function ItemModalContent({
                 placeholder="Accessory name"
                 className="h-10 border-slate-300"
               />
+              {existingMatch ? (
+                <div className="mt-2 rounded-md border border-amber-100 bg-amber-50 p-2 text-sm text-amber-700">
+                  Existing item detected: <strong>{existingMatch.name}</strong>{" "}
+                  — {existingMatch.quantity} in stock. Submitting will increase
+                  quantity of the existing item.
+                </div>
+              ) : null}
             </div>
 
             <div className="grid gap-2">
@@ -417,6 +462,31 @@ function ItemModalContent({
             </div>
 
             <div className="grid gap-2">
+              <Label htmlFor="accessory-image">Image</Label>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Input
+                  id="accessory-image"
+                  type="file"
+                  accept="image/*"
+                  onChange={updateImage}
+                  className="h-10 rounded-xl border border-slate-300 bg-white file:mr-4 file:rounded-md file:border-0 file:bg-slate-100 file:px-2 file:py-1 file:text-xs file:font-semibold file:text-slate-700 hover:file:bg-slate-200 cursor-pointer text-slate-500 text-sm flex items-center pt-1.5"
+                />
+
+                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl border border-slate-100 bg-slate-50 shadow-sm">
+                  {previewImage ? (
+                    <img
+                      src={previewImage}
+                      alt="Selected item"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xs text-slate-500">No image</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-2">
               <Label>Status</Label>
               <Select
                 value={formState.values.status}
@@ -479,13 +549,13 @@ function ItemModalContent({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
 const dummyData: {
-  initialSerialNumber: number
-  categoryPrefixMap: Record<string, string>
-  departmentRoomMap: Record<string, readonly string[]>
+  initialSerialNumber: number;
+  categoryPrefixMap: Record<string, string>;
+  departmentRoomMap: Record<string, readonly string[]>;
 } = {
   initialSerialNumber: 976666,
   categoryPrefixMap: {
@@ -503,4 +573,4 @@ const dummyData: {
     HR: ["Room 301"],
     Finance: ["Room 104"],
   },
-}
+};
