@@ -9,6 +9,7 @@ import {
   User,
   LogOut,
   Building2,
+  Settings,
 } from "lucide-react";
 
 // Note:alert
@@ -34,6 +35,11 @@ const menuItems = [
     title: "Department",
     icon: Building2,
     to: "/departments",
+  },
+  {
+    title: "Settings",
+    icon: Settings,
+    to: "/settings",
   },
 ];
 
