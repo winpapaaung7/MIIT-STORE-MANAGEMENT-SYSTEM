@@ -98,18 +98,18 @@ export default function AddDepartmentModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {mode === "edit" ? "Edit Department" : "Add New Department"}
+            {mode === "edit" ? "Edit Room" : "Add Room"}
           </DialogTitle>
           <DialogDescription>
             {mode === "edit"
-              ? "Update the department details below."
-              : "Enter the department name, class number, and current status."}
+              ? "Update this room under its department."
+              : "Choose the department (for example, Classroom) and enter its room number."}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="department">Department Name</Label>
+            <Label htmlFor="department">Department / Classroom</Label>
             <Input
               id="department"
               placeholder="e.g. Computer Science"
@@ -124,7 +124,7 @@ export default function AddDepartmentModal({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="classroom">Class Number</Label>
+            <Label htmlFor="classroom">Room Number</Label>
             <Input
               id="classroom"
               placeholder="e.g. 101"

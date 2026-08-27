@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CalendarDays,
   MoreHorizontal,
@@ -22,64 +22,50 @@ import AddAcademicYearDialog from "./AddAcademicYearDialog";
 import EditAcademicYearDialog from "./EditAcademicYearDialog";
 import DeleteAcademicYearDialog from "./DeleteAcademicYearDialog";
 
-import { academicYearData, type AcademicYear } from "./data/academicYearData";
+import { type AcademicYear } from "./data/academicYearData";
+
+type LiveAcademicYear = AcademicYear & {
+  semesters?: { semester_name: string; start_date: string; end_date: string }[];
+};
 
 export default function AcedemicYear() {
   // Academic Year List
   const [academicYears, setAcademicYears] =
-    useState<AcademicYear[]>(academicYearData);
+    useState<LiveAcademicYear[]>([]);
 
   // Search
   const [search, setSearch] = useState("");
 
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000"}/api/academic-years`)
+      .then((response) => response.json())
+      .then((payload) => {
+        if (!payload.ok) return;
+        setAcademicYears((payload.years ?? []).map((year: any) => ({
+          id: year.budget_year_id,
+          startDate: new Date(year.start_date),
+          endDate: new Date(year.end_date),
+          status: year.status === "Active" ? "Active" : "Inactive",
+          current: year.status === "Active",
+          semesters: year.semester ?? [],
+        })));
+      });
+  }, []);
+
   // ----------------------------
   // Add Academic Year
   // ----------------------------
-  const handleAdd = (newYear: AcademicYear) => {
-    const updated = academicYears.map((item) => ({
-      ...item,
-      status: newYear.status === "Active" ? "Inactive" : item.status,
-      current: false,
-    }));
-
-    setAcademicYears([
-      {
-        ...newYear,
-        current: newYear.status === "Active",
-      },
-      ...updated,
-    ]);
-  };
+  const handleAdd = async (newYear: AcademicYear) => { const response = await fetch((import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000") + "/api/academic-years", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ year_name: newYear.startDate.getFullYear() + "-" + newYear.endDate.getFullYear(), start_date: newYear.startDate.toISOString(), end_date: newYear.endDate.toISOString(), status: newYear.status }) }); const payload = await response.json(); if (!response.ok || !payload.ok) throw new Error(payload.message ?? "Unable to save academic year"); setAcademicYears((previous) => [{ id: payload.year.budget_year_id, startDate: new Date(payload.year.start_date), endDate: new Date(payload.year.end_date), status: payload.year.status, current: payload.year.status === "Active" }, ...previous]); };
 
   // ----------------------------
   // Update Academic Year
   // ----------------------------
-  const handleUpdate = (updatedYear: AcademicYear) => {
-    setAcademicYears((prev) =>
-      prev.map((item) => {
-        if (item.id === updatedYear.id) {
-          return updatedYear;
-        }
-
-        if (updatedYear.status === "Active") {
-          return {
-            ...item,
-            status: "Inactive",
-            current: false,
-          };
-        }
-
-        return item;
-      }),
-    );
-  };
+  const handleUpdate = async (updatedYear: AcademicYear) => { const response = await fetch((import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000") + "/api/academic-years/" + updatedYear.id, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ year_name: updatedYear.startDate.getFullYear() + "-" + updatedYear.endDate.getFullYear(), start_date: updatedYear.startDate.toISOString(), end_date: updatedYear.endDate.toISOString(), status: updatedYear.status }) }); const payload = await response.json(); if (!response.ok || !payload.ok) throw new Error(payload.message ?? "Unable to update academic year"); setAcademicYears((previous) => previous.map((year) => year.id === updatedYear.id ? { ...updatedYear, current: updatedYear.status === "Active" } : updatedYear.status === "Active" ? { ...year, status: "Inactive", current: false } : year)); };
 
   // ----------------------------
   // Delete Academic Year
   // ----------------------------
-  const handleDelete = (id: number) => {
-    setAcademicYears((prev) => prev.filter((item) => item.id !== id));
-  };
+  const handleDelete = async (id: number) => { const response = await fetch((import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000") + "/api/academic-years/" + id, { method: "DELETE" }); const payload = await response.json(); if (!response.ok || !payload.ok) throw new Error(payload.message ?? "Unable to delete academic year"); setAcademicYears((previous) => previous.filter((year) => year.id !== id)); };
 
   // ----------------------------
   // Search Filter
@@ -217,6 +203,20 @@ export default function AcedemicYear() {
                     {item.startDate.toLocaleDateString()} {" - "}
                     {item.endDate.toLocaleDateString()}
                   </p>
+                  {item.semesters?.length ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {item.semesters.map((semester, index) => (
+                        <span
+                          key={`${semester.semester_name}-${index}`}
+                          className="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600"
+                        >
+                          {semester.semester_name}: {new Date(semester.start_date).toLocaleDateString()} – {new Date(semester.end_date).toLocaleDateString()}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-xs text-amber-600">No semesters configured yet.</p>
+                  )}
                 </div>
               </div>
 

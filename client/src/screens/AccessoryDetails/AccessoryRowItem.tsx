@@ -2,6 +2,7 @@ import {
   Edit3,
   MessageSquare,
   MoreHorizontal,
+  QrCode,
   Trash2,
 } from "lucide-react"
 
@@ -36,18 +37,9 @@ function QrCodeMark({ onClick }: { onClick: () => void }) {
       type="button"
       onClick={onClick}
       aria-label="Open QR code scan"
-      className="grid size-9 shrink-0 grid-cols-4 gap-0.5 rounded-lg border border-slate-200 bg-white p-1.5 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-slate-200"
+      className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-slate-200"
     >
-      {Array.from({ length: 16 }).map((_, index) => (
-        <span
-          key={index}
-          className={cn(
-            "rounded-[1px] bg-slate-800",
-            [1, 6, 9, 14].includes(index) && "bg-slate-300",
-            [4, 11].includes(index) && "bg-slate-500"
-          )}
-        />
-      ))}
+      <QrCode className="size-4 text-slate-800" />
     </button>
   )
 }

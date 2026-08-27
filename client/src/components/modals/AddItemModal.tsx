@@ -14,9 +14,12 @@ export interface AddItemModalProps {
   onClose: () => void;
   newAccessory: NewAccessoryForm;
   categories: readonly string[];
+  categoryIds?: Record<string, number>;
   statuses: readonly AccessoryStatus[];
   departments: readonly Department[];
   departmentRoomMap: Record<Department, readonly string[]>;
+  departmentIds?: Record<string, number>;
+  roomIds?: Record<string, number>;
   existingInventory?: readonly {
     id: string;
     name: string;
@@ -32,9 +35,12 @@ export default function AddItemModal({
   onClose,
   newAccessory,
   categories,
+  categoryIds,
   statuses,
   departments,
   departmentRoomMap,
+  departmentIds,
+  roomIds,
   existingInventory,
   onSubmit,
 }: AddItemModalProps) {
@@ -58,9 +64,12 @@ export default function AddItemModal({
         image: "",
       }}
       categories={categories}
+      categoryIds={categoryIds}
       statuses={statuses}
       departments={departments}
       departmentRoomMap={departmentRoomMap}
+      departmentIds={departmentIds}
+      roomIds={roomIds}
       existingInventory={existingInventory}
       onConfirm={onSubmit}
     />

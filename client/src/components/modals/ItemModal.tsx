@@ -1,4 +1,4 @@
-import { useMemo, useState, type ChangeEvent, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from "react";
 import type { InventoryItem } from "@/screens/Inventory/data/inventoryData";
 
 import { Button } from "@/components/ui/button";
@@ -37,6 +37,9 @@ export interface ItemSubmitPayload extends ItemFormValues {
   quantity: number;
   idRange: string;
   image?: string;
+  departmentId?: number;
+  roomId?: number;
+  categoryId?: number;
 }
 
 export interface ItemModalProps {
@@ -45,9 +48,12 @@ export interface ItemModalProps {
   defaultValues: ItemFormValues;
   mode?: "add" | "edit";
   categories: readonly string[];
+  categoryIds?: Record<string, number>;
   statuses: readonly string[];
   departments: readonly string[];
   departmentRoomMap: Record<string, string | readonly string[]>;
+  departmentIds?: Record<string, number>;
+  roomIds?: Record<string, number>;
   existingInventory?: readonly InventoryItem[];
   onConfirm: (payload: ItemSubmitPayload) => void;
 }
@@ -57,7 +63,7 @@ interface ItemModalState {
   quantity: number;
 }
 
-const idPattern = /^\d{3}-\d{6}$/;
+const idPattern = /^\d{4}-\d{6}$/;
 
 function formatDate(date: Date) {
   const year = date.getFullYear();
@@ -77,24 +83,19 @@ function incrementAccessoryId(id: string, offset: number) {
   const nextPrefix = Math.floor(numericValue / 1_000_000);
   const nextSerial = numericValue % 1_000_000;
 
-  return `${String(nextPrefix).padStart(3, "0")}-${String(nextSerial).padStart(
+  return `${String(nextPrefix).padStart(4, "0")}-${String(nextSerial).padStart(
     6,
     "0",
   )}`;
 }
 
-function getCategoryPrefix(category: string) {
-  return dummyData.categoryPrefixMap[category] ?? "000";
-}
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";
 
-function buildAccessoryId(
-  category: string,
-  serialNumber = dummyData.initialSerialNumber,
-) {
-  return `${getCategoryPrefix(category)}-${String(serialNumber).padStart(
-    6,
-    "0",
-  )}`;
+interface GeneratedIdResponse {
+  ok: boolean;
+  item_id: string;
+  next_serial: number;
 }
 
 function toRoomList(rooms: string | readonly string[] | undefined) {
@@ -156,9 +157,12 @@ function ItemModalContent({
   defaultValues,
   mode = "add",
   categories,
+  categoryIds,
   statuses,
   departments,
   departmentRoomMap,
+  departmentIds,
+  roomIds,
   existingInventory,
   onConfirm,
 }: ItemModalProps) {
@@ -166,18 +170,62 @@ function ItemModalContent({
     buildInitialState(defaultValues, mode),
   );
   const [image, setImage] = useState(defaultValues.image ?? "");
+  const [generatedItemId, setGeneratedItemId] = useState("");
+  const [nextSerial, setNextSerial] = useState(1);
+
+  useEffect(() => {
+    if (mode !== "add" || !open) {
+      return;
+    }
+
+    const itemName = formState.values.itemName.trim();
+    const categoryName = formState.values.category.trim();
+
+    if (!itemName || !categoryName) {
+      setGeneratedItemId("");
+      setNextSerial(1);
+      return;
+    }
+
+    setGeneratedItemId("");
+    setNextSerial(1);
+    let cancelled = false;
+
+    const loadGeneratedId = async () => {
+      try {
+        const params = new URLSearchParams({
+          item_name: itemName,
+          category_name: categoryName,
+        });
+        const response = await fetch(
+          `${API_BASE_URL}/api/items/next-generated-id?${params.toString()}`,
+        );
+        const data = (await response.json()) as GeneratedIdResponse;
+
+        if (!response.ok || !data.ok || cancelled) {
+          return;
+        }
+
+        setGeneratedItemId(data.item_id);
+        setNextSerial(data.next_serial);
+      } catch {
+        if (!cancelled) {
+          setGeneratedItemId("");
+        }
+      }
+    };
+
+    void loadGeneratedId();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [formState.values.category, formState.values.itemName, mode, open]);
 
   const departmentRooms = useMemo<Record<string, string[]>>(() => {
     const entries = Object.entries(departmentRoomMap).map(
       ([department, rooms]) => [department, toRoomList(rooms)] as const,
     );
-    const defaultRooms = Object.fromEntries(
-      Object.entries(dummyData.departmentRoomMap).map(([department, rooms]) => [
-        department,
-        [...rooms],
-      ]),
-    ) as Record<string, string[]>;
-
     return entries.reduce<Record<string, string[]>>(
       (result, [department, rooms]) => ({
         ...result,
@@ -185,14 +233,14 @@ function ItemModalContent({
           new Set([...(result[department] ?? []), ...rooms]),
         ),
       }),
-      defaultRooms,
+      {},
     );
   }, [departmentRoomMap]);
 
   const departmentOptions = useMemo(
     () =>
-      Array.from(new Set([...departments, ...Object.keys(departmentRooms)])),
-    [departmentRooms, departments],
+      Array.from(new Set(departments)),
+    [departments],
   );
 
   const roomOptions = useMemo<string[]>(() => {
@@ -210,8 +258,10 @@ function ItemModalContent({
     () =>
       mode === "edit"
         ? defaultValues.id
-        : buildAccessoryId(formState.values.category),
-    [defaultValues.id, formState.values.category, mode],
+        : generatedItemId
+          ? `${generatedItemId}-${String(nextSerial).padStart(6, "0")}`
+          : "",
+    [defaultValues.id, generatedItemId, mode, nextSerial],
   );
   const idRange = useMemo(() => {
     const startId = generatedId;
@@ -309,9 +359,11 @@ function ItemModalContent({
     event.preventDefault();
 
     if (
-      !idPattern.test(generatedId) ||
-      !formState.values.itemName.trim() ||
-      !formState.values.room.trim()
+      (mode === "add" &&
+        (!idPattern.test(generatedId) ||
+          !formState.values.itemName.trim() ||
+          !formState.values.room.trim())) ||
+      !formState.values.status
     ) {
       return;
     }
@@ -325,13 +377,18 @@ function ItemModalContent({
       remark: formState.values.remark.trim(),
       quantity: formState.quantity,
       image,
+      categoryId: categoryIds?.[formState.values.category],
+      departmentId: departmentIds?.[formState.values.department],
+      roomId: roomIds?.[`${formState.values.department}\u0000${formState.values.room}`],
     });
   };
 
   const canSubmit =
-    idPattern.test(generatedId) &&
-    formState.values.itemName.trim().length > 0 &&
-    formState.values.room.trim().length > 0;
+    mode === "edit"
+      ? formState.values.status.length > 0
+      : idPattern.test(generatedId) &&
+        formState.values.itemName.trim().length > 0 &&
+        formState.values.room.trim().length > 0;
   const formId = mode === "edit" ? "edit-accessory-form" : "add-accessory-form";
 
   return (
@@ -357,6 +414,8 @@ function ItemModalContent({
           className="min-h-0 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5"
         >
           <div className="grid gap-4 sm:gap-5">
+            {mode === "add" ? (
+              <>
             <div className="grid gap-2">
               <Label>Category</Label>
               <Select
@@ -446,7 +505,7 @@ function ItemModalContent({
                   </SelectContent>
                 </Select>
               </div>
-            </div>
+              </div>
 
             <div className="grid gap-2">
               <Label htmlFor="accessory-quantity">Quantity</Label>
@@ -456,7 +515,6 @@ function ItemModalContent({
                 min={1}
                 value={formState.quantity}
                 onChange={(event) => updateQuantity(event.target.value)}
-                disabled={mode === "edit"}
                 className="h-10 border-slate-300 bg-white"
               />
             </div>
@@ -485,6 +543,8 @@ function ItemModalContent({
                 </div>
               </div>
             </div>
+              </>
+            ) : null}
 
             <div className="grid gap-2">
               <Label>Status</Label>
@@ -505,16 +565,18 @@ function ItemModalContent({
               </Select>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="accessory-created-date">Created Date</Label>
-              <Input
-                id="accessory-created-date"
-                value={formState.values.createdDate}
-                disabled
-                readOnly
-                className="h-10 border-slate-200 bg-slate-100 text-slate-500"
-              />
-            </div>
+            {mode === "add" ? (
+              <div className="grid gap-2">
+                <Label htmlFor="accessory-created-date">Created Date</Label>
+                <Input
+                  id="accessory-created-date"
+                  value={formState.values.createdDate}
+                  disabled
+                  readOnly
+                  className="h-10 border-slate-200 bg-slate-100 text-slate-500"
+                />
+              </div>
+            ) : null}
 
             <div className="grid gap-2">
               <Label htmlFor="accessory-remark">Remark</Label>
@@ -552,25 +614,3 @@ function ItemModalContent({
   );
 }
 
-const dummyData: {
-  initialSerialNumber: number;
-  categoryPrefixMap: Record<string, string>;
-  departmentRoomMap: Record<string, readonly string[]>;
-} = {
-  initialSerialNumber: 976666,
-  categoryPrefixMap: {
-    "Computer Accessory": "033",
-    "Office Supply": "012",
-    "Networking Device": "088",
-    "Cable & Connector": "021",
-    "Audio Accessory": "034",
-    "Power Accessory": "052",
-    "Display Accessory": "065",
-    "Presentation Accessory": "076",
-  },
-  departmentRoomMap: {
-    ICT: ["Room 201", "Room 202"],
-    HR: ["Room 301"],
-    Finance: ["Room 104"],
-  },
-};

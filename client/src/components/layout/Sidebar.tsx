@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
   Package,
@@ -10,12 +9,19 @@ import {
   LogOut,
   Building2,
   Settings,
+  LayoutDashboard,
 } from "lucide-react";
+import msmLogo from "@/assets/MSM logo_r.png";
 
 // Note:alert
 // everytime u add a new route in the AppRoutes.tsx file, you need to add a new item in the menuItems array below. The title is the text that will be displayed in the sidebar, the icon is the icon that will be displayed in the sidebar, and the to is the route that will be navigated to when the item is clicked.
 
 const menuItems = [
+  {
+    title: "Dashboard",
+    icon: LayoutDashboard,
+    to: "/",
+  },
   {
     title: "Inventory",
     icon: Package,
@@ -43,26 +49,26 @@ const menuItems = [
   },
 ];
 
-export function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
+export function Sidebar({ collapsed, onCollapsedChange }: { collapsed: boolean; onCollapsedChange: (collapsed: boolean) => void }) {
 
   return (
     <aside
-      className={`h-screen bg-[#050814] text-slate-300 flex flex-col justify-between p-3 border-r border-[#111827] flex-shrink-0 transition-all duration-200 ${
+      className={`fixed inset-y-0 left-0 z-40 flex h-screen flex-col overflow-hidden border-r border-[#111827] bg-[#050814] p-[clamp(0.75rem,2vh,1rem)] text-slate-300 transition-all duration-200 ${
         collapsed ? "w-16" : "w-[260px]"
       }`}
     >
       {/* header part, i mean the top section with miit storage text */}
-      <div>
+      <div className="min-h-0">
         <div className="flex items-center justify-between px-1 py-2">
           {!collapsed && (
-            <h1 className="text-lg font-bold text-[#f59e0b] tracking-wide">
-              MIIT Store
-            </h1>
+            <div className="flex min-w-0 items-center gap-2.5">
+              <img src={msmLogo} alt="MSM logo" className="h-8 w-8 shrink-0 object-contain" />
+              <h1 className="truncate text-lg font-bold tracking-wide text-[#f59e0b]">MIIT Store</h1>
+            </div>
           )}
 
           <button
-            onClick={() => setCollapsed((s) => !s)}
+            onClick={() => onCollapsedChange(!collapsed)}
             className="rounded-md p-1 hover:bg-[#0f172a]/40"
           >
             {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
@@ -88,7 +94,7 @@ export function Sidebar() {
         )}
 
         {/* navigation menu to our screens, ask me directly in the telegram group if u dont know how to add route here */}
-        <nav className="mt-2 space-y-1.5">
+        <nav className="mt-[clamp(0.25rem,1vh,0.5rem)] space-y-[clamp(0.25rem,0.8vh,0.375rem)]">
           {menuItems.map((item) => {
             const Icon = item.icon;
 
@@ -97,7 +103,7 @@ export function Sidebar() {
                 key={item.title}
                 to={item.to}
                 className={({ isActive }) =>
-                  `group relative flex items-center h-11 rounded-lg transition-colors ${
+                  `group relative flex h-[clamp(2.25rem,5.1vh,2.75rem)] items-center rounded-lg transition-colors ${
                     collapsed ? "justify-center px-0" : "gap-3 px-3"
                   } ${
                     isActive
@@ -132,7 +138,7 @@ export function Sidebar() {
       </div>
 
       {/* footer of the sidebar with the sign out button */}
-      <div className="px-1 pb-2">
+      <div className="mt-auto px-1 pb-0 pt-3">
         <button
           className={`w-full flex items-center justify-center gap-2 rounded-lg border border-[#1e293b] py-2 text-[13px] text-slate-300 font-medium hover:bg-[#0f172a]/50 transition-colors ${
             collapsed ? "px-0" : ""

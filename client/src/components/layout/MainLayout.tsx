@@ -1,12 +1,15 @@
+import { useState, type CSSProperties } from "react";
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 
 export default function MainLayout() {
+  const [collapsed, setCollapsed] = useState(false);
+  const sidebarWidth = collapsed ? "64px" : "260px";
   return (
-    <div className="flex overflow-x-hidden">
-      <Sidebar />
+    <div className="min-h-screen overflow-x-hidden" style={{ "--sidebar-width": sidebarWidth } as CSSProperties}>
+      <Sidebar collapsed={collapsed} onCollapsedChange={setCollapsed} />
 
-      <main className="min-w-0 flex-1 overflow-x-hidden p-6 bg-slate-100 min-h-screen">
+      <main className="ml-[var(--sidebar-width)] min-h-screen min-w-0 bg-slate-100 p-4 sm:p-6">
         <Outlet />
       </main>
     </div>

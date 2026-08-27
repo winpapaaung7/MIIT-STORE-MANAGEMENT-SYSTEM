@@ -1,0 +1,601 @@
+student_name,roll_number,email,phone,major,batch,year,status
+Aung Min Khant 1,2021-MIIT-CSE-001,aungminkhant1.cse2021.001@gmail.com,09768000001,CSE,2021 Batch,3rd Year,Active
+Thiri Mon 1,2021-MIIT-CSE-002,thirimon1.cse2021.002@gmail.com,09768000002,CSE,2021 Batch,3rd Year,Active
+Kyaw Zin Oo 1,2021-MIIT-CSE-003,kyawzinoo1.cse2021.003@gmail.com,09768000003,CSE,2021 Batch,3rd Year,Active
+Su Myat Noe 1,2021-MIIT-CSE-004,sumyatnoe1.cse2021.004@gmail.com,09768000004,CSE,2021 Batch,3rd Year,Active
+Htet Aung 1,2021-MIIT-CSE-005,htetaung1.cse2021.005@gmail.com,09768000005,CSE,2021 Batch,3rd Year,Active
+Yoon Myat Thu 1,2021-MIIT-CSE-006,yoonmyatthu1.cse2021.006@gmail.com,09768000006,CSE,2021 Batch,3rd Year,Active
+Kaung Htet 1,2021-MIIT-CSE-007,kaunghtet1.cse2021.007@gmail.com,09768000007,CSE,2021 Batch,3rd Year,Active
+Nandar Hlaing 1,2021-MIIT-CSE-008,nandarhlaing1.cse2021.008@gmail.com,09768000008,CSE,2021 Batch,3rd Year,Active
+Min Thant 1,2021-MIIT-CSE-009,minthant1.cse2021.009@gmail.com,09768000009,CSE,2021 Batch,3rd Year,Active
+May Zin Win 1,2021-MIIT-CSE-010,mayzinwin1.cse2021.010@gmail.com,09768000010,CSE,2021 Batch,3rd Year,Active
+Aung Min Khant 2,2021-MIIT-CSE-011,aungminkhant2.cse2021.011@gmail.com,09768000011,CSE,2021 Batch,3rd Year,Active
+Thiri Mon 2,2021-MIIT-CSE-012,thirimon2.cse2021.012@gmail.com,09768000012,CSE,2021 Batch,3rd Year,Active
+Kyaw Zin Oo 2,2021-MIIT-CSE-013,kyawzinoo2.cse2021.013@gmail.com,09768000013,CSE,2021 Batch,3rd Year,Active
+Su Myat Noe 2,2021-MIIT-CSE-014,sumyatnoe2.cse2021.014@gmail.com,09768000014,CSE,2021 Batch,3rd Year,Active
+Htet Aung 2,2021-MIIT-CSE-015,htetaung2.cse2021.015@gmail.com,09768000015,CSE,2021 Batch,3rd Year,Active
+Yoon Myat Thu 2,2021-MIIT-CSE-016,yoonmyatthu2.cse2021.016@gmail.com,09768000016,CSE,2021 Batch,3rd Year,Active
+Kaung Htet 2,2021-MIIT-CSE-017,kaunghtet2.cse2021.017@gmail.com,09768000017,CSE,2021 Batch,3rd Year,Active
+Nandar Hlaing 2,2021-MIIT-CSE-018,nandarhlaing2.cse2021.018@gmail.com,09768000018,CSE,2021 Batch,3rd Year,Active
+Min Thant 2,2021-MIIT-CSE-019,minthant2.cse2021.019@gmail.com,09768000019,CSE,2021 Batch,3rd Year,Active
+May Zin Win 2,2021-MIIT-CSE-020,mayzinwin2.cse2021.020@gmail.com,09768000020,CSE,2021 Batch,3rd Year,Active
+Aung Min Khant 3,2021-MIIT-CSE-021,aungminkhant3.cse2021.021@gmail.com,09768000021,CSE,2021 Batch,3rd Year,Active
+Thiri Mon 3,2021-MIIT-CSE-022,thirimon3.cse2021.022@gmail.com,09768000022,CSE,2021 Batch,3rd Year,Active
+Kyaw Zin Oo 3,2021-MIIT-CSE-023,kyawzinoo3.cse2021.023@gmail.com,09768000023,CSE,2021 Batch,3rd Year,Active
+Su Myat Noe 3,2021-MIIT-CSE-024,sumyatnoe3.cse2021.024@gmail.com,09768000024,CSE,2021 Batch,3rd Year,Active
+Htet Aung 3,2021-MIIT-CSE-025,htetaung3.cse2021.025@gmail.com,09768000025,CSE,2021 Batch,3rd Year,Active
+Yoon Myat Thu 3,2021-MIIT-CSE-026,yoonmyatthu3.cse2021.026@gmail.com,09768000026,CSE,2021 Batch,3rd Year,Active
+Kaung Htet 3,2021-MIIT-CSE-027,kaunghtet3.cse2021.027@gmail.com,09768000027,CSE,2021 Batch,3rd Year,Active
+Nandar Hlaing 3,2021-MIIT-CSE-028,nandarhlaing3.cse2021.028@gmail.com,09768000028,CSE,2021 Batch,3rd Year,Active
+Min Thant 3,2021-MIIT-CSE-029,minthant3.cse2021.029@gmail.com,09768000029,CSE,2021 Batch,3rd Year,Active
+May Zin Win 3,2021-MIIT-CSE-030,mayzinwin3.cse2021.030@gmail.com,09768000030,CSE,2021 Batch,3rd Year,Active
+Aung Min Khant 4,2021-MIIT-CSE-031,aungminkhant4.cse2021.031@gmail.com,09768000031,CSE,2021 Batch,3rd Year,Active
+Thiri Mon 4,2021-MIIT-CSE-032,thirimon4.cse2021.032@gmail.com,09768000032,CSE,2021 Batch,3rd Year,Active
+Kyaw Zin Oo 4,2021-MIIT-CSE-033,kyawzinoo4.cse2021.033@gmail.com,09768000033,CSE,2021 Batch,3rd Year,Active
+Su Myat Noe 4,2021-MIIT-CSE-034,sumyatnoe4.cse2021.034@gmail.com,09768000034,CSE,2021 Batch,3rd Year,Active
+Htet Aung 4,2021-MIIT-CSE-035,htetaung4.cse2021.035@gmail.com,09768000035,CSE,2021 Batch,3rd Year,Active
+Yoon Myat Thu 4,2021-MIIT-CSE-036,yoonmyatthu4.cse2021.036@gmail.com,09768000036,CSE,2021 Batch,3rd Year,Active
+Kaung Htet 4,2021-MIIT-CSE-037,kaunghtet4.cse2021.037@gmail.com,09768000037,CSE,2021 Batch,3rd Year,Active
+Nandar Hlaing 4,2021-MIIT-CSE-038,nandarhlaing4.cse2021.038@gmail.com,09768000038,CSE,2021 Batch,3rd Year,Active
+Min Thant 4,2021-MIIT-CSE-039,minthant4.cse2021.039@gmail.com,09768000039,CSE,2021 Batch,3rd Year,Active
+May Zin Win 4,2021-MIIT-CSE-040,mayzinwin4.cse2021.040@gmail.com,09768000040,CSE,2021 Batch,3rd Year,Active
+Aung Min Khant 5,2021-MIIT-CSE-041,aungminkhant5.cse2021.041@gmail.com,09768000041,CSE,2021 Batch,3rd Year,Active
+Thiri Mon 5,2021-MIIT-CSE-042,thirimon5.cse2021.042@gmail.com,09768000042,CSE,2021 Batch,3rd Year,Active
+Kyaw Zin Oo 5,2021-MIIT-CSE-043,kyawzinoo5.cse2021.043@gmail.com,09768000043,CSE,2021 Batch,3rd Year,Active
+Su Myat Noe 5,2021-MIIT-CSE-044,sumyatnoe5.cse2021.044@gmail.com,09768000044,CSE,2021 Batch,3rd Year,Active
+Htet Aung 5,2021-MIIT-CSE-045,htetaung5.cse2021.045@gmail.com,09768000045,CSE,2021 Batch,3rd Year,Active
+Yoon Myat Thu 5,2021-MIIT-CSE-046,yoonmyatthu5.cse2021.046@gmail.com,09768000046,CSE,2021 Batch,3rd Year,Active
+Kaung Htet 5,2021-MIIT-CSE-047,kaunghtet5.cse2021.047@gmail.com,09768000047,CSE,2021 Batch,3rd Year,Active
+Nandar Hlaing 5,2021-MIIT-CSE-048,nandarhlaing5.cse2021.048@gmail.com,09768000048,CSE,2021 Batch,3rd Year,Active
+Min Thant 5,2021-MIIT-CSE-049,minthant5.cse2021.049@gmail.com,09768000049,CSE,2021 Batch,3rd Year,Active
+May Zin Win 5,2021-MIIT-CSE-050,mayzinwin5.cse2021.050@gmail.com,09768000050,CSE,2021 Batch,3rd Year,Active
+Aung Min Khant 6,2021-MIIT-CSE-051,aungminkhant6.cse2021.051@gmail.com,09768000051,CSE,2021 Batch,3rd Year,Active
+Thiri Mon 6,2021-MIIT-CSE-052,thirimon6.cse2021.052@gmail.com,09768000052,CSE,2021 Batch,3rd Year,Active
+Kyaw Zin Oo 6,2021-MIIT-CSE-053,kyawzinoo6.cse2021.053@gmail.com,09768000053,CSE,2021 Batch,3rd Year,Active
+Su Myat Noe 6,2021-MIIT-CSE-054,sumyatnoe6.cse2021.054@gmail.com,09768000054,CSE,2021 Batch,3rd Year,Active
+Htet Aung 6,2021-MIIT-CSE-055,htetaung6.cse2021.055@gmail.com,09768000055,CSE,2021 Batch,3rd Year,Active
+Yoon Myat Thu 6,2021-MIIT-CSE-056,yoonmyatthu6.cse2021.056@gmail.com,09768000056,CSE,2021 Batch,3rd Year,Active
+Kaung Htet 6,2021-MIIT-CSE-057,kaunghtet6.cse2021.057@gmail.com,09768000057,CSE,2021 Batch,3rd Year,Active
+Nandar Hlaing 6,2021-MIIT-CSE-058,nandarhlaing6.cse2021.058@gmail.com,09768000058,CSE,2021 Batch,3rd Year,Active
+Min Thant 6,2021-MIIT-CSE-059,minthant6.cse2021.059@gmail.com,09768000059,CSE,2021 Batch,3rd Year,Active
+May Zin Win 6,2021-MIIT-CSE-060,mayzinwin6.cse2021.060@gmail.com,09768000060,CSE,2021 Batch,3rd Year,Active
+Aung Min Khant 1,2021-MIIT-ECE-001,aungminkhant1.ece2021.001@gmail.com,09768000061,ECE,2021 Batch,3rd Year,Active
+Thiri Mon 1,2021-MIIT-ECE-002,thirimon1.ece2021.002@gmail.com,09768000062,ECE,2021 Batch,3rd Year,Active
+Kyaw Zin Oo 1,2021-MIIT-ECE-003,kyawzinoo1.ece2021.003@gmail.com,09768000063,ECE,2021 Batch,3rd Year,Active
+Su Myat Noe 1,2021-MIIT-ECE-004,sumyatnoe1.ece2021.004@gmail.com,09768000064,ECE,2021 Batch,3rd Year,Active
+Htet Aung 1,2021-MIIT-ECE-005,htetaung1.ece2021.005@gmail.com,09768000065,ECE,2021 Batch,3rd Year,Active
+Yoon Myat Thu 1,2021-MIIT-ECE-006,yoonmyatthu1.ece2021.006@gmail.com,09768000066,ECE,2021 Batch,3rd Year,Active
+Kaung Htet 1,2021-MIIT-ECE-007,kaunghtet1.ece2021.007@gmail.com,09768000067,ECE,2021 Batch,3rd Year,Active
+Nandar Hlaing 1,2021-MIIT-ECE-008,nandarhlaing1.ece2021.008@gmail.com,09768000068,ECE,2021 Batch,3rd Year,Active
+Min Thant 1,2021-MIIT-ECE-009,minthant1.ece2021.009@gmail.com,09768000069,ECE,2021 Batch,3rd Year,Active
+May Zin Win 1,2021-MIIT-ECE-010,mayzinwin1.ece2021.010@gmail.com,09768000070,ECE,2021 Batch,3rd Year,Active
+Aung Min Khant 2,2021-MIIT-ECE-011,aungminkhant2.ece2021.011@gmail.com,09768000071,ECE,2021 Batch,3rd Year,Active
+Thiri Mon 2,2021-MIIT-ECE-012,thirimon2.ece2021.012@gmail.com,09768000072,ECE,2021 Batch,3rd Year,Active
+Kyaw Zin Oo 2,2021-MIIT-ECE-013,kyawzinoo2.ece2021.013@gmail.com,09768000073,ECE,2021 Batch,3rd Year,Active
+Su Myat Noe 2,2021-MIIT-ECE-014,sumyatnoe2.ece2021.014@gmail.com,09768000074,ECE,2021 Batch,3rd Year,Active
+Htet Aung 2,2021-MIIT-ECE-015,htetaung2.ece2021.015@gmail.com,09768000075,ECE,2021 Batch,3rd Year,Active
+Yoon Myat Thu 2,2021-MIIT-ECE-016,yoonmyatthu2.ece2021.016@gmail.com,09768000076,ECE,2021 Batch,3rd Year,Active
+Kaung Htet 2,2021-MIIT-ECE-017,kaunghtet2.ece2021.017@gmail.com,09768000077,ECE,2021 Batch,3rd Year,Active
+Nandar Hlaing 2,2021-MIIT-ECE-018,nandarhlaing2.ece2021.018@gmail.com,09768000078,ECE,2021 Batch,3rd Year,Active
+Min Thant 2,2021-MIIT-ECE-019,minthant2.ece2021.019@gmail.com,09768000079,ECE,2021 Batch,3rd Year,Active
+May Zin Win 2,2021-MIIT-ECE-020,mayzinwin2.ece2021.020@gmail.com,09768000080,ECE,2021 Batch,3rd Year,Active
+Aung Min Khant 3,2021-MIIT-ECE-021,aungminkhant3.ece2021.021@gmail.com,09768000081,ECE,2021 Batch,3rd Year,Active
+Thiri Mon 3,2021-MIIT-ECE-022,thirimon3.ece2021.022@gmail.com,09768000082,ECE,2021 Batch,3rd Year,Active
+Kyaw Zin Oo 3,2021-MIIT-ECE-023,kyawzinoo3.ece2021.023@gmail.com,09768000083,ECE,2021 Batch,3rd Year,Active
+Su Myat Noe 3,2021-MIIT-ECE-024,sumyatnoe3.ece2021.024@gmail.com,09768000084,ECE,2021 Batch,3rd Year,Active
+Htet Aung 3,2021-MIIT-ECE-025,htetaung3.ece2021.025@gmail.com,09768000085,ECE,2021 Batch,3rd Year,Active
+Yoon Myat Thu 3,2021-MIIT-ECE-026,yoonmyatthu3.ece2021.026@gmail.com,09768000086,ECE,2021 Batch,3rd Year,Active
+Kaung Htet 3,2021-MIIT-ECE-027,kaunghtet3.ece2021.027@gmail.com,09768000087,ECE,2021 Batch,3rd Year,Active
+Nandar Hlaing 3,2021-MIIT-ECE-028,nandarhlaing3.ece2021.028@gmail.com,09768000088,ECE,2021 Batch,3rd Year,Active
+Min Thant 3,2021-MIIT-ECE-029,minthant3.ece2021.029@gmail.com,09768000089,ECE,2021 Batch,3rd Year,Active
+May Zin Win 3,2021-MIIT-ECE-030,mayzinwin3.ece2021.030@gmail.com,09768000090,ECE,2021 Batch,3rd Year,Active
+Aung Min Khant 4,2021-MIIT-ECE-031,aungminkhant4.ece2021.031@gmail.com,09768000091,ECE,2021 Batch,3rd Year,Active
+Thiri Mon 4,2021-MIIT-ECE-032,thirimon4.ece2021.032@gmail.com,09768000092,ECE,2021 Batch,3rd Year,Active
+Kyaw Zin Oo 4,2021-MIIT-ECE-033,kyawzinoo4.ece2021.033@gmail.com,09768000093,ECE,2021 Batch,3rd Year,Active
+Su Myat Noe 4,2021-MIIT-ECE-034,sumyatnoe4.ece2021.034@gmail.com,09768000094,ECE,2021 Batch,3rd Year,Active
+Htet Aung 4,2021-MIIT-ECE-035,htetaung4.ece2021.035@gmail.com,09768000095,ECE,2021 Batch,3rd Year,Active
+Yoon Myat Thu 4,2021-MIIT-ECE-036,yoonmyatthu4.ece2021.036@gmail.com,09768000096,ECE,2021 Batch,3rd Year,Active
+Kaung Htet 4,2021-MIIT-ECE-037,kaunghtet4.ece2021.037@gmail.com,09768000097,ECE,2021 Batch,3rd Year,Active
+Nandar Hlaing 4,2021-MIIT-ECE-038,nandarhlaing4.ece2021.038@gmail.com,09768000098,ECE,2021 Batch,3rd Year,Active
+Min Thant 4,2021-MIIT-ECE-039,minthant4.ece2021.039@gmail.com,09768000099,ECE,2021 Batch,3rd Year,Active
+May Zin Win 4,2021-MIIT-ECE-040,mayzinwin4.ece2021.040@gmail.com,09768000100,ECE,2021 Batch,3rd Year,Active
+Aung Min Khant 5,2021-MIIT-ECE-041,aungminkhant5.ece2021.041@gmail.com,09768000101,ECE,2021 Batch,3rd Year,Active
+Thiri Mon 5,2021-MIIT-ECE-042,thirimon5.ece2021.042@gmail.com,09768000102,ECE,2021 Batch,3rd Year,Active
+Kyaw Zin Oo 5,2021-MIIT-ECE-043,kyawzinoo5.ece2021.043@gmail.com,09768000103,ECE,2021 Batch,3rd Year,Active
+Su Myat Noe 5,2021-MIIT-ECE-044,sumyatnoe5.ece2021.044@gmail.com,09768000104,ECE,2021 Batch,3rd Year,Active
+Htet Aung 5,2021-MIIT-ECE-045,htetaung5.ece2021.045@gmail.com,09768000105,ECE,2021 Batch,3rd Year,Active
+Yoon Myat Thu 5,2021-MIIT-ECE-046,yoonmyatthu5.ece2021.046@gmail.com,09768000106,ECE,2021 Batch,3rd Year,Active
+Kaung Htet 5,2021-MIIT-ECE-047,kaunghtet5.ece2021.047@gmail.com,09768000107,ECE,2021 Batch,3rd Year,Active
+Nandar Hlaing 5,2021-MIIT-ECE-048,nandarhlaing5.ece2021.048@gmail.com,09768000108,ECE,2021 Batch,3rd Year,Active
+Min Thant 5,2021-MIIT-ECE-049,minthant5.ece2021.049@gmail.com,09768000109,ECE,2021 Batch,3rd Year,Active
+May Zin Win 5,2021-MIIT-ECE-050,mayzinwin5.ece2021.050@gmail.com,09768000110,ECE,2021 Batch,3rd Year,Active
+Aung Min Khant 6,2021-MIIT-ECE-051,aungminkhant6.ece2021.051@gmail.com,09768000111,ECE,2021 Batch,3rd Year,Active
+Thiri Mon 6,2021-MIIT-ECE-052,thirimon6.ece2021.052@gmail.com,09768000112,ECE,2021 Batch,3rd Year,Active
+Kyaw Zin Oo 6,2021-MIIT-ECE-053,kyawzinoo6.ece2021.053@gmail.com,09768000113,ECE,2021 Batch,3rd Year,Active
+Su Myat Noe 6,2021-MIIT-ECE-054,sumyatnoe6.ece2021.054@gmail.com,09768000114,ECE,2021 Batch,3rd Year,Active
+Htet Aung 6,2021-MIIT-ECE-055,htetaung6.ece2021.055@gmail.com,09768000115,ECE,2021 Batch,3rd Year,Active
+Yoon Myat Thu 6,2021-MIIT-ECE-056,yoonmyatthu6.ece2021.056@gmail.com,09768000116,ECE,2021 Batch,3rd Year,Active
+Kaung Htet 6,2021-MIIT-ECE-057,kaunghtet6.ece2021.057@gmail.com,09768000117,ECE,2021 Batch,3rd Year,Active
+Nandar Hlaing 6,2021-MIIT-ECE-058,nandarhlaing6.ece2021.058@gmail.com,09768000118,ECE,2021 Batch,3rd Year,Active
+Min Thant 6,2021-MIIT-ECE-059,minthant6.ece2021.059@gmail.com,09768000119,ECE,2021 Batch,3rd Year,Active
+May Zin Win 6,2021-MIIT-ECE-060,mayzinwin6.ece2021.060@gmail.com,09768000120,ECE,2021 Batch,3rd Year,Active
+Aung Min Khant 1,2022-MIIT-CSE-001,aungminkhant1.cse2022.001@gmail.com,09768000121,CSE,2022 Batch,3rd Year,Active
+Thiri Mon 1,2022-MIIT-CSE-002,thirimon1.cse2022.002@gmail.com,09768000122,CSE,2022 Batch,3rd Year,Active
+Kyaw Zin Oo 1,2022-MIIT-CSE-003,kyawzinoo1.cse2022.003@gmail.com,09768000123,CSE,2022 Batch,3rd Year,Active
+Su Myat Noe 1,2022-MIIT-CSE-004,sumyatnoe1.cse2022.004@gmail.com,09768000124,CSE,2022 Batch,3rd Year,Active
+Htet Aung 1,2022-MIIT-CSE-005,htetaung1.cse2022.005@gmail.com,09768000125,CSE,2022 Batch,3rd Year,Active
+Yoon Myat Thu 1,2022-MIIT-CSE-006,yoonmyatthu1.cse2022.006@gmail.com,09768000126,CSE,2022 Batch,3rd Year,Active
+Kaung Htet 1,2022-MIIT-CSE-007,kaunghtet1.cse2022.007@gmail.com,09768000127,CSE,2022 Batch,3rd Year,Active
+Nandar Hlaing 1,2022-MIIT-CSE-008,nandarhlaing1.cse2022.008@gmail.com,09768000128,CSE,2022 Batch,3rd Year,Active
+Min Thant 1,2022-MIIT-CSE-009,minthant1.cse2022.009@gmail.com,09768000129,CSE,2022 Batch,3rd Year,Active
+May Zin Win 1,2022-MIIT-CSE-010,mayzinwin1.cse2022.010@gmail.com,09768000130,CSE,2022 Batch,3rd Year,Active
+Aung Min Khant 2,2022-MIIT-CSE-011,aungminkhant2.cse2022.011@gmail.com,09768000131,CSE,2022 Batch,3rd Year,Active
+Thiri Mon 2,2022-MIIT-CSE-012,thirimon2.cse2022.012@gmail.com,09768000132,CSE,2022 Batch,3rd Year,Active
+Kyaw Zin Oo 2,2022-MIIT-CSE-013,kyawzinoo2.cse2022.013@gmail.com,09768000133,CSE,2022 Batch,3rd Year,Active
+Su Myat Noe 2,2022-MIIT-CSE-014,sumyatnoe2.cse2022.014@gmail.com,09768000134,CSE,2022 Batch,3rd Year,Active
+Htet Aung 2,2022-MIIT-CSE-015,htetaung2.cse2022.015@gmail.com,09768000135,CSE,2022 Batch,3rd Year,Active
+Yoon Myat Thu 2,2022-MIIT-CSE-016,yoonmyatthu2.cse2022.016@gmail.com,09768000136,CSE,2022 Batch,3rd Year,Active
+Kaung Htet 2,2022-MIIT-CSE-017,kaunghtet2.cse2022.017@gmail.com,09768000137,CSE,2022 Batch,3rd Year,Active
+Nandar Hlaing 2,2022-MIIT-CSE-018,nandarhlaing2.cse2022.018@gmail.com,09768000138,CSE,2022 Batch,3rd Year,Active
+Min Thant 2,2022-MIIT-CSE-019,minthant2.cse2022.019@gmail.com,09768000139,CSE,2022 Batch,3rd Year,Active
+May Zin Win 2,2022-MIIT-CSE-020,mayzinwin2.cse2022.020@gmail.com,09768000140,CSE,2022 Batch,3rd Year,Active
+Aung Min Khant 3,2022-MIIT-CSE-021,aungminkhant3.cse2022.021@gmail.com,09768000141,CSE,2022 Batch,3rd Year,Active
+Thiri Mon 3,2022-MIIT-CSE-022,thirimon3.cse2022.022@gmail.com,09768000142,CSE,2022 Batch,3rd Year,Active
+Kyaw Zin Oo 3,2022-MIIT-CSE-023,kyawzinoo3.cse2022.023@gmail.com,09768000143,CSE,2022 Batch,3rd Year,Active
+Su Myat Noe 3,2022-MIIT-CSE-024,sumyatnoe3.cse2022.024@gmail.com,09768000144,CSE,2022 Batch,3rd Year,Active
+Htet Aung 3,2022-MIIT-CSE-025,htetaung3.cse2022.025@gmail.com,09768000145,CSE,2022 Batch,3rd Year,Active
+Yoon Myat Thu 3,2022-MIIT-CSE-026,yoonmyatthu3.cse2022.026@gmail.com,09768000146,CSE,2022 Batch,3rd Year,Active
+Kaung Htet 3,2022-MIIT-CSE-027,kaunghtet3.cse2022.027@gmail.com,09768000147,CSE,2022 Batch,3rd Year,Active
+Nandar Hlaing 3,2022-MIIT-CSE-028,nandarhlaing3.cse2022.028@gmail.com,09768000148,CSE,2022 Batch,3rd Year,Active
+Min Thant 3,2022-MIIT-CSE-029,minthant3.cse2022.029@gmail.com,09768000149,CSE,2022 Batch,3rd Year,Active
+May Zin Win 3,2022-MIIT-CSE-030,mayzinwin3.cse2022.030@gmail.com,09768000150,CSE,2022 Batch,3rd Year,Active
+Aung Min Khant 4,2022-MIIT-CSE-031,aungminkhant4.cse2022.031@gmail.com,09768000151,CSE,2022 Batch,3rd Year,Active
+Thiri Mon 4,2022-MIIT-CSE-032,thirimon4.cse2022.032@gmail.com,09768000152,CSE,2022 Batch,3rd Year,Active
+Kyaw Zin Oo 4,2022-MIIT-CSE-033,kyawzinoo4.cse2022.033@gmail.com,09768000153,CSE,2022 Batch,3rd Year,Active
+Su Myat Noe 4,2022-MIIT-CSE-034,sumyatnoe4.cse2022.034@gmail.com,09768000154,CSE,2022 Batch,3rd Year,Active
+Htet Aung 4,2022-MIIT-CSE-035,htetaung4.cse2022.035@gmail.com,09768000155,CSE,2022 Batch,3rd Year,Active
+Yoon Myat Thu 4,2022-MIIT-CSE-036,yoonmyatthu4.cse2022.036@gmail.com,09768000156,CSE,2022 Batch,3rd Year,Active
+Kaung Htet 4,2022-MIIT-CSE-037,kaunghtet4.cse2022.037@gmail.com,09768000157,CSE,2022 Batch,3rd Year,Active
+Nandar Hlaing 4,2022-MIIT-CSE-038,nandarhlaing4.cse2022.038@gmail.com,09768000158,CSE,2022 Batch,3rd Year,Active
+Min Thant 4,2022-MIIT-CSE-039,minthant4.cse2022.039@gmail.com,09768000159,CSE,2022 Batch,3rd Year,Active
+May Zin Win 4,2022-MIIT-CSE-040,mayzinwin4.cse2022.040@gmail.com,09768000160,CSE,2022 Batch,3rd Year,Active
+Aung Min Khant 5,2022-MIIT-CSE-041,aungminkhant5.cse2022.041@gmail.com,09768000161,CSE,2022 Batch,3rd Year,Active
+Thiri Mon 5,2022-MIIT-CSE-042,thirimon5.cse2022.042@gmail.com,09768000162,CSE,2022 Batch,3rd Year,Active
+Kyaw Zin Oo 5,2022-MIIT-CSE-043,kyawzinoo5.cse2022.043@gmail.com,09768000163,CSE,2022 Batch,3rd Year,Active
+Su Myat Noe 5,2022-MIIT-CSE-044,sumyatnoe5.cse2022.044@gmail.com,09768000164,CSE,2022 Batch,3rd Year,Active
+Htet Aung 5,2022-MIIT-CSE-045,htetaung5.cse2022.045@gmail.com,09768000165,CSE,2022 Batch,3rd Year,Active
+Yoon Myat Thu 5,2022-MIIT-CSE-046,yoonmyatthu5.cse2022.046@gmail.com,09768000166,CSE,2022 Batch,3rd Year,Active
+Kaung Htet 5,2022-MIIT-CSE-047,kaunghtet5.cse2022.047@gmail.com,09768000167,CSE,2022 Batch,3rd Year,Active
+Nandar Hlaing 5,2022-MIIT-CSE-048,nandarhlaing5.cse2022.048@gmail.com,09768000168,CSE,2022 Batch,3rd Year,Active
+Min Thant 5,2022-MIIT-CSE-049,minthant5.cse2022.049@gmail.com,09768000169,CSE,2022 Batch,3rd Year,Active
+May Zin Win 5,2022-MIIT-CSE-050,mayzinwin5.cse2022.050@gmail.com,09768000170,CSE,2022 Batch,3rd Year,Active
+Aung Min Khant 6,2022-MIIT-CSE-051,aungminkhant6.cse2022.051@gmail.com,09768000171,CSE,2022 Batch,3rd Year,Active
+Thiri Mon 6,2022-MIIT-CSE-052,thirimon6.cse2022.052@gmail.com,09768000172,CSE,2022 Batch,3rd Year,Active
+Kyaw Zin Oo 6,2022-MIIT-CSE-053,kyawzinoo6.cse2022.053@gmail.com,09768000173,CSE,2022 Batch,3rd Year,Active
+Su Myat Noe 6,2022-MIIT-CSE-054,sumyatnoe6.cse2022.054@gmail.com,09768000174,CSE,2022 Batch,3rd Year,Active
+Htet Aung 6,2022-MIIT-CSE-055,htetaung6.cse2022.055@gmail.com,09768000175,CSE,2022 Batch,3rd Year,Active
+Yoon Myat Thu 6,2022-MIIT-CSE-056,yoonmyatthu6.cse2022.056@gmail.com,09768000176,CSE,2022 Batch,3rd Year,Active
+Kaung Htet 6,2022-MIIT-CSE-057,kaunghtet6.cse2022.057@gmail.com,09768000177,CSE,2022 Batch,3rd Year,Active
+Nandar Hlaing 6,2022-MIIT-CSE-058,nandarhlaing6.cse2022.058@gmail.com,09768000178,CSE,2022 Batch,3rd Year,Active
+Min Thant 6,2022-MIIT-CSE-059,minthant6.cse2022.059@gmail.com,09768000179,CSE,2022 Batch,3rd Year,Active
+May Zin Win 6,2022-MIIT-CSE-060,mayzinwin6.cse2022.060@gmail.com,09768000180,CSE,2022 Batch,3rd Year,Active
+Aung Min Khant 1,2022-MIIT-ECE-001,aungminkhant1.ece2022.001@gmail.com,09768000181,ECE,2022 Batch,3rd Year,Active
+Thiri Mon 1,2022-MIIT-ECE-002,thirimon1.ece2022.002@gmail.com,09768000182,ECE,2022 Batch,3rd Year,Active
+Kyaw Zin Oo 1,2022-MIIT-ECE-003,kyawzinoo1.ece2022.003@gmail.com,09768000183,ECE,2022 Batch,3rd Year,Active
+Su Myat Noe 1,2022-MIIT-ECE-004,sumyatnoe1.ece2022.004@gmail.com,09768000184,ECE,2022 Batch,3rd Year,Active
+Htet Aung 1,2022-MIIT-ECE-005,htetaung1.ece2022.005@gmail.com,09768000185,ECE,2022 Batch,3rd Year,Active
+Yoon Myat Thu 1,2022-MIIT-ECE-006,yoonmyatthu1.ece2022.006@gmail.com,09768000186,ECE,2022 Batch,3rd Year,Active
+Kaung Htet 1,2022-MIIT-ECE-007,kaunghtet1.ece2022.007@gmail.com,09768000187,ECE,2022 Batch,3rd Year,Active
+Nandar Hlaing 1,2022-MIIT-ECE-008,nandarhlaing1.ece2022.008@gmail.com,09768000188,ECE,2022 Batch,3rd Year,Active
+Min Thant 1,2022-MIIT-ECE-009,minthant1.ece2022.009@gmail.com,09768000189,ECE,2022 Batch,3rd Year,Active
+May Zin Win 1,2022-MIIT-ECE-010,mayzinwin1.ece2022.010@gmail.com,09768000190,ECE,2022 Batch,3rd Year,Active
+Aung Min Khant 2,2022-MIIT-ECE-011,aungminkhant2.ece2022.011@gmail.com,09768000191,ECE,2022 Batch,3rd Year,Active
+Thiri Mon 2,2022-MIIT-ECE-012,thirimon2.ece2022.012@gmail.com,09768000192,ECE,2022 Batch,3rd Year,Active
+Kyaw Zin Oo 2,2022-MIIT-ECE-013,kyawzinoo2.ece2022.013@gmail.com,09768000193,ECE,2022 Batch,3rd Year,Active
+Su Myat Noe 2,2022-MIIT-ECE-014,sumyatnoe2.ece2022.014@gmail.com,09768000194,ECE,2022 Batch,3rd Year,Active
+Htet Aung 2,2022-MIIT-ECE-015,htetaung2.ece2022.015@gmail.com,09768000195,ECE,2022 Batch,3rd Year,Active
+Yoon Myat Thu 2,2022-MIIT-ECE-016,yoonmyatthu2.ece2022.016@gmail.com,09768000196,ECE,2022 Batch,3rd Year,Active
+Kaung Htet 2,2022-MIIT-ECE-017,kaunghtet2.ece2022.017@gmail.com,09768000197,ECE,2022 Batch,3rd Year,Active
+Nandar Hlaing 2,2022-MIIT-ECE-018,nandarhlaing2.ece2022.018@gmail.com,09768000198,ECE,2022 Batch,3rd Year,Active
+Min Thant 2,2022-MIIT-ECE-019,minthant2.ece2022.019@gmail.com,09768000199,ECE,2022 Batch,3rd Year,Active
+May Zin Win 2,2022-MIIT-ECE-020,mayzinwin2.ece2022.020@gmail.com,09768000200,ECE,2022 Batch,3rd Year,Active
+Aung Min Khant 3,2022-MIIT-ECE-021,aungminkhant3.ece2022.021@gmail.com,09768000201,ECE,2022 Batch,3rd Year,Active
+Thiri Mon 3,2022-MIIT-ECE-022,thirimon3.ece2022.022@gmail.com,09768000202,ECE,2022 Batch,3rd Year,Active
+Kyaw Zin Oo 3,2022-MIIT-ECE-023,kyawzinoo3.ece2022.023@gmail.com,09768000203,ECE,2022 Batch,3rd Year,Active
+Su Myat Noe 3,2022-MIIT-ECE-024,sumyatnoe3.ece2022.024@gmail.com,09768000204,ECE,2022 Batch,3rd Year,Active
+Htet Aung 3,2022-MIIT-ECE-025,htetaung3.ece2022.025@gmail.com,09768000205,ECE,2022 Batch,3rd Year,Active
+Yoon Myat Thu 3,2022-MIIT-ECE-026,yoonmyatthu3.ece2022.026@gmail.com,09768000206,ECE,2022 Batch,3rd Year,Active
+Kaung Htet 3,2022-MIIT-ECE-027,kaunghtet3.ece2022.027@gmail.com,09768000207,ECE,2022 Batch,3rd Year,Active
+Nandar Hlaing 3,2022-MIIT-ECE-028,nandarhlaing3.ece2022.028@gmail.com,09768000208,ECE,2022 Batch,3rd Year,Active
+Min Thant 3,2022-MIIT-ECE-029,minthant3.ece2022.029@gmail.com,09768000209,ECE,2022 Batch,3rd Year,Active
+May Zin Win 3,2022-MIIT-ECE-030,mayzinwin3.ece2022.030@gmail.com,09768000210,ECE,2022 Batch,3rd Year,Active
+Aung Min Khant 4,2022-MIIT-ECE-031,aungminkhant4.ece2022.031@gmail.com,09768000211,ECE,2022 Batch,3rd Year,Active
+Thiri Mon 4,2022-MIIT-ECE-032,thirimon4.ece2022.032@gmail.com,09768000212,ECE,2022 Batch,3rd Year,Active
+Kyaw Zin Oo 4,2022-MIIT-ECE-033,kyawzinoo4.ece2022.033@gmail.com,09768000213,ECE,2022 Batch,3rd Year,Active
+Su Myat Noe 4,2022-MIIT-ECE-034,sumyatnoe4.ece2022.034@gmail.com,09768000214,ECE,2022 Batch,3rd Year,Active
+Htet Aung 4,2022-MIIT-ECE-035,htetaung4.ece2022.035@gmail.com,09768000215,ECE,2022 Batch,3rd Year,Active
+Yoon Myat Thu 4,2022-MIIT-ECE-036,yoonmyatthu4.ece2022.036@gmail.com,09768000216,ECE,2022 Batch,3rd Year,Active
+Kaung Htet 4,2022-MIIT-ECE-037,kaunghtet4.ece2022.037@gmail.com,09768000217,ECE,2022 Batch,3rd Year,Active
+Nandar Hlaing 4,2022-MIIT-ECE-038,nandarhlaing4.ece2022.038@gmail.com,09768000218,ECE,2022 Batch,3rd Year,Active
+Min Thant 4,2022-MIIT-ECE-039,minthant4.ece2022.039@gmail.com,09768000219,ECE,2022 Batch,3rd Year,Active
+May Zin Win 4,2022-MIIT-ECE-040,mayzinwin4.ece2022.040@gmail.com,09768000220,ECE,2022 Batch,3rd Year,Active
+Aung Min Khant 5,2022-MIIT-ECE-041,aungminkhant5.ece2022.041@gmail.com,09768000221,ECE,2022 Batch,3rd Year,Active
+Thiri Mon 5,2022-MIIT-ECE-042,thirimon5.ece2022.042@gmail.com,09768000222,ECE,2022 Batch,3rd Year,Active
+Kyaw Zin Oo 5,2022-MIIT-ECE-043,kyawzinoo5.ece2022.043@gmail.com,09768000223,ECE,2022 Batch,3rd Year,Active
+Su Myat Noe 5,2022-MIIT-ECE-044,sumyatnoe5.ece2022.044@gmail.com,09768000224,ECE,2022 Batch,3rd Year,Active
+Htet Aung 5,2022-MIIT-ECE-045,htetaung5.ece2022.045@gmail.com,09768000225,ECE,2022 Batch,3rd Year,Active
+Yoon Myat Thu 5,2022-MIIT-ECE-046,yoonmyatthu5.ece2022.046@gmail.com,09768000226,ECE,2022 Batch,3rd Year,Active
+Kaung Htet 5,2022-MIIT-ECE-047,kaunghtet5.ece2022.047@gmail.com,09768000227,ECE,2022 Batch,3rd Year,Active
+Nandar Hlaing 5,2022-MIIT-ECE-048,nandarhlaing5.ece2022.048@gmail.com,09768000228,ECE,2022 Batch,3rd Year,Active
+Min Thant 5,2022-MIIT-ECE-049,minthant5.ece2022.049@gmail.com,09768000229,ECE,2022 Batch,3rd Year,Active
+May Zin Win 5,2022-MIIT-ECE-050,mayzinwin5.ece2022.050@gmail.com,09768000230,ECE,2022 Batch,3rd Year,Active
+Aung Min Khant 6,2022-MIIT-ECE-051,aungminkhant6.ece2022.051@gmail.com,09768000231,ECE,2022 Batch,3rd Year,Active
+Thiri Mon 6,2022-MIIT-ECE-052,thirimon6.ece2022.052@gmail.com,09768000232,ECE,2022 Batch,3rd Year,Active
+Kyaw Zin Oo 6,2022-MIIT-ECE-053,kyawzinoo6.ece2022.053@gmail.com,09768000233,ECE,2022 Batch,3rd Year,Active
+Su Myat Noe 6,2022-MIIT-ECE-054,sumyatnoe6.ece2022.054@gmail.com,09768000234,ECE,2022 Batch,3rd Year,Active
+Htet Aung 6,2022-MIIT-ECE-055,htetaung6.ece2022.055@gmail.com,09768000235,ECE,2022 Batch,3rd Year,Active
+Yoon Myat Thu 6,2022-MIIT-ECE-056,yoonmyatthu6.ece2022.056@gmail.com,09768000236,ECE,2022 Batch,3rd Year,Active
+Kaung Htet 6,2022-MIIT-ECE-057,kaunghtet6.ece2022.057@gmail.com,09768000237,ECE,2022 Batch,3rd Year,Active
+Nandar Hlaing 6,2022-MIIT-ECE-058,nandarhlaing6.ece2022.058@gmail.com,09768000238,ECE,2022 Batch,3rd Year,Active
+Min Thant 6,2022-MIIT-ECE-059,minthant6.ece2022.059@gmail.com,09768000239,ECE,2022 Batch,3rd Year,Active
+May Zin Win 6,2022-MIIT-ECE-060,mayzinwin6.ece2022.060@gmail.com,09768000240,ECE,2022 Batch,3rd Year,Active
+Aung Min Khant 1,2023-MIIT-CSE-001,aungminkhant1.cse2023.001@gmail.com,09768000241,CSE,2023 Batch,3rd Year,Active
+Thiri Mon 1,2023-MIIT-CSE-002,thirimon1.cse2023.002@gmail.com,09768000242,CSE,2023 Batch,3rd Year,Active
+Kyaw Zin Oo 1,2023-MIIT-CSE-003,kyawzinoo1.cse2023.003@gmail.com,09768000243,CSE,2023 Batch,3rd Year,Active
+Su Myat Noe 1,2023-MIIT-CSE-004,sumyatnoe1.cse2023.004@gmail.com,09768000244,CSE,2023 Batch,3rd Year,Active
+Htet Aung 1,2023-MIIT-CSE-005,htetaung1.cse2023.005@gmail.com,09768000245,CSE,2023 Batch,3rd Year,Active
+Yoon Myat Thu 1,2023-MIIT-CSE-006,yoonmyatthu1.cse2023.006@gmail.com,09768000246,CSE,2023 Batch,3rd Year,Active
+Kaung Htet 1,2023-MIIT-CSE-007,kaunghtet1.cse2023.007@gmail.com,09768000247,CSE,2023 Batch,3rd Year,Active
+Nandar Hlaing 1,2023-MIIT-CSE-008,nandarhlaing1.cse2023.008@gmail.com,09768000248,CSE,2023 Batch,3rd Year,Active
+Min Thant 1,2023-MIIT-CSE-009,minthant1.cse2023.009@gmail.com,09768000249,CSE,2023 Batch,3rd Year,Active
+May Zin Win 1,2023-MIIT-CSE-010,mayzinwin1.cse2023.010@gmail.com,09768000250,CSE,2023 Batch,3rd Year,Active
+Aung Min Khant 2,2023-MIIT-CSE-011,aungminkhant2.cse2023.011@gmail.com,09768000251,CSE,2023 Batch,3rd Year,Active
+Thiri Mon 2,2023-MIIT-CSE-012,thirimon2.cse2023.012@gmail.com,09768000252,CSE,2023 Batch,3rd Year,Active
+Kyaw Zin Oo 2,2023-MIIT-CSE-013,kyawzinoo2.cse2023.013@gmail.com,09768000253,CSE,2023 Batch,3rd Year,Active
+Su Myat Noe 2,2023-MIIT-CSE-014,sumyatnoe2.cse2023.014@gmail.com,09768000254,CSE,2023 Batch,3rd Year,Active
+Htet Aung 2,2023-MIIT-CSE-015,htetaung2.cse2023.015@gmail.com,09768000255,CSE,2023 Batch,3rd Year,Active
+Yoon Myat Thu 2,2023-MIIT-CSE-016,yoonmyatthu2.cse2023.016@gmail.com,09768000256,CSE,2023 Batch,3rd Year,Active
+Kaung Htet 2,2023-MIIT-CSE-017,kaunghtet2.cse2023.017@gmail.com,09768000257,CSE,2023 Batch,3rd Year,Active
+Nandar Hlaing 2,2023-MIIT-CSE-018,nandarhlaing2.cse2023.018@gmail.com,09768000258,CSE,2023 Batch,3rd Year,Active
+Min Thant 2,2023-MIIT-CSE-019,minthant2.cse2023.019@gmail.com,09768000259,CSE,2023 Batch,3rd Year,Active
+May Zin Win 2,2023-MIIT-CSE-020,mayzinwin2.cse2023.020@gmail.com,09768000260,CSE,2023 Batch,3rd Year,Active
+Aung Min Khant 3,2023-MIIT-CSE-021,aungminkhant3.cse2023.021@gmail.com,09768000261,CSE,2023 Batch,3rd Year,Active
+Thiri Mon 3,2023-MIIT-CSE-022,thirimon3.cse2023.022@gmail.com,09768000262,CSE,2023 Batch,3rd Year,Active
+Kyaw Zin Oo 3,2023-MIIT-CSE-023,kyawzinoo3.cse2023.023@gmail.com,09768000263,CSE,2023 Batch,3rd Year,Active
+Su Myat Noe 3,2023-MIIT-CSE-024,sumyatnoe3.cse2023.024@gmail.com,09768000264,CSE,2023 Batch,3rd Year,Active
+Htet Aung 3,2023-MIIT-CSE-025,htetaung3.cse2023.025@gmail.com,09768000265,CSE,2023 Batch,3rd Year,Active
+Yoon Myat Thu 3,2023-MIIT-CSE-026,yoonmyatthu3.cse2023.026@gmail.com,09768000266,CSE,2023 Batch,3rd Year,Active
+Kaung Htet 3,2023-MIIT-CSE-027,kaunghtet3.cse2023.027@gmail.com,09768000267,CSE,2023 Batch,3rd Year,Active
+Nandar Hlaing 3,2023-MIIT-CSE-028,nandarhlaing3.cse2023.028@gmail.com,09768000268,CSE,2023 Batch,3rd Year,Active
+Min Thant 3,2023-MIIT-CSE-029,minthant3.cse2023.029@gmail.com,09768000269,CSE,2023 Batch,3rd Year,Active
+May Zin Win 3,2023-MIIT-CSE-030,mayzinwin3.cse2023.030@gmail.com,09768000270,CSE,2023 Batch,3rd Year,Active
+Aung Min Khant 4,2023-MIIT-CSE-031,aungminkhant4.cse2023.031@gmail.com,09768000271,CSE,2023 Batch,3rd Year,Active
+Thiri Mon 4,2023-MIIT-CSE-032,thirimon4.cse2023.032@gmail.com,09768000272,CSE,2023 Batch,3rd Year,Active
+Kyaw Zin Oo 4,2023-MIIT-CSE-033,kyawzinoo4.cse2023.033@gmail.com,09768000273,CSE,2023 Batch,3rd Year,Active
+Su Myat Noe 4,2023-MIIT-CSE-034,sumyatnoe4.cse2023.034@gmail.com,09768000274,CSE,2023 Batch,3rd Year,Active
+Htet Aung 4,2023-MIIT-CSE-035,htetaung4.cse2023.035@gmail.com,09768000275,CSE,2023 Batch,3rd Year,Active
+Yoon Myat Thu 4,2023-MIIT-CSE-036,yoonmyatthu4.cse2023.036@gmail.com,09768000276,CSE,2023 Batch,3rd Year,Active
+Kaung Htet 4,2023-MIIT-CSE-037,kaunghtet4.cse2023.037@gmail.com,09768000277,CSE,2023 Batch,3rd Year,Active
+Nandar Hlaing 4,2023-MIIT-CSE-038,nandarhlaing4.cse2023.038@gmail.com,09768000278,CSE,2023 Batch,3rd Year,Active
+Min Thant 4,2023-MIIT-CSE-039,minthant4.cse2023.039@gmail.com,09768000279,CSE,2023 Batch,3rd Year,Active
+May Zin Win 4,2023-MIIT-CSE-040,mayzinwin4.cse2023.040@gmail.com,09768000280,CSE,2023 Batch,3rd Year,Active
+Aung Min Khant 5,2023-MIIT-CSE-041,aungminkhant5.cse2023.041@gmail.com,09768000281,CSE,2023 Batch,3rd Year,Active
+Thiri Mon 5,2023-MIIT-CSE-042,thirimon5.cse2023.042@gmail.com,09768000282,CSE,2023 Batch,3rd Year,Active
+Kyaw Zin Oo 5,2023-MIIT-CSE-043,kyawzinoo5.cse2023.043@gmail.com,09768000283,CSE,2023 Batch,3rd Year,Active
+Su Myat Noe 5,2023-MIIT-CSE-044,sumyatnoe5.cse2023.044@gmail.com,09768000284,CSE,2023 Batch,3rd Year,Active
+Htet Aung 5,2023-MIIT-CSE-045,htetaung5.cse2023.045@gmail.com,09768000285,CSE,2023 Batch,3rd Year,Active
+Yoon Myat Thu 5,2023-MIIT-CSE-046,yoonmyatthu5.cse2023.046@gmail.com,09768000286,CSE,2023 Batch,3rd Year,Active
+Kaung Htet 5,2023-MIIT-CSE-047,kaunghtet5.cse2023.047@gmail.com,09768000287,CSE,2023 Batch,3rd Year,Active
+Nandar Hlaing 5,2023-MIIT-CSE-048,nandarhlaing5.cse2023.048@gmail.com,09768000288,CSE,2023 Batch,3rd Year,Active
+Min Thant 5,2023-MIIT-CSE-049,minthant5.cse2023.049@gmail.com,09768000289,CSE,2023 Batch,3rd Year,Active
+May Zin Win 5,2023-MIIT-CSE-050,mayzinwin5.cse2023.050@gmail.com,09768000290,CSE,2023 Batch,3rd Year,Active
+Aung Min Khant 6,2023-MIIT-CSE-051,aungminkhant6.cse2023.051@gmail.com,09768000291,CSE,2023 Batch,3rd Year,Active
+Thiri Mon 6,2023-MIIT-CSE-052,thirimon6.cse2023.052@gmail.com,09768000292,CSE,2023 Batch,3rd Year,Active
+Kyaw Zin Oo 6,2023-MIIT-CSE-053,kyawzinoo6.cse2023.053@gmail.com,09768000293,CSE,2023 Batch,3rd Year,Active
+Su Myat Noe 6,2023-MIIT-CSE-054,sumyatnoe6.cse2023.054@gmail.com,09768000294,CSE,2023 Batch,3rd Year,Active
+Htet Aung 6,2023-MIIT-CSE-055,htetaung6.cse2023.055@gmail.com,09768000295,CSE,2023 Batch,3rd Year,Active
+Yoon Myat Thu 6,2023-MIIT-CSE-056,yoonmyatthu6.cse2023.056@gmail.com,09768000296,CSE,2023 Batch,3rd Year,Active
+Kaung Htet 6,2023-MIIT-CSE-057,kaunghtet6.cse2023.057@gmail.com,09768000297,CSE,2023 Batch,3rd Year,Active
+Nandar Hlaing 6,2023-MIIT-CSE-058,nandarhlaing6.cse2023.058@gmail.com,09768000298,CSE,2023 Batch,3rd Year,Active
+Min Thant 6,2023-MIIT-CSE-059,minthant6.cse2023.059@gmail.com,09768000299,CSE,2023 Batch,3rd Year,Active
+May Zin Win 6,2023-MIIT-CSE-060,mayzinwin6.cse2023.060@gmail.com,09768000300,CSE,2023 Batch,3rd Year,Active
+Aung Min Khant 1,2023-MIIT-ECE-001,aungminkhant1.ece2023.001@gmail.com,09768000301,ECE,2023 Batch,3rd Year,Active
+Thiri Mon 1,2023-MIIT-ECE-002,thirimon1.ece2023.002@gmail.com,09768000302,ECE,2023 Batch,3rd Year,Active
+Kyaw Zin Oo 1,2023-MIIT-ECE-003,kyawzinoo1.ece2023.003@gmail.com,09768000303,ECE,2023 Batch,3rd Year,Active
+Su Myat Noe 1,2023-MIIT-ECE-004,sumyatnoe1.ece2023.004@gmail.com,09768000304,ECE,2023 Batch,3rd Year,Active
+Htet Aung 1,2023-MIIT-ECE-005,htetaung1.ece2023.005@gmail.com,09768000305,ECE,2023 Batch,3rd Year,Active
+Yoon Myat Thu 1,2023-MIIT-ECE-006,yoonmyatthu1.ece2023.006@gmail.com,09768000306,ECE,2023 Batch,3rd Year,Active
+Kaung Htet 1,2023-MIIT-ECE-007,kaunghtet1.ece2023.007@gmail.com,09768000307,ECE,2023 Batch,3rd Year,Active
+Nandar Hlaing 1,2023-MIIT-ECE-008,nandarhlaing1.ece2023.008@gmail.com,09768000308,ECE,2023 Batch,3rd Year,Active
+Min Thant 1,2023-MIIT-ECE-009,minthant1.ece2023.009@gmail.com,09768000309,ECE,2023 Batch,3rd Year,Active
+May Zin Win 1,2023-MIIT-ECE-010,mayzinwin1.ece2023.010@gmail.com,09768000310,ECE,2023 Batch,3rd Year,Active
+Aung Min Khant 2,2023-MIIT-ECE-011,aungminkhant2.ece2023.011@gmail.com,09768000311,ECE,2023 Batch,3rd Year,Active
+Thiri Mon 2,2023-MIIT-ECE-012,thirimon2.ece2023.012@gmail.com,09768000312,ECE,2023 Batch,3rd Year,Active
+Kyaw Zin Oo 2,2023-MIIT-ECE-013,kyawzinoo2.ece2023.013@gmail.com,09768000313,ECE,2023 Batch,3rd Year,Active
+Su Myat Noe 2,2023-MIIT-ECE-014,sumyatnoe2.ece2023.014@gmail.com,09768000314,ECE,2023 Batch,3rd Year,Active
+Htet Aung 2,2023-MIIT-ECE-015,htetaung2.ece2023.015@gmail.com,09768000315,ECE,2023 Batch,3rd Year,Active
+Yoon Myat Thu 2,2023-MIIT-ECE-016,yoonmyatthu2.ece2023.016@gmail.com,09768000316,ECE,2023 Batch,3rd Year,Active
+Kaung Htet 2,2023-MIIT-ECE-017,kaunghtet2.ece2023.017@gmail.com,09768000317,ECE,2023 Batch,3rd Year,Active
+Nandar Hlaing 2,2023-MIIT-ECE-018,nandarhlaing2.ece2023.018@gmail.com,09768000318,ECE,2023 Batch,3rd Year,Active
+Min Thant 2,2023-MIIT-ECE-019,minthant2.ece2023.019@gmail.com,09768000319,ECE,2023 Batch,3rd Year,Active
+May Zin Win 2,2023-MIIT-ECE-020,mayzinwin2.ece2023.020@gmail.com,09768000320,ECE,2023 Batch,3rd Year,Active
+Aung Min Khant 3,2023-MIIT-ECE-021,aungminkhant3.ece2023.021@gmail.com,09768000321,ECE,2023 Batch,3rd Year,Active
+Thiri Mon 3,2023-MIIT-ECE-022,thirimon3.ece2023.022@gmail.com,09768000322,ECE,2023 Batch,3rd Year,Active
+Kyaw Zin Oo 3,2023-MIIT-ECE-023,kyawzinoo3.ece2023.023@gmail.com,09768000323,ECE,2023 Batch,3rd Year,Active
+Su Myat Noe 3,2023-MIIT-ECE-024,sumyatnoe3.ece2023.024@gmail.com,09768000324,ECE,2023 Batch,3rd Year,Active
+Htet Aung 3,2023-MIIT-ECE-025,htetaung3.ece2023.025@gmail.com,09768000325,ECE,2023 Batch,3rd Year,Active
+Yoon Myat Thu 3,2023-MIIT-ECE-026,yoonmyatthu3.ece2023.026@gmail.com,09768000326,ECE,2023 Batch,3rd Year,Active
+Kaung Htet 3,2023-MIIT-ECE-027,kaunghtet3.ece2023.027@gmail.com,09768000327,ECE,2023 Batch,3rd Year,Active
+Nandar Hlaing 3,2023-MIIT-ECE-028,nandarhlaing3.ece2023.028@gmail.com,09768000328,ECE,2023 Batch,3rd Year,Active
+Min Thant 3,2023-MIIT-ECE-029,minthant3.ece2023.029@gmail.com,09768000329,ECE,2023 Batch,3rd Year,Active
+May Zin Win 3,2023-MIIT-ECE-030,mayzinwin3.ece2023.030@gmail.com,09768000330,ECE,2023 Batch,3rd Year,Active
+Aung Min Khant 4,2023-MIIT-ECE-031,aungminkhant4.ece2023.031@gmail.com,09768000331,ECE,2023 Batch,3rd Year,Active
+Thiri Mon 4,2023-MIIT-ECE-032,thirimon4.ece2023.032@gmail.com,09768000332,ECE,2023 Batch,3rd Year,Active
+Kyaw Zin Oo 4,2023-MIIT-ECE-033,kyawzinoo4.ece2023.033@gmail.com,09768000333,ECE,2023 Batch,3rd Year,Active
+Su Myat Noe 4,2023-MIIT-ECE-034,sumyatnoe4.ece2023.034@gmail.com,09768000334,ECE,2023 Batch,3rd Year,Active
+Htet Aung 4,2023-MIIT-ECE-035,htetaung4.ece2023.035@gmail.com,09768000335,ECE,2023 Batch,3rd Year,Active
+Yoon Myat Thu 4,2023-MIIT-ECE-036,yoonmyatthu4.ece2023.036@gmail.com,09768000336,ECE,2023 Batch,3rd Year,Active
+Kaung Htet 4,2023-MIIT-ECE-037,kaunghtet4.ece2023.037@gmail.com,09768000337,ECE,2023 Batch,3rd Year,Active
+Nandar Hlaing 4,2023-MIIT-ECE-038,nandarhlaing4.ece2023.038@gmail.com,09768000338,ECE,2023 Batch,3rd Year,Active
+Min Thant 4,2023-MIIT-ECE-039,minthant4.ece2023.039@gmail.com,09768000339,ECE,2023 Batch,3rd Year,Active
+May Zin Win 4,2023-MIIT-ECE-040,mayzinwin4.ece2023.040@gmail.com,09768000340,ECE,2023 Batch,3rd Year,Active
+Aung Min Khant 5,2023-MIIT-ECE-041,aungminkhant5.ece2023.041@gmail.com,09768000341,ECE,2023 Batch,3rd Year,Active
+Thiri Mon 5,2023-MIIT-ECE-042,thirimon5.ece2023.042@gmail.com,09768000342,ECE,2023 Batch,3rd Year,Active
+Kyaw Zin Oo 5,2023-MIIT-ECE-043,kyawzinoo5.ece2023.043@gmail.com,09768000343,ECE,2023 Batch,3rd Year,Active
+Su Myat Noe 5,2023-MIIT-ECE-044,sumyatnoe5.ece2023.044@gmail.com,09768000344,ECE,2023 Batch,3rd Year,Active
+Htet Aung 5,2023-MIIT-ECE-045,htetaung5.ece2023.045@gmail.com,09768000345,ECE,2023 Batch,3rd Year,Active
+Yoon Myat Thu 5,2023-MIIT-ECE-046,yoonmyatthu5.ece2023.046@gmail.com,09768000346,ECE,2023 Batch,3rd Year,Active
+Kaung Htet 5,2023-MIIT-ECE-047,kaunghtet5.ece2023.047@gmail.com,09768000347,ECE,2023 Batch,3rd Year,Active
+Nandar Hlaing 5,2023-MIIT-ECE-048,nandarhlaing5.ece2023.048@gmail.com,09768000348,ECE,2023 Batch,3rd Year,Active
+Min Thant 5,2023-MIIT-ECE-049,minthant5.ece2023.049@gmail.com,09768000349,ECE,2023 Batch,3rd Year,Active
+May Zin Win 5,2023-MIIT-ECE-050,mayzinwin5.ece2023.050@gmail.com,09768000350,ECE,2023 Batch,3rd Year,Active
+Aung Min Khant 6,2023-MIIT-ECE-051,aungminkhant6.ece2023.051@gmail.com,09768000351,ECE,2023 Batch,3rd Year,Active
+Thiri Mon 6,2023-MIIT-ECE-052,thirimon6.ece2023.052@gmail.com,09768000352,ECE,2023 Batch,3rd Year,Active
+Kyaw Zin Oo 6,2023-MIIT-ECE-053,kyawzinoo6.ece2023.053@gmail.com,09768000353,ECE,2023 Batch,3rd Year,Active
+Su Myat Noe 6,2023-MIIT-ECE-054,sumyatnoe6.ece2023.054@gmail.com,09768000354,ECE,2023 Batch,3rd Year,Active
+Htet Aung 6,2023-MIIT-ECE-055,htetaung6.ece2023.055@gmail.com,09768000355,ECE,2023 Batch,3rd Year,Active
+Yoon Myat Thu 6,2023-MIIT-ECE-056,yoonmyatthu6.ece2023.056@gmail.com,09768000356,ECE,2023 Batch,3rd Year,Active
+Kaung Htet 6,2023-MIIT-ECE-057,kaunghtet6.ece2023.057@gmail.com,09768000357,ECE,2023 Batch,3rd Year,Active
+Nandar Hlaing 6,2023-MIIT-ECE-058,nandarhlaing6.ece2023.058@gmail.com,09768000358,ECE,2023 Batch,3rd Year,Active
+Min Thant 6,2023-MIIT-ECE-059,minthant6.ece2023.059@gmail.com,09768000359,ECE,2023 Batch,3rd Year,Active
+May Zin Win 6,2023-MIIT-ECE-060,mayzinwin6.ece2023.060@gmail.com,09768000360,ECE,2023 Batch,3rd Year,Active
+Aung Min Khant 1,2024-MIIT-CSE-001,aungminkhant1.cse2024.001@gmail.com,09768000361,CSE,2024 Batch,3rd Year,Active
+Thiri Mon 1,2024-MIIT-CSE-002,thirimon1.cse2024.002@gmail.com,09768000362,CSE,2024 Batch,3rd Year,Active
+Kyaw Zin Oo 1,2024-MIIT-CSE-003,kyawzinoo1.cse2024.003@gmail.com,09768000363,CSE,2024 Batch,3rd Year,Active
+Su Myat Noe 1,2024-MIIT-CSE-004,sumyatnoe1.cse2024.004@gmail.com,09768000364,CSE,2024 Batch,3rd Year,Active
+Htet Aung 1,2024-MIIT-CSE-005,htetaung1.cse2024.005@gmail.com,09768000365,CSE,2024 Batch,3rd Year,Active
+Yoon Myat Thu 1,2024-MIIT-CSE-006,yoonmyatthu1.cse2024.006@gmail.com,09768000366,CSE,2024 Batch,3rd Year,Active
+Kaung Htet 1,2024-MIIT-CSE-007,kaunghtet1.cse2024.007@gmail.com,09768000367,CSE,2024 Batch,3rd Year,Active
+Nandar Hlaing 1,2024-MIIT-CSE-008,nandarhlaing1.cse2024.008@gmail.com,09768000368,CSE,2024 Batch,3rd Year,Active
+Min Thant 1,2024-MIIT-CSE-009,minthant1.cse2024.009@gmail.com,09768000369,CSE,2024 Batch,3rd Year,Active
+May Zin Win 1,2024-MIIT-CSE-010,mayzinwin1.cse2024.010@gmail.com,09768000370,CSE,2024 Batch,3rd Year,Active
+Aung Min Khant 2,2024-MIIT-CSE-011,aungminkhant2.cse2024.011@gmail.com,09768000371,CSE,2024 Batch,3rd Year,Active
+Thiri Mon 2,2024-MIIT-CSE-012,thirimon2.cse2024.012@gmail.com,09768000372,CSE,2024 Batch,3rd Year,Active
+Kyaw Zin Oo 2,2024-MIIT-CSE-013,kyawzinoo2.cse2024.013@gmail.com,09768000373,CSE,2024 Batch,3rd Year,Active
+Su Myat Noe 2,2024-MIIT-CSE-014,sumyatnoe2.cse2024.014@gmail.com,09768000374,CSE,2024 Batch,3rd Year,Active
+Htet Aung 2,2024-MIIT-CSE-015,htetaung2.cse2024.015@gmail.com,09768000375,CSE,2024 Batch,3rd Year,Active
+Yoon Myat Thu 2,2024-MIIT-CSE-016,yoonmyatthu2.cse2024.016@gmail.com,09768000376,CSE,2024 Batch,3rd Year,Active
+Kaung Htet 2,2024-MIIT-CSE-017,kaunghtet2.cse2024.017@gmail.com,09768000377,CSE,2024 Batch,3rd Year,Active
+Nandar Hlaing 2,2024-MIIT-CSE-018,nandarhlaing2.cse2024.018@gmail.com,09768000378,CSE,2024 Batch,3rd Year,Active
+Min Thant 2,2024-MIIT-CSE-019,minthant2.cse2024.019@gmail.com,09768000379,CSE,2024 Batch,3rd Year,Active
+May Zin Win 2,2024-MIIT-CSE-020,mayzinwin2.cse2024.020@gmail.com,09768000380,CSE,2024 Batch,3rd Year,Active
+Aung Min Khant 3,2024-MIIT-CSE-021,aungminkhant3.cse2024.021@gmail.com,09768000381,CSE,2024 Batch,3rd Year,Active
+Thiri Mon 3,2024-MIIT-CSE-022,thirimon3.cse2024.022@gmail.com,09768000382,CSE,2024 Batch,3rd Year,Active
+Kyaw Zin Oo 3,2024-MIIT-CSE-023,kyawzinoo3.cse2024.023@gmail.com,09768000383,CSE,2024 Batch,3rd Year,Active
+Su Myat Noe 3,2024-MIIT-CSE-024,sumyatnoe3.cse2024.024@gmail.com,09768000384,CSE,2024 Batch,3rd Year,Active
+Htet Aung 3,2024-MIIT-CSE-025,htetaung3.cse2024.025@gmail.com,09768000385,CSE,2024 Batch,3rd Year,Active
+Yoon Myat Thu 3,2024-MIIT-CSE-026,yoonmyatthu3.cse2024.026@gmail.com,09768000386,CSE,2024 Batch,3rd Year,Active
+Kaung Htet 3,2024-MIIT-CSE-027,kaunghtet3.cse2024.027@gmail.com,09768000387,CSE,2024 Batch,3rd Year,Active
+Nandar Hlaing 3,2024-MIIT-CSE-028,nandarhlaing3.cse2024.028@gmail.com,09768000388,CSE,2024 Batch,3rd Year,Active
+Min Thant 3,2024-MIIT-CSE-029,minthant3.cse2024.029@gmail.com,09768000389,CSE,2024 Batch,3rd Year,Active
+May Zin Win 3,2024-MIIT-CSE-030,mayzinwin3.cse2024.030@gmail.com,09768000390,CSE,2024 Batch,3rd Year,Active
+Aung Min Khant 4,2024-MIIT-CSE-031,aungminkhant4.cse2024.031@gmail.com,09768000391,CSE,2024 Batch,3rd Year,Active
+Thiri Mon 4,2024-MIIT-CSE-032,thirimon4.cse2024.032@gmail.com,09768000392,CSE,2024 Batch,3rd Year,Active
+Kyaw Zin Oo 4,2024-MIIT-CSE-033,kyawzinoo4.cse2024.033@gmail.com,09768000393,CSE,2024 Batch,3rd Year,Active
+Su Myat Noe 4,2024-MIIT-CSE-034,sumyatnoe4.cse2024.034@gmail.com,09768000394,CSE,2024 Batch,3rd Year,Active
+Htet Aung 4,2024-MIIT-CSE-035,htetaung4.cse2024.035@gmail.com,09768000395,CSE,2024 Batch,3rd Year,Active
+Yoon Myat Thu 4,2024-MIIT-CSE-036,yoonmyatthu4.cse2024.036@gmail.com,09768000396,CSE,2024 Batch,3rd Year,Active
+Kaung Htet 4,2024-MIIT-CSE-037,kaunghtet4.cse2024.037@gmail.com,09768000397,CSE,2024 Batch,3rd Year,Active
+Nandar Hlaing 4,2024-MIIT-CSE-038,nandarhlaing4.cse2024.038@gmail.com,09768000398,CSE,2024 Batch,3rd Year,Active
+Min Thant 4,2024-MIIT-CSE-039,minthant4.cse2024.039@gmail.com,09768000399,CSE,2024 Batch,3rd Year,Active
+May Zin Win 4,2024-MIIT-CSE-040,mayzinwin4.cse2024.040@gmail.com,09768000400,CSE,2024 Batch,3rd Year,Active
+Aung Min Khant 5,2024-MIIT-CSE-041,aungminkhant5.cse2024.041@gmail.com,09768000401,CSE,2024 Batch,3rd Year,Active
+Thiri Mon 5,2024-MIIT-CSE-042,thirimon5.cse2024.042@gmail.com,09768000402,CSE,2024 Batch,3rd Year,Active
+Kyaw Zin Oo 5,2024-MIIT-CSE-043,kyawzinoo5.cse2024.043@gmail.com,09768000403,CSE,2024 Batch,3rd Year,Active
+Su Myat Noe 5,2024-MIIT-CSE-044,sumyatnoe5.cse2024.044@gmail.com,09768000404,CSE,2024 Batch,3rd Year,Active
+Htet Aung 5,2024-MIIT-CSE-045,htetaung5.cse2024.045@gmail.com,09768000405,CSE,2024 Batch,3rd Year,Active
+Yoon Myat Thu 5,2024-MIIT-CSE-046,yoonmyatthu5.cse2024.046@gmail.com,09768000406,CSE,2024 Batch,3rd Year,Active
+Kaung Htet 5,2024-MIIT-CSE-047,kaunghtet5.cse2024.047@gmail.com,09768000407,CSE,2024 Batch,3rd Year,Active
+Nandar Hlaing 5,2024-MIIT-CSE-048,nandarhlaing5.cse2024.048@gmail.com,09768000408,CSE,2024 Batch,3rd Year,Active
+Min Thant 5,2024-MIIT-CSE-049,minthant5.cse2024.049@gmail.com,09768000409,CSE,2024 Batch,3rd Year,Active
+May Zin Win 5,2024-MIIT-CSE-050,mayzinwin5.cse2024.050@gmail.com,09768000410,CSE,2024 Batch,3rd Year,Active
+Aung Min Khant 6,2024-MIIT-CSE-051,aungminkhant6.cse2024.051@gmail.com,09768000411,CSE,2024 Batch,3rd Year,Active
+Thiri Mon 6,2024-MIIT-CSE-052,thirimon6.cse2024.052@gmail.com,09768000412,CSE,2024 Batch,3rd Year,Active
+Kyaw Zin Oo 6,2024-MIIT-CSE-053,kyawzinoo6.cse2024.053@gmail.com,09768000413,CSE,2024 Batch,3rd Year,Active
+Su Myat Noe 6,2024-MIIT-CSE-054,sumyatnoe6.cse2024.054@gmail.com,09768000414,CSE,2024 Batch,3rd Year,Active
+Htet Aung 6,2024-MIIT-CSE-055,htetaung6.cse2024.055@gmail.com,09768000415,CSE,2024 Batch,3rd Year,Active
+Yoon Myat Thu 6,2024-MIIT-CSE-056,yoonmyatthu6.cse2024.056@gmail.com,09768000416,CSE,2024 Batch,3rd Year,Active
+Kaung Htet 6,2024-MIIT-CSE-057,kaunghtet6.cse2024.057@gmail.com,09768000417,CSE,2024 Batch,3rd Year,Active
+Nandar Hlaing 6,2024-MIIT-CSE-058,nandarhlaing6.cse2024.058@gmail.com,09768000418,CSE,2024 Batch,3rd Year,Active
+Min Thant 6,2024-MIIT-CSE-059,minthant6.cse2024.059@gmail.com,09768000419,CSE,2024 Batch,3rd Year,Active
+May Zin Win 6,2024-MIIT-CSE-060,mayzinwin6.cse2024.060@gmail.com,09768000420,CSE,2024 Batch,3rd Year,Active
+Aung Min Khant 1,2024-MIIT-ECE-001,aungminkhant1.ece2024.001@gmail.com,09768000421,ECE,2024 Batch,3rd Year,Active
+Thiri Mon 1,2024-MIIT-ECE-002,thirimon1.ece2024.002@gmail.com,09768000422,ECE,2024 Batch,3rd Year,Active
+Kyaw Zin Oo 1,2024-MIIT-ECE-003,kyawzinoo1.ece2024.003@gmail.com,09768000423,ECE,2024 Batch,3rd Year,Active
+Su Myat Noe 1,2024-MIIT-ECE-004,sumyatnoe1.ece2024.004@gmail.com,09768000424,ECE,2024 Batch,3rd Year,Active
+Htet Aung 1,2024-MIIT-ECE-005,htetaung1.ece2024.005@gmail.com,09768000425,ECE,2024 Batch,3rd Year,Active
+Yoon Myat Thu 1,2024-MIIT-ECE-006,yoonmyatthu1.ece2024.006@gmail.com,09768000426,ECE,2024 Batch,3rd Year,Active
+Kaung Htet 1,2024-MIIT-ECE-007,kaunghtet1.ece2024.007@gmail.com,09768000427,ECE,2024 Batch,3rd Year,Active
+Nandar Hlaing 1,2024-MIIT-ECE-008,nandarhlaing1.ece2024.008@gmail.com,09768000428,ECE,2024 Batch,3rd Year,Active
+Min Thant 1,2024-MIIT-ECE-009,minthant1.ece2024.009@gmail.com,09768000429,ECE,2024 Batch,3rd Year,Active
+May Zin Win 1,2024-MIIT-ECE-010,mayzinwin1.ece2024.010@gmail.com,09768000430,ECE,2024 Batch,3rd Year,Active
+Aung Min Khant 2,2024-MIIT-ECE-011,aungminkhant2.ece2024.011@gmail.com,09768000431,ECE,2024 Batch,3rd Year,Active
+Thiri Mon 2,2024-MIIT-ECE-012,thirimon2.ece2024.012@gmail.com,09768000432,ECE,2024 Batch,3rd Year,Active
+Kyaw Zin Oo 2,2024-MIIT-ECE-013,kyawzinoo2.ece2024.013@gmail.com,09768000433,ECE,2024 Batch,3rd Year,Active
+Su Myat Noe 2,2024-MIIT-ECE-014,sumyatnoe2.ece2024.014@gmail.com,09768000434,ECE,2024 Batch,3rd Year,Active
+Htet Aung 2,2024-MIIT-ECE-015,htetaung2.ece2024.015@gmail.com,09768000435,ECE,2024 Batch,3rd Year,Active
+Yoon Myat Thu 2,2024-MIIT-ECE-016,yoonmyatthu2.ece2024.016@gmail.com,09768000436,ECE,2024 Batch,3rd Year,Active
+Kaung Htet 2,2024-MIIT-ECE-017,kaunghtet2.ece2024.017@gmail.com,09768000437,ECE,2024 Batch,3rd Year,Active
+Nandar Hlaing 2,2024-MIIT-ECE-018,nandarhlaing2.ece2024.018@gmail.com,09768000438,ECE,2024 Batch,3rd Year,Active
+Min Thant 2,2024-MIIT-ECE-019,minthant2.ece2024.019@gmail.com,09768000439,ECE,2024 Batch,3rd Year,Active
+May Zin Win 2,2024-MIIT-ECE-020,mayzinwin2.ece2024.020@gmail.com,09768000440,ECE,2024 Batch,3rd Year,Active
+Aung Min Khant 3,2024-MIIT-ECE-021,aungminkhant3.ece2024.021@gmail.com,09768000441,ECE,2024 Batch,3rd Year,Active
+Thiri Mon 3,2024-MIIT-ECE-022,thirimon3.ece2024.022@gmail.com,09768000442,ECE,2024 Batch,3rd Year,Active
+Kyaw Zin Oo 3,2024-MIIT-ECE-023,kyawzinoo3.ece2024.023@gmail.com,09768000443,ECE,2024 Batch,3rd Year,Active
+Su Myat Noe 3,2024-MIIT-ECE-024,sumyatnoe3.ece2024.024@gmail.com,09768000444,ECE,2024 Batch,3rd Year,Active
+Htet Aung 3,2024-MIIT-ECE-025,htetaung3.ece2024.025@gmail.com,09768000445,ECE,2024 Batch,3rd Year,Active
+Yoon Myat Thu 3,2024-MIIT-ECE-026,yoonmyatthu3.ece2024.026@gmail.com,09768000446,ECE,2024 Batch,3rd Year,Active
+Kaung Htet 3,2024-MIIT-ECE-027,kaunghtet3.ece2024.027@gmail.com,09768000447,ECE,2024 Batch,3rd Year,Active
+Nandar Hlaing 3,2024-MIIT-ECE-028,nandarhlaing3.ece2024.028@gmail.com,09768000448,ECE,2024 Batch,3rd Year,Active
+Min Thant 3,2024-MIIT-ECE-029,minthant3.ece2024.029@gmail.com,09768000449,ECE,2024 Batch,3rd Year,Active
+May Zin Win 3,2024-MIIT-ECE-030,mayzinwin3.ece2024.030@gmail.com,09768000450,ECE,2024 Batch,3rd Year,Active
+Aung Min Khant 4,2024-MIIT-ECE-031,aungminkhant4.ece2024.031@gmail.com,09768000451,ECE,2024 Batch,3rd Year,Active
+Thiri Mon 4,2024-MIIT-ECE-032,thirimon4.ece2024.032@gmail.com,09768000452,ECE,2024 Batch,3rd Year,Active
+Kyaw Zin Oo 4,2024-MIIT-ECE-033,kyawzinoo4.ece2024.033@gmail.com,09768000453,ECE,2024 Batch,3rd Year,Active
+Su Myat Noe 4,2024-MIIT-ECE-034,sumyatnoe4.ece2024.034@gmail.com,09768000454,ECE,2024 Batch,3rd Year,Active
+Htet Aung 4,2024-MIIT-ECE-035,htetaung4.ece2024.035@gmail.com,09768000455,ECE,2024 Batch,3rd Year,Active
+Yoon Myat Thu 4,2024-MIIT-ECE-036,yoonmyatthu4.ece2024.036@gmail.com,09768000456,ECE,2024 Batch,3rd Year,Active
+Kaung Htet 4,2024-MIIT-ECE-037,kaunghtet4.ece2024.037@gmail.com,09768000457,ECE,2024 Batch,3rd Year,Active
+Nandar Hlaing 4,2024-MIIT-ECE-038,nandarhlaing4.ece2024.038@gmail.com,09768000458,ECE,2024 Batch,3rd Year,Active
+Min Thant 4,2024-MIIT-ECE-039,minthant4.ece2024.039@gmail.com,09768000459,ECE,2024 Batch,3rd Year,Active
+May Zin Win 4,2024-MIIT-ECE-040,mayzinwin4.ece2024.040@gmail.com,09768000460,ECE,2024 Batch,3rd Year,Active
+Aung Min Khant 5,2024-MIIT-ECE-041,aungminkhant5.ece2024.041@gmail.com,09768000461,ECE,2024 Batch,3rd Year,Active
+Thiri Mon 5,2024-MIIT-ECE-042,thirimon5.ece2024.042@gmail.com,09768000462,ECE,2024 Batch,3rd Year,Active
+Kyaw Zin Oo 5,2024-MIIT-ECE-043,kyawzinoo5.ece2024.043@gmail.com,09768000463,ECE,2024 Batch,3rd Year,Active
+Su Myat Noe 5,2024-MIIT-ECE-044,sumyatnoe5.ece2024.044@gmail.com,09768000464,ECE,2024 Batch,3rd Year,Active
+Htet Aung 5,2024-MIIT-ECE-045,htetaung5.ece2024.045@gmail.com,09768000465,ECE,2024 Batch,3rd Year,Active
+Yoon Myat Thu 5,2024-MIIT-ECE-046,yoonmyatthu5.ece2024.046@gmail.com,09768000466,ECE,2024 Batch,3rd Year,Active
+Kaung Htet 5,2024-MIIT-ECE-047,kaunghtet5.ece2024.047@gmail.com,09768000467,ECE,2024 Batch,3rd Year,Active
+Nandar Hlaing 5,2024-MIIT-ECE-048,nandarhlaing5.ece2024.048@gmail.com,09768000468,ECE,2024 Batch,3rd Year,Active
+Min Thant 5,2024-MIIT-ECE-049,minthant5.ece2024.049@gmail.com,09768000469,ECE,2024 Batch,3rd Year,Active
+May Zin Win 5,2024-MIIT-ECE-050,mayzinwin5.ece2024.050@gmail.com,09768000470,ECE,2024 Batch,3rd Year,Active
+Aung Min Khant 6,2024-MIIT-ECE-051,aungminkhant6.ece2024.051@gmail.com,09768000471,ECE,2024 Batch,3rd Year,Active
+Thiri Mon 6,2024-MIIT-ECE-052,thirimon6.ece2024.052@gmail.com,09768000472,ECE,2024 Batch,3rd Year,Active
+Kyaw Zin Oo 6,2024-MIIT-ECE-053,kyawzinoo6.ece2024.053@gmail.com,09768000473,ECE,2024 Batch,3rd Year,Active
+Su Myat Noe 6,2024-MIIT-ECE-054,sumyatnoe6.ece2024.054@gmail.com,09768000474,ECE,2024 Batch,3rd Year,Active
+Htet Aung 6,2024-MIIT-ECE-055,htetaung6.ece2024.055@gmail.com,09768000475,ECE,2024 Batch,3rd Year,Active
+Yoon Myat Thu 6,2024-MIIT-ECE-056,yoonmyatthu6.ece2024.056@gmail.com,09768000476,ECE,2024 Batch,3rd Year,Active
+Kaung Htet 6,2024-MIIT-ECE-057,kaunghtet6.ece2024.057@gmail.com,09768000477,ECE,2024 Batch,3rd Year,Active
+Nandar Hlaing 6,2024-MIIT-ECE-058,nandarhlaing6.ece2024.058@gmail.com,09768000478,ECE,2024 Batch,3rd Year,Active
+Min Thant 6,2024-MIIT-ECE-059,minthant6.ece2024.059@gmail.com,09768000479,ECE,2024 Batch,3rd Year,Active
+May Zin Win 6,2024-MIIT-ECE-060,mayzinwin6.ece2024.060@gmail.com,09768000480,ECE,2024 Batch,3rd Year,Active
+Aung Min Khant 1,2025-MIIT-CSE-001,aungminkhant1.cse2025.001@gmail.com,09768000481,CSE,2025 Batch,3rd Year,Active
+Thiri Mon 1,2025-MIIT-CSE-002,thirimon1.cse2025.002@gmail.com,09768000482,CSE,2025 Batch,3rd Year,Active
+Kyaw Zin Oo 1,2025-MIIT-CSE-003,kyawzinoo1.cse2025.003@gmail.com,09768000483,CSE,2025 Batch,3rd Year,Active
+Su Myat Noe 1,2025-MIIT-CSE-004,sumyatnoe1.cse2025.004@gmail.com,09768000484,CSE,2025 Batch,3rd Year,Active
+Htet Aung 1,2025-MIIT-CSE-005,htetaung1.cse2025.005@gmail.com,09768000485,CSE,2025 Batch,3rd Year,Active
+Yoon Myat Thu 1,2025-MIIT-CSE-006,yoonmyatthu1.cse2025.006@gmail.com,09768000486,CSE,2025 Batch,3rd Year,Active
+Kaung Htet 1,2025-MIIT-CSE-007,kaunghtet1.cse2025.007@gmail.com,09768000487,CSE,2025 Batch,3rd Year,Active
+Nandar Hlaing 1,2025-MIIT-CSE-008,nandarhlaing1.cse2025.008@gmail.com,09768000488,CSE,2025 Batch,3rd Year,Active
+Min Thant 1,2025-MIIT-CSE-009,minthant1.cse2025.009@gmail.com,09768000489,CSE,2025 Batch,3rd Year,Active
+May Zin Win 1,2025-MIIT-CSE-010,mayzinwin1.cse2025.010@gmail.com,09768000490,CSE,2025 Batch,3rd Year,Active
+Aung Min Khant 2,2025-MIIT-CSE-011,aungminkhant2.cse2025.011@gmail.com,09768000491,CSE,2025 Batch,3rd Year,Active
+Thiri Mon 2,2025-MIIT-CSE-012,thirimon2.cse2025.012@gmail.com,09768000492,CSE,2025 Batch,3rd Year,Active
+Kyaw Zin Oo 2,2025-MIIT-CSE-013,kyawzinoo2.cse2025.013@gmail.com,09768000493,CSE,2025 Batch,3rd Year,Active
+Su Myat Noe 2,2025-MIIT-CSE-014,sumyatnoe2.cse2025.014@gmail.com,09768000494,CSE,2025 Batch,3rd Year,Active
+Htet Aung 2,2025-MIIT-CSE-015,htetaung2.cse2025.015@gmail.com,09768000495,CSE,2025 Batch,3rd Year,Active
+Yoon Myat Thu 2,2025-MIIT-CSE-016,yoonmyatthu2.cse2025.016@gmail.com,09768000496,CSE,2025 Batch,3rd Year,Active
+Kaung Htet 2,2025-MIIT-CSE-017,kaunghtet2.cse2025.017@gmail.com,09768000497,CSE,2025 Batch,3rd Year,Active
+Nandar Hlaing 2,2025-MIIT-CSE-018,nandarhlaing2.cse2025.018@gmail.com,09768000498,CSE,2025 Batch,3rd Year,Active
+Min Thant 2,2025-MIIT-CSE-019,minthant2.cse2025.019@gmail.com,09768000499,CSE,2025 Batch,3rd Year,Active
+May Zin Win 2,2025-MIIT-CSE-020,mayzinwin2.cse2025.020@gmail.com,09768000500,CSE,2025 Batch,3rd Year,Active
+Aung Min Khant 3,2025-MIIT-CSE-021,aungminkhant3.cse2025.021@gmail.com,09768000501,CSE,2025 Batch,3rd Year,Active
+Thiri Mon 3,2025-MIIT-CSE-022,thirimon3.cse2025.022@gmail.com,09768000502,CSE,2025 Batch,3rd Year,Active
+Kyaw Zin Oo 3,2025-MIIT-CSE-023,kyawzinoo3.cse2025.023@gmail.com,09768000503,CSE,2025 Batch,3rd Year,Active
+Su Myat Noe 3,2025-MIIT-CSE-024,sumyatnoe3.cse2025.024@gmail.com,09768000504,CSE,2025 Batch,3rd Year,Active
+Htet Aung 3,2025-MIIT-CSE-025,htetaung3.cse2025.025@gmail.com,09768000505,CSE,2025 Batch,3rd Year,Active
+Yoon Myat Thu 3,2025-MIIT-CSE-026,yoonmyatthu3.cse2025.026@gmail.com,09768000506,CSE,2025 Batch,3rd Year,Active
+Kaung Htet 3,2025-MIIT-CSE-027,kaunghtet3.cse2025.027@gmail.com,09768000507,CSE,2025 Batch,3rd Year,Active
+Nandar Hlaing 3,2025-MIIT-CSE-028,nandarhlaing3.cse2025.028@gmail.com,09768000508,CSE,2025 Batch,3rd Year,Active
+Min Thant 3,2025-MIIT-CSE-029,minthant3.cse2025.029@gmail.com,09768000509,CSE,2025 Batch,3rd Year,Active
+May Zin Win 3,2025-MIIT-CSE-030,mayzinwin3.cse2025.030@gmail.com,09768000510,CSE,2025 Batch,3rd Year,Active
+Aung Min Khant 4,2025-MIIT-CSE-031,aungminkhant4.cse2025.031@gmail.com,09768000511,CSE,2025 Batch,3rd Year,Active
+Thiri Mon 4,2025-MIIT-CSE-032,thirimon4.cse2025.032@gmail.com,09768000512,CSE,2025 Batch,3rd Year,Active
+Kyaw Zin Oo 4,2025-MIIT-CSE-033,kyawzinoo4.cse2025.033@gmail.com,09768000513,CSE,2025 Batch,3rd Year,Active
+Su Myat Noe 4,2025-MIIT-CSE-034,sumyatnoe4.cse2025.034@gmail.com,09768000514,CSE,2025 Batch,3rd Year,Active
+Htet Aung 4,2025-MIIT-CSE-035,htetaung4.cse2025.035@gmail.com,09768000515,CSE,2025 Batch,3rd Year,Active
+Yoon Myat Thu 4,2025-MIIT-CSE-036,yoonmyatthu4.cse2025.036@gmail.com,09768000516,CSE,2025 Batch,3rd Year,Active
+Kaung Htet 4,2025-MIIT-CSE-037,kaunghtet4.cse2025.037@gmail.com,09768000517,CSE,2025 Batch,3rd Year,Active
+Nandar Hlaing 4,2025-MIIT-CSE-038,nandarhlaing4.cse2025.038@gmail.com,09768000518,CSE,2025 Batch,3rd Year,Active
+Min Thant 4,2025-MIIT-CSE-039,minthant4.cse2025.039@gmail.com,09768000519,CSE,2025 Batch,3rd Year,Active
+May Zin Win 4,2025-MIIT-CSE-040,mayzinwin4.cse2025.040@gmail.com,09768000520,CSE,2025 Batch,3rd Year,Active
+Aung Min Khant 5,2025-MIIT-CSE-041,aungminkhant5.cse2025.041@gmail.com,09768000521,CSE,2025 Batch,3rd Year,Active
+Thiri Mon 5,2025-MIIT-CSE-042,thirimon5.cse2025.042@gmail.com,09768000522,CSE,2025 Batch,3rd Year,Active
+Kyaw Zin Oo 5,2025-MIIT-CSE-043,kyawzinoo5.cse2025.043@gmail.com,09768000523,CSE,2025 Batch,3rd Year,Active
+Su Myat Noe 5,2025-MIIT-CSE-044,sumyatnoe5.cse2025.044@gmail.com,09768000524,CSE,2025 Batch,3rd Year,Active
+Htet Aung 5,2025-MIIT-CSE-045,htetaung5.cse2025.045@gmail.com,09768000525,CSE,2025 Batch,3rd Year,Active
+Yoon Myat Thu 5,2025-MIIT-CSE-046,yoonmyatthu5.cse2025.046@gmail.com,09768000526,CSE,2025 Batch,3rd Year,Active
+Kaung Htet 5,2025-MIIT-CSE-047,kaunghtet5.cse2025.047@gmail.com,09768000527,CSE,2025 Batch,3rd Year,Active
+Nandar Hlaing 5,2025-MIIT-CSE-048,nandarhlaing5.cse2025.048@gmail.com,09768000528,CSE,2025 Batch,3rd Year,Active
+Min Thant 5,2025-MIIT-CSE-049,minthant5.cse2025.049@gmail.com,09768000529,CSE,2025 Batch,3rd Year,Active
+May Zin Win 5,2025-MIIT-CSE-050,mayzinwin5.cse2025.050@gmail.com,09768000530,CSE,2025 Batch,3rd Year,Active
+Aung Min Khant 6,2025-MIIT-CSE-051,aungminkhant6.cse2025.051@gmail.com,09768000531,CSE,2025 Batch,3rd Year,Active
+Thiri Mon 6,2025-MIIT-CSE-052,thirimon6.cse2025.052@gmail.com,09768000532,CSE,2025 Batch,3rd Year,Active
+Kyaw Zin Oo 6,2025-MIIT-CSE-053,kyawzinoo6.cse2025.053@gmail.com,09768000533,CSE,2025 Batch,3rd Year,Active
+Su Myat Noe 6,2025-MIIT-CSE-054,sumyatnoe6.cse2025.054@gmail.com,09768000534,CSE,2025 Batch,3rd Year,Active
+Htet Aung 6,2025-MIIT-CSE-055,htetaung6.cse2025.055@gmail.com,09768000535,CSE,2025 Batch,3rd Year,Active
+Yoon Myat Thu 6,2025-MIIT-CSE-056,yoonmyatthu6.cse2025.056@gmail.com,09768000536,CSE,2025 Batch,3rd Year,Active
+Kaung Htet 6,2025-MIIT-CSE-057,kaunghtet6.cse2025.057@gmail.com,09768000537,CSE,2025 Batch,3rd Year,Active
+Nandar Hlaing 6,2025-MIIT-CSE-058,nandarhlaing6.cse2025.058@gmail.com,09768000538,CSE,2025 Batch,3rd Year,Active
+Min Thant 6,2025-MIIT-CSE-059,minthant6.cse2025.059@gmail.com,09768000539,CSE,2025 Batch,3rd Year,Active
+May Zin Win 6,2025-MIIT-CSE-060,mayzinwin6.cse2025.060@gmail.com,09768000540,CSE,2025 Batch,3rd Year,Active
+Aung Min Khant 1,2025-MIIT-ECE-001,aungminkhant1.ece2025.001@gmail.com,09768000541,ECE,2025 Batch,3rd Year,Active
+Thiri Mon 1,2025-MIIT-ECE-002,thirimon1.ece2025.002@gmail.com,09768000542,ECE,2025 Batch,3rd Year,Active
+Kyaw Zin Oo 1,2025-MIIT-ECE-003,kyawzinoo1.ece2025.003@gmail.com,09768000543,ECE,2025 Batch,3rd Year,Active
+Su Myat Noe 1,2025-MIIT-ECE-004,sumyatnoe1.ece2025.004@gmail.com,09768000544,ECE,2025 Batch,3rd Year,Active
+Htet Aung 1,2025-MIIT-ECE-005,htetaung1.ece2025.005@gmail.com,09768000545,ECE,2025 Batch,3rd Year,Active
+Yoon Myat Thu 1,2025-MIIT-ECE-006,yoonmyatthu1.ece2025.006@gmail.com,09768000546,ECE,2025 Batch,3rd Year,Active
+Kaung Htet 1,2025-MIIT-ECE-007,kaunghtet1.ece2025.007@gmail.com,09768000547,ECE,2025 Batch,3rd Year,Active
+Nandar Hlaing 1,2025-MIIT-ECE-008,nandarhlaing1.ece2025.008@gmail.com,09768000548,ECE,2025 Batch,3rd Year,Active
+Min Thant 1,2025-MIIT-ECE-009,minthant1.ece2025.009@gmail.com,09768000549,ECE,2025 Batch,3rd Year,Active
+May Zin Win 1,2025-MIIT-ECE-010,mayzinwin1.ece2025.010@gmail.com,09768000550,ECE,2025 Batch,3rd Year,Active
+Aung Min Khant 2,2025-MIIT-ECE-011,aungminkhant2.ece2025.011@gmail.com,09768000551,ECE,2025 Batch,3rd Year,Active
+Thiri Mon 2,2025-MIIT-ECE-012,thirimon2.ece2025.012@gmail.com,09768000552,ECE,2025 Batch,3rd Year,Active
+Kyaw Zin Oo 2,2025-MIIT-ECE-013,kyawzinoo2.ece2025.013@gmail.com,09768000553,ECE,2025 Batch,3rd Year,Active
+Su Myat Noe 2,2025-MIIT-ECE-014,sumyatnoe2.ece2025.014@gmail.com,09768000554,ECE,2025 Batch,3rd Year,Active
+Htet Aung 2,2025-MIIT-ECE-015,htetaung2.ece2025.015@gmail.com,09768000555,ECE,2025 Batch,3rd Year,Active
+Yoon Myat Thu 2,2025-MIIT-ECE-016,yoonmyatthu2.ece2025.016@gmail.com,09768000556,ECE,2025 Batch,3rd Year,Active
+Kaung Htet 2,2025-MIIT-ECE-017,kaunghtet2.ece2025.017@gmail.com,09768000557,ECE,2025 Batch,3rd Year,Active
+Nandar Hlaing 2,2025-MIIT-ECE-018,nandarhlaing2.ece2025.018@gmail.com,09768000558,ECE,2025 Batch,3rd Year,Active
+Min Thant 2,2025-MIIT-ECE-019,minthant2.ece2025.019@gmail.com,09768000559,ECE,2025 Batch,3rd Year,Active
+May Zin Win 2,2025-MIIT-ECE-020,mayzinwin2.ece2025.020@gmail.com,09768000560,ECE,2025 Batch,3rd Year,Active
+Aung Min Khant 3,2025-MIIT-ECE-021,aungminkhant3.ece2025.021@gmail.com,09768000561,ECE,2025 Batch,3rd Year,Active
+Thiri Mon 3,2025-MIIT-ECE-022,thirimon3.ece2025.022@gmail.com,09768000562,ECE,2025 Batch,3rd Year,Active
+Kyaw Zin Oo 3,2025-MIIT-ECE-023,kyawzinoo3.ece2025.023@gmail.com,09768000563,ECE,2025 Batch,3rd Year,Active
+Su Myat Noe 3,2025-MIIT-ECE-024,sumyatnoe3.ece2025.024@gmail.com,09768000564,ECE,2025 Batch,3rd Year,Active
+Htet Aung 3,2025-MIIT-ECE-025,htetaung3.ece2025.025@gmail.com,09768000565,ECE,2025 Batch,3rd Year,Active
+Yoon Myat Thu 3,2025-MIIT-ECE-026,yoonmyatthu3.ece2025.026@gmail.com,09768000566,ECE,2025 Batch,3rd Year,Active
+Kaung Htet 3,2025-MIIT-ECE-027,kaunghtet3.ece2025.027@gmail.com,09768000567,ECE,2025 Batch,3rd Year,Active
+Nandar Hlaing 3,2025-MIIT-ECE-028,nandarhlaing3.ece2025.028@gmail.com,09768000568,ECE,2025 Batch,3rd Year,Active
+Min Thant 3,2025-MIIT-ECE-029,minthant3.ece2025.029@gmail.com,09768000569,ECE,2025 Batch,3rd Year,Active
+May Zin Win 3,2025-MIIT-ECE-030,mayzinwin3.ece2025.030@gmail.com,09768000570,ECE,2025 Batch,3rd Year,Active
+Aung Min Khant 4,2025-MIIT-ECE-031,aungminkhant4.ece2025.031@gmail.com,09768000571,ECE,2025 Batch,3rd Year,Active
+Thiri Mon 4,2025-MIIT-ECE-032,thirimon4.ece2025.032@gmail.com,09768000572,ECE,2025 Batch,3rd Year,Active
+Kyaw Zin Oo 4,2025-MIIT-ECE-033,kyawzinoo4.ece2025.033@gmail.com,09768000573,ECE,2025 Batch,3rd Year,Active
+Su Myat Noe 4,2025-MIIT-ECE-034,sumyatnoe4.ece2025.034@gmail.com,09768000574,ECE,2025 Batch,3rd Year,Active
+Htet Aung 4,2025-MIIT-ECE-035,htetaung4.ece2025.035@gmail.com,09768000575,ECE,2025 Batch,3rd Year,Active
+Yoon Myat Thu 4,2025-MIIT-ECE-036,yoonmyatthu4.ece2025.036@gmail.com,09768000576,ECE,2025 Batch,3rd Year,Active
+Kaung Htet 4,2025-MIIT-ECE-037,kaunghtet4.ece2025.037@gmail.com,09768000577,ECE,2025 Batch,3rd Year,Active
+Nandar Hlaing 4,2025-MIIT-ECE-038,nandarhlaing4.ece2025.038@gmail.com,09768000578,ECE,2025 Batch,3rd Year,Active
+Min Thant 4,2025-MIIT-ECE-039,minthant4.ece2025.039@gmail.com,09768000579,ECE,2025 Batch,3rd Year,Active
+May Zin Win 4,2025-MIIT-ECE-040,mayzinwin4.ece2025.040@gmail.com,09768000580,ECE,2025 Batch,3rd Year,Active
+Aung Min Khant 5,2025-MIIT-ECE-041,aungminkhant5.ece2025.041@gmail.com,09768000581,ECE,2025 Batch,3rd Year,Active
+Thiri Mon 5,2025-MIIT-ECE-042,thirimon5.ece2025.042@gmail.com,09768000582,ECE,2025 Batch,3rd Year,Active
+Kyaw Zin Oo 5,2025-MIIT-ECE-043,kyawzinoo5.ece2025.043@gmail.com,09768000583,ECE,2025 Batch,3rd Year,Active
+Su Myat Noe 5,2025-MIIT-ECE-044,sumyatnoe5.ece2025.044@gmail.com,09768000584,ECE,2025 Batch,3rd Year,Active
+Htet Aung 5,2025-MIIT-ECE-045,htetaung5.ece2025.045@gmail.com,09768000585,ECE,2025 Batch,3rd Year,Active
+Yoon Myat Thu 5,2025-MIIT-ECE-046,yoonmyatthu5.ece2025.046@gmail.com,09768000586,ECE,2025 Batch,3rd Year,Active
+Kaung Htet 5,2025-MIIT-ECE-047,kaunghtet5.ece2025.047@gmail.com,09768000587,ECE,2025 Batch,3rd Year,Active
+Nandar Hlaing 5,2025-MIIT-ECE-048,nandarhlaing5.ece2025.048@gmail.com,09768000588,ECE,2025 Batch,3rd Year,Active
+Min Thant 5,2025-MIIT-ECE-049,minthant5.ece2025.049@gmail.com,09768000589,ECE,2025 Batch,3rd Year,Active
+May Zin Win 5,2025-MIIT-ECE-050,mayzinwin5.ece2025.050@gmail.com,09768000590,ECE,2025 Batch,3rd Year,Active
+Aung Min Khant 6,2025-MIIT-ECE-051,aungminkhant6.ece2025.051@gmail.com,09768000591,ECE,2025 Batch,3rd Year,Active
+Thiri Mon 6,2025-MIIT-ECE-052,thirimon6.ece2025.052@gmail.com,09768000592,ECE,2025 Batch,3rd Year,Active
+Kyaw Zin Oo 6,2025-MIIT-ECE-053,kyawzinoo6.ece2025.053@gmail.com,09768000593,ECE,2025 Batch,3rd Year,Active
+Su Myat Noe 6,2025-MIIT-ECE-054,sumyatnoe6.ece2025.054@gmail.com,09768000594,ECE,2025 Batch,3rd Year,Active
+Htet Aung 6,2025-MIIT-ECE-055,htetaung6.ece2025.055@gmail.com,09768000595,ECE,2025 Batch,3rd Year,Active
+Yoon Myat Thu 6,2025-MIIT-ECE-056,yoonmyatthu6.ece2025.056@gmail.com,09768000596,ECE,2025 Batch,3rd Year,Active
+Kaung Htet 6,2025-MIIT-ECE-057,kaunghtet6.ece2025.057@gmail.com,09768000597,ECE,2025 Batch,3rd Year,Active
+Nandar Hlaing 6,2025-MIIT-ECE-058,nandarhlaing6.ece2025.058@gmail.com,09768000598,ECE,2025 Batch,3rd Year,Active
+Min Thant 6,2025-MIIT-ECE-059,minthant6.ece2025.059@gmail.com,09768000599,ECE,2025 Batch,3rd Year,Active
+May Zin Win 6,2025-MIIT-ECE-060,mayzinwin6.ece2025.060@gmail.com,09768000600,ECE,2025 Batch,3rd Year,Active

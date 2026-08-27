@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils"
 interface FilterDropdownConfig {
   label: string
   value: FilterChoice
-  options: string[]
+  options: readonly string[]
   onChange: (value: FilterChoice) => void
   className?: string
 }
@@ -26,7 +26,7 @@ export interface FilterDropdownsProps {
   categories: readonly string[]
   itemNames: string[]
   departmentOptions: string[]
-  rooms: string[]
+  rooms: readonly string[]
   selectCategory: (category: FilterChoice) => void
   setSelectedItemName: (itemName: FilterChoice) => void
   onDepartmentChange: (department: FilterChoice) => void

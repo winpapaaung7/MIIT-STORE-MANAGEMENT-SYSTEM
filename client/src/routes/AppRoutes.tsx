@@ -3,9 +3,10 @@ import MainLayout from "../components/layout/MainLayout";
 import InventoryPage from "../screens/Inventory/InventoryPage";
 import DepartmentPage from "../screens/Departments/DepartmentPage";
 import AccessoryDetailsPage from "../screens/AccessoryDetails/AccessoryDetailsPage";
-import LaptopRentalPage from "../screens/LaptopRental/LaptopRentalpage";
+import LaptopRentalPage from "../screens/LaptopRental/LaptopRentalPage";
 // import LoginPage from "../screens/Login/LoginPage";
 import SettingsPage from "../screens/Settings/SettingsPage";
+import DashboardPage from "../screens/Dashboard/DashboardPage";
 
 const AppRoutes = () => {
   return (
@@ -18,7 +19,7 @@ const AppRoutes = () => {
         {/* <Route index element={<div>Dashboard</div>} /> */}
         {/* this is the default route, when the user navigates to the root path, they will be redirected to the inventory page */}
 
-        <Route index element={<InventoryPage />} />
+        <Route index element={<DashboardPage />} />
 
         {/* our pages */}
         <Route path="inventory" element={<InventoryPage />} />

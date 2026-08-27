@@ -18,7 +18,7 @@ export interface AccessoriesFilterBarProps {
   categories: readonly string[]
   itemNames: string[]
   departmentOptions: string[]
-  rooms: string[]
+  rooms: readonly string[]
   selectCategory: (category: FilterChoice) => void
   setSelectedItemName: (itemName: FilterChoice) => void
   onDepartmentChange: (department: FilterChoice) => void

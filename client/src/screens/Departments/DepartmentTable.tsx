@@ -46,8 +46,8 @@ export default function DepartmentTable({
           <TableHeader className="sticky top-0 z-10 bg-white">
             <TableRow>
               <TableHead className="px-4 py-3 text-left">ID</TableHead>
-              <TableHead className="px-4 py-3 text-left">Department</TableHead>
-              <TableHead className="px-4 py-3 text-left">Classroom</TableHead>
+              <TableHead className="px-4 py-3 text-left">Department / Classroom</TableHead>
+              <TableHead className="px-4 py-3 text-left">Room</TableHead>
               <TableHead className="px-4 py-3 text-left">Status</TableHead>
               <TableHead className="px-4 py-3 text-center">Actions</TableHead>
             </TableRow>
@@ -82,9 +82,11 @@ export default function DepartmentTable({
                     {department.id}
                   </TableCell>
 
-                  <TableCell className="px-4 py-4 text-left font-semibold text-slate-950 sm:py-5">
-                    {department.department}
-                  </TableCell>
+              <TableCell className="max-w-0 overflow-hidden px-4 py-4 text-left font-semibold text-slate-950 sm:py-5">
+                <span className="block truncate" title={department.department}>
+                  {department.department}
+                </span>
+              </TableCell>
 
                   <TableCell className="px-4 py-4 text-left text-sm text-slate-500 sm:py-5">
                     {department.classroom}

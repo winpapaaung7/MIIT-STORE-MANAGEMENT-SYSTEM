@@ -1,12 +1,14 @@
 import { Search } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Input } from "@/components/ui/input";
-import { departmentRoomMap } from "@/screens/AccessoryDetails/accessoryData";
 import AddDepartmentModal from "./AddDepartmentModal";
 import AddNewDeptButton from "./AddNewDeptButton";
 import DepartmentTable from "./DepartmentTable";
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";
 
 interface Department {
   id: number;
@@ -15,27 +17,54 @@ interface Department {
   status: "Available" | "Closed";
 }
 
-const initialDepartments: Department[] = Object.entries(departmentRoomMap).flatMap(
-  ([department, rooms]) =>
-    rooms.map((room) => ({
-      id: 0,
-      department,
-      classroom: room,
-      status: "Available" as const,
-    })),
-).map((department, index) => ({
-  ...department,
-  id: index + 1,
-}));
+interface DepartmentResponse {
+  ok: boolean;
+  departments: Department[];
+  message?: string;
+}
+
+interface CreateDepartmentResponse {
+  ok: boolean;
+  department: Department;
+  message?: string;
+}
+
+interface UpdateDepartmentResponse {
+  ok: boolean;
+  department: Department;
+  message?: string;
+}
 
 export default function DepartmentPage() {
   const navigate = useNavigate();
-  const [departments, setDepartments] =
-    useState<Department[]>(initialDepartments);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [departmentError, setDepartmentError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDepartment, setSelectedDepartment] =
     useState<Department | null>(null);
+
+  useEffect(() => {
+    const loadDepartments = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/departments`);
+        const result = (await response.json()) as DepartmentResponse;
+
+        if (!response.ok || !result.ok) {
+          throw new Error(result.message ?? "Failed to load departments");
+        }
+
+        setDepartments(result.departments);
+        setDepartmentError("");
+      } catch (error) {
+        setDepartmentError(
+          error instanceof Error ? error.message : "Failed to load departments",
+        );
+      }
+    };
+
+    void loadDepartments();
+  }, []);
 
   const filteredDepartments = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -52,7 +81,7 @@ export default function DepartmentPage() {
     });
   }, [departments, searchQuery]);
 
-  const handleSaveDepartment = (
+  const handleSaveDepartment = async (
     values: {
       department: string;
       classroom: string;
@@ -60,35 +89,62 @@ export default function DepartmentPage() {
     },
     departmentId?: number,
   ) => {
-    if (departmentId) {
-      setDepartments((current) =>
-        current.map((department) =>
-          department.id === departmentId
-            ? {
-                ...department,
-                department: values.department,
-                classroom: values.classroom,
-                status: values.status,
-              }
-            : department,
-        ),
-      );
-      setSelectedDepartment(null);
-      setIsModalOpen(false);
-      return;
-    }
-
-    setDepartments((current) => [
-      ...current,
-      {
-        id: Math.max(0, ...current.map((department) => department.id)) + 1,
+    try {
+      const payload = {
         department: values.department,
         classroom: values.classroom,
         status: values.status,
-      },
-    ]);
-    setSelectedDepartment(null);
-    setIsModalOpen(false);
+      };
+
+      if (departmentId) {
+        const response = await fetch(
+          `${API_BASE_URL}/api/departments/${departmentId}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+          },
+        );
+
+        const result = (await response.json()) as UpdateDepartmentResponse;
+
+        if (!response.ok || !result.ok) {
+          throw new Error(result.message ?? "Failed to update department");
+        }
+
+        setDepartments((current) =>
+          current.map((department) =>
+            department.id === departmentId ? result.department : department,
+          ),
+        );
+      } else {
+        const response = await fetch(`${API_BASE_URL}/api/departments`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const result = (await response.json()) as CreateDepartmentResponse;
+
+        if (!response.ok || !result.ok) {
+          throw new Error(result.message ?? "Failed to create department");
+        }
+
+        setDepartments((current) => [...current, result.department]);
+      }
+
+      setSelectedDepartment(null);
+      setIsModalOpen(false);
+      setDepartmentError("");
+    } catch (error) {
+      setDepartmentError(
+        error instanceof Error ? error.message : "Failed to save department",
+      );
+    }
   };
 
   const handleEditDepartment = (department: Department) => {
@@ -96,10 +152,30 @@ export default function DepartmentPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteDepartment = (department: Department) => {
-    setDepartments((current) =>
-      current.filter((item) => item.id !== department.id),
-    );
+  const handleDeleteDepartment = async (department: Department) => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/departments/${department.id}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.ok) {
+        throw new Error(result.message ?? "Failed to delete department");
+      }
+
+      setDepartments((current) =>
+        current.filter((item) => item.id !== department.id),
+      );
+      setDepartmentError("");
+    } catch (error) {
+      setDepartmentError(
+        error instanceof Error ? error.message : "Failed to delete department",
+      );
+    }
   };
 
   const handleOpenDepartmentDetails = (department: Department) => {
@@ -135,6 +211,10 @@ export default function DepartmentPage() {
           />
         </div>
       </div>
+
+      {departmentError ? (
+        <p className="text-sm font-medium text-red-600">{departmentError}</p>
+      ) : null}
 
       <DepartmentTable
         data={filteredDepartments}

@@ -1,13 +1,229 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
+}
+
+model budget_year {
+  budget_year_id Int           @id @default(autoincrement())
+  year_name      String        @db.VarChar(20)
+  start_date     DateTime      @db.Date
+  end_date       DateTime      @db.Date
+  status         String        @db.VarChar(20)
+  item_detail    item_detail[]
+  semester       semester[]
+}
+
+model category {
+  category_id    Int     @id @default(autoincrement())
+  category_name  String  @db.VarChar(100)
+  description    String? @db.VarChar(255)
+  rental_allowed Boolean @default(false)
+  item           item[]
+}
+
+model department {
+  department_id                                    Int           @id @default(autoincrement())
+  department_code                                  String        @unique(map: "department_code") @db.VarChar(10)
+  department_name                                  String        @db.VarChar(255)
+  description                                      String?       @db.VarChar(255)
+  item_detail                                      item_detail[]
+  room                                             room[]
+  transfer_transfer_from_department_idTodepartment transfer[]    @relation("transfer_from_department_idTodepartment")
+  transfer_transfer_to_department_idTodepartment   transfer[]    @relation("transfer_to_department_idTodepartment")
+  users                                            users[]
+}
+
+model item {
+  item_id     String        @id @db.Char(4)
+  item_code   String        @unique(map: "item_code") @db.Char(4)
+  item_name   String        @db.VarChar(100)
+  category_id Int
+  brand       String?       @db.VarChar(100)
+  model       String?       @db.VarChar(100)
+  description String?       @db.VarChar(255)
+  created_at  DateTime      @default(now()) @db.DateTime(0)
+  image_url   String?       @db.VarChar(255)
+  category    category      @relation(fields: [category_id], references: [category_id], map: "fk_item_category")
+  item_detail item_detail[]
+
+  @@index([category_id], map: "idx_item_category")
+}
+
+model item_detail {
+  item_detail_id        Int             @id @default(autoincrement())
+  item_id               String          @db.Char(4)
+  detail_code           String          @unique(map: "detail_code") @db.Char(11)
+  current_department_id Int?
+  budget_year_id        Int
+  status                String          @db.VarChar(30)
+  purchase_date         DateTime?       @db.Date
+  notes                 String?         @db.VarChar(255)
+  current_room_id       Int?
+  created_at            DateTime        @default(now()) @db.DateTime(0)
+  budget_year           budget_year     @relation(fields: [budget_year_id], references: [budget_year_id], map: "fk_item_detail_budget")
+  department            department?     @relation(fields: [current_department_id], references: [department_id], map: "fk_item_detail_department")
+  item                  item            @relation(fields: [item_id], references: [item_id], map: "fk_item_detail_item")
+  room                  room?           @relation(fields: [current_room_id], references: [room_id], map: "fk_item_detail_room")
+  laptop_rental         laptop_rental[]
+  qr_code               qr_code[]
+  transfer_item         transfer_item[]
+
+  @@index([budget_year_id], map: "idx_item_detail_budget")
+  @@index([current_department_id], map: "idx_item_detail_department")
+  @@index([item_id], map: "idx_item_detail_item")
+  @@index([current_room_id], map: "idx_item_detail_room")
+}
+
+model laptop_rental {
+  rental_id      Int         @id @default(autoincrement())
+  student_id     Int?
+  teacher_user_id Int?
+  item_detail_id Int
+  semester_id    Int
+  issued_by      Int
+  issue_date     DateTime    @db.Date
+  due_date       DateTime    @db.Date
+  return_date    DateTime?   @db.Date
+  rental_status  String      @db.VarChar(20)
+  condition_out  String?     @db.VarChar(30)
+  condition_in   String?     @db.VarChar(30)
+  remarks        String?     @db.VarChar(255)
+  users          users       @relation(fields: [issued_by], references: [user_id], map: "fk_rental_issued_by")
+  item_detail    item_detail @relation(fields: [item_detail_id], references: [item_detail_id], map: "fk_rental_item_detail")
+  semester       semester    @relation(fields: [semester_id], references: [semester_id], map: "fk_rental_semester")
+  student        student?    @relation(fields: [student_id], references: [student_id], map: "fk_rental_student")
+  teacher        users?      @relation("rental_teacher_borrower", fields: [teacher_user_id], references: [user_id], map: "fk_rental_teacher")
+
+  @@index([issued_by], map: "idx_rental_issued_by")
+  @@index([item_detail_id], map: "idx_rental_item_detail")
+  @@index([semester_id], map: "idx_rental_semester")
+  @@index([student_id], map: "idx_rental_student")
+  @@index([teacher_user_id], map: "idx_rental_teacher")
+}
+
+model qr_code {
+  qr_code_id     String      @id @db.VarChar(20)
+  item_detail_id Int
+  generated_at   DateTime    @default(now()) @db.DateTime(0)
+  is_active      Boolean     @default(true)
+  item_detail    item_detail @relation(fields: [item_detail_id], references: [item_detail_id], onDelete: Cascade, map: "fk_qr_code_item_detail")
+
+  @@index([item_detail_id], map: "idx_qr_item_detail")
+}
+
+model role {
+  role_id   Int     @id @default(autoincrement())
+  role_name String  @unique(map: "role_name") @db.VarChar(50)
+  users     users[]
+}
+
+model room {
+  room_id                              Int           @id @default(autoincrement())
+  department_id                        Int
+  building_name                        String?       @db.VarChar(100)
+  description                          String?       @db.VarChar(255)
+  status                               Boolean       @default(true)
+  item_detail                          item_detail[]
+  department                           department    @relation(fields: [department_id], references: [department_id], map: "fk_room_department")
+  transfer_transfer_from_room_idToroom transfer[]    @relation("transfer_from_room_idToroom")
+  transfer_transfer_to_room_idToroom   transfer[]    @relation("transfer_to_room_idToroom")
+
+  @@index([department_id], map: "idx_room_department")
+}
+
+model semester {
+  semester_id   Int             @id @default(autoincrement())
+  budget_year_id Int?
+  academic_year String          @db.VarChar(20)
+  semester_name String          @db.VarChar(30)
+  start_date    DateTime        @db.Date
+  end_date      DateTime        @db.Date
+  status        String          @db.VarChar(20)
+  laptop_rental laptop_rental[]
+  budget_year   budget_year?    @relation(fields: [budget_year_id], references: [budget_year_id], map: "fk_semester_budget_year")
+
+  @@index([budget_year_id], map: "idx_semester_budget_year")
+}
+
+model student {
+  student_id    Int             @id @default(autoincrement())
+  student_name  String          @db.VarChar(100)
+  email         String?         @db.VarChar(150)
+  phone         String?         @db.VarChar(30)
+  batch         String?         @db.VarChar(30)
+  status        String          @db.VarChar(20)
+  roll_number   String?         @db.VarChar(20)
+  major         String?         @db.VarChar(20)
+  laptop_rental laptop_rental[]
+}
+
+model transfer {
+  transfer_id                                        Int             @id @default(autoincrement())
+  transfer_code                                      String          @unique(map: "transfer_code") @db.VarChar(30)
+  from_department_id                                 Int
+  from_room_id                                       Int?
+  to_department_id                                   Int
+  to_room_id                                         Int?
+  initiated_by                                       Int
+  received_by                                        Int?
+  transfer_date                                      DateTime        @default(now()) @db.DateTime(0)
+  received_date                                      DateTime?       @db.DateTime(0)
+  transfer_status                                    String          @db.VarChar(20)
+  remarks                                            String?         @db.VarChar(255)
+  department_transfer_from_department_idTodepartment department      @relation("transfer_from_department_idTodepartment", fields: [from_department_id], references: [department_id], map: "fk_transfer_from_department")
+  room_transfer_from_room_idToroom                   room?           @relation("transfer_from_room_idToroom", fields: [from_room_id], references: [room_id], map: "fk_transfer_from_room")
+  users_transfer_initiated_byTousers                 users           @relation("transfer_initiated_byTousers", fields: [initiated_by], references: [user_id], map: "fk_transfer_initiated_by")
+  users_transfer_received_byTousers                  users?          @relation("transfer_received_byTousers", fields: [received_by], references: [user_id], map: "fk_transfer_received_by")
+  department_transfer_to_department_idTodepartment   department      @relation("transfer_to_department_idTodepartment", fields: [to_department_id], references: [department_id], map: "fk_transfer_to_department")
+  room_transfer_to_room_idToroom                     room?           @relation("transfer_to_room_idToroom", fields: [to_room_id], references: [room_id], map: "fk_transfer_to_room")
+  transfer_item                                      transfer_item[]
+
+  @@index([from_room_id], map: "fk_transfer_from_room")
+  @@index([to_room_id], map: "fk_transfer_to_room")
+  @@index([from_department_id], map: "idx_transfer_from_department")
+  @@index([initiated_by], map: "idx_transfer_initiated_by")
+  @@index([received_by], map: "idx_transfer_received_by")
+  @@index([to_department_id], map: "idx_transfer_to_department")
+}
+
+model transfer_item {
+  transfer_item_id Int         @id @default(autoincrement())
+  transfer_id      Int
+  item_detail_id   Int
+  condition_before String?     @db.VarChar(30)
+  condition_after  String?     @db.VarChar(30)
+  item_status      String?     @db.VarChar(20)
+  remarks          String?     @db.VarChar(255)
+  item_detail      item_detail @relation(fields: [item_detail_id], references: [item_detail_id], map: "fk_transfer_item_item_detail")
+  transfer         transfer    @relation(fields: [transfer_id], references: [transfer_id], onDelete: Cascade, map: "fk_transfer_item_transfer")
+
+  @@unique([transfer_id, item_detail_id], map: "uq_transfer_item")
+  @@index([item_detail_id], map: "idx_transfer_item_item_detail")
+  @@index([transfer_id], map: "idx_transfer_item_transfer")
+}
+
+model users {
+  user_id                               Int             @id @default(autoincrement())
+  full_name                             String          @db.VarChar(100)
+  username                              String          @unique(map: "username") @db.VarChar(150)
+  email                                 String          @unique(map: "email") @db.VarChar(150)
+  phone                                 String?         @db.VarChar(30)
+  password_hash                         String          @db.VarChar(255)
+  role_id                               Int
+  department_id                         Int?
+  status                                String          @db.VarChar(20)
+  created_at                            DateTime        @default(now()) @db.DateTime(0)
+  laptop_rental                         laptop_rental[]
+  laptop_rental_as_borrower             laptop_rental[] @relation("rental_teacher_borrower")
+  transfer_transfer_initiated_byTousers transfer[]      @relation("transfer_initiated_byTousers")
+  transfer_transfer_received_byTousers  transfer[]      @relation("transfer_received_byTousers")
+  department                            department?     @relation(fields: [department_id], references: [department_id], map: "fk_users_department")
+  role                                  role            @relation(fields: [role_id], references: [role_id], map: "fk_users_role")
+
+  @@index([department_id], map: "idx_users_department")
+  @@index([role_id], map: "idx_users_role")
 }

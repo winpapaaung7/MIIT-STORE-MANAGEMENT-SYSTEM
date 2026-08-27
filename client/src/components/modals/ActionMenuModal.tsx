@@ -103,6 +103,16 @@ export default function ActionMenuModal({
           <div className="space-y-4 py-2">
             {activeAction.type === "remark" && (
               <div className="grid gap-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <AccessoryDetailTile
+                    label="Current Department"
+                    value={activeAction.item.department}
+                  />
+                  <AccessoryDetailTile
+                    label="Current Room"
+                    value={activeAction.item.room || "No room assigned."}
+                  />
+                </div>
                 <AccessoryDetailTile
                   label="Status"
                   value={activeAction.item.status}

@@ -22,12 +22,14 @@ import { type InventoryItem } from "./data/inventoryData";
 
 interface EditItemModalProps {
   item: InventoryItem & { category?: string }; // Extended slightly to support category if present
+  categories: readonly { id: number; name: string }[];
   onDelete: (id: string) => void;
   onEdit: (updatedItem: any) => void;
 }
 
 export const EditItemModal: React.FC<EditItemModalProps> = ({
   item,
+  categories,
   onDelete,
   onEdit,
 }) => {
@@ -59,8 +61,14 @@ export const EditItemModal: React.FC<EditItemModalProps> = ({
     reader.readAsDataURL(file);
   };
 
-  const handleSaveChanges = () => {
-    onEdit({ ...item, name, category, image });
+  const handleSaveChanges = async () => {
+    await onEdit({
+      ...item,
+      name,
+      category,
+      image,
+      categoryId: categories.find((option) => option.name === category)?.id,
+    });
     setIsEditDialogOpen(false);
   };
 
@@ -72,6 +80,8 @@ export const EditItemModal: React.FC<EditItemModalProps> = ({
     onDelete(item.id);
     setIsDeleteDialogOpen(false);
   };
+
+  const openEditDialog = () => setIsEditDialogOpen(true);
 
   return (
     <>
@@ -88,7 +98,7 @@ export const EditItemModal: React.FC<EditItemModalProps> = ({
         <DropdownMenuContent align="end" className="w-36 rounded-xl">
           <DropdownMenuItem
             className="cursor-pointer text-slate-950 focus:text-slate-950"
-            onClick={() => setIsEditDialogOpen(true)}
+            onClick={openEditDialog}
           >
             <Edit3 className="h-4 w-4 text-slate-600" />
             Edit
@@ -163,9 +173,11 @@ export const EditItemModal: React.FC<EditItemModalProps> = ({
                   backgroundRepeat: "no-repeat",
                 }}
               >
-                <option value="Laptops & Computers">Laptops & Computers</option>
-                <option value="Electronics">Electronics</option>
-                <option value="Furniture">Furniture</option>
+                {categories.map((option) => (
+                  <option key={option.id} value={option.name}>
+                    {option.name}
+                  </option>
+                ))}
               </select>
             </div>
 

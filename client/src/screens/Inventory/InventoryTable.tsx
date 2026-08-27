@@ -8,7 +8,6 @@ import {
 } from "@/components/ui/table";
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-
 import { useState } from "react";
 
 import { type InventoryItem } from "./data/inventoryData";
@@ -16,6 +15,7 @@ import { EditItemModal } from "./EditItemModal";
 
 interface InventoryTableProps {
   items: InventoryItem[];
+  categories: readonly { id: number; name: string }[];
   onOpenItem: (item: InventoryItem) => void;
   onEditItem: (item: InventoryItem) => void;
   onDeleteItem: (id: string) => void;
@@ -23,6 +23,7 @@ interface InventoryTableProps {
 
 export default function InventoryTable({
   items,
+  categories,
   onOpenItem,
   onEditItem,
   onDeleteItem,
@@ -87,7 +88,7 @@ export default function InventoryTable({
                   className="h-24 cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
                 >
                   <TableCell className="px-4 py-5 text-left font-mono text-sm font-medium text-slate-950 sm:px-8 sm:text-base">
-                    {item.id.slice(0, 3)}
+                    {item.id}
                   </TableCell>
 
                   <TableCell className="px-4 py-5 text-left sm:px-8">
@@ -140,6 +141,7 @@ export default function InventoryTable({
                     <div className="flex items-center justify-center">
                       <EditItemModal
                         item={item}
+                        categories={categories}
                         onDelete={onDeleteItem}
                         onEdit={onEditItem}
                       />
