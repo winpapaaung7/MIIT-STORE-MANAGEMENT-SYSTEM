@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "seed:roles": "tsx src/scripts/seed-roles.ts",
+    "check:auth-migration": "tsx src/scripts/check-auth-migration.ts",
+    "reset:user-password": "tsx src/scripts/reset-user-password.ts",
+    "create:user": "tsx src/scripts/create-user.ts"
   },
   "keywords": [],
   "author": "",
@@ -15,10 +19,12 @@
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.9.1",
     "@prisma/client": "^7.8.0",
+    "@types/nodemailer": "^8.0.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "mysql2": "^3.23.2",
+    "nodemailer": "^9.0.6",
     "prisma": "^7.8.0"
   },
   "devDependencies": {
