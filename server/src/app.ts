@@ -7,6 +7,9 @@ import path from "node:path";
 import { PrismaClient } from "./generated/prisma/client.js";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { createDashboardRouter } from "./routes/dashboard.js";
+import { createAuthRouter } from "./routes/auth.js";
+import { createUsersRouter } from "./routes/users.js";
+import { apiAuthorization, requireDepartmentScope } from "./auth/middleware.js";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -19,8 +22,12 @@ const prisma = new PrismaClient({
 });
 
 const app = express();
-app.use(cors());
+const allowedOrigins = (process.env.CLIENT_ORIGIN ?? "http://localhost:5173,http://localhost:4173").split(",").map((origin) => origin.trim());
+app.use(cors({ origin: (origin, callback) => callback(null, !origin || allowedOrigins.includes(origin)), credentials: true }));
 app.use(express.json({ limit: "6mb" }));
+app.use("/api/auth", createAuthRouter(prisma));
+app.use("/api", apiAuthorization(prisma));
+app.use("/api/users", createUsersRouter(prisma));
 app.use("/api/dashboard", createDashboardRouter(prisma));
 
 const uploadsDirectory = path.resolve("uploads");
@@ -369,9 +376,10 @@ app.get("/api/items/next-generated-id", async (req, res) => {
   }
 });
 
-app.get("/api/departments", async (_req, res) => {
+app.get("/api/departments", async (req, res) => {
   try {
     const rooms = await prisma.room.findMany({
+      where: req.auth?.role.code === "DEPARTMENT_HEAD" ? { department_id: req.auth.department!.id } : undefined,
       include: {
         department: true,
       },
@@ -545,6 +553,7 @@ app.get("/api/qr-codes/:id", async (req, res) => {
       });
 
       if (itemDetail) {
+        if (!requireDepartmentScope(itemDetail.current_department_id, res, req.auth)) return;
         await createQrCodeForItemDetailId(numericId);
 
         qrCode = await prisma.qr_code.findUnique({
@@ -591,6 +600,7 @@ app.get("/api/qr-codes/:id", async (req, res) => {
       });
 
       if (itemDetail) {
+        if (!requireDepartmentScope(itemDetail.current_department_id, res, req.auth)) return;
         await createQrCodesForDetailCodes([qrCodeId]);
 
         return res.json({
@@ -647,6 +657,7 @@ app.get("/api/qr-codes/:id", async (req, res) => {
     }
 
     const detail = qrCode.item_detail;
+    if (!requireDepartmentScope(detail.current_department_id, res, req.auth)) return;
 
     res.json({
       ok: true,
@@ -678,9 +689,10 @@ app.get("/api/qr-codes/:id", async (req, res) => {
   }
 });
 
-app.get("/api/items", async (_req, res) => {
+app.get("/api/items", async (req, res) => {
   try {
     const items = await prisma.item.findMany({
+      where: req.auth?.role.code === "DEPARTMENT_HEAD" ? { item_detail: { some: { current_department_id: req.auth.department!.id } } } : undefined,
       include: {
         category: true,
         _count: {
@@ -712,9 +724,10 @@ app.get("/api/items", async (_req, res) => {
   }
 });
 
-app.get("/api/item-details", async (_req, res) => {
+app.get("/api/item-details", async (req, res) => {
   try {
     const details = await prisma.item_detail.findMany({
+      where: req.auth?.role.code === "DEPARTMENT_HEAD" ? { current_department_id: req.auth.department!.id } : undefined,
       include: {
         item: {
           include: {
@@ -1365,16 +1378,34 @@ app.post("/api/transfers", async (req, res) => {
       return;
     }
 
-    const fromDepartment = await findOrCreateDepartment(fromDepartmentName);
-    const toDepartment = await findOrCreateDepartment(toDepartmentName);
+    const isDepartmentHead = req.auth?.role.code === "DEPARTMENT_HEAD";
+    const fromDepartment = isDepartmentHead
+      ? await prisma.department.findFirst({ where: { department_name: fromDepartmentName } })
+      : await findOrCreateDepartment(fromDepartmentName);
+    const toDepartment = isDepartmentHead
+      ? await prisma.department.findFirst({ where: { department_name: toDepartmentName } })
+      : await findOrCreateDepartment(toDepartmentName);
+    if (!fromDepartment || !toDepartment) {
+      res.status(404).json({ ok: false, message: "Department not found" });
+      return;
+    }
+    if (!requireDepartmentScope(fromDepartment.department_id, res, req.auth)) return;
 
     const fromRoom = fromRoomName
-      ? await findOrCreateRoom(fromDepartment.department_id, fromRoomName)
+      ? (isDepartmentHead
+          ? await prisma.room.findFirst({ where: { department_id: fromDepartment.department_id, building_name: fromRoomName } })
+          : await findOrCreateRoom(fromDepartment.department_id, fromRoomName))
       : null;
 
     const toRoom = toRoomName
-      ? await findOrCreateRoom(toDepartment.department_id, toRoomName)
+      ? (isDepartmentHead
+          ? await prisma.room.findFirst({ where: { department_id: toDepartment.department_id, building_name: toRoomName } })
+          : await findOrCreateRoom(toDepartment.department_id, toRoomName))
       : null;
+    if (isDepartmentHead && (fromRoomName && !fromRoom || !toRoom)) {
+      res.status(404).json({ ok: false, message: "Room not found" });
+      return;
+    }
 
     const itemDetails = await prisma.item_detail.findMany({
       where: {
@@ -1423,7 +1454,7 @@ app.post("/api/transfers", async (req, res) => {
       return;
     }
 
-    const initiatedBy = await prisma.users.findFirst();
+    const initiatedBy = req.auth ? await prisma.users.findUnique({ where: { user_id: req.auth.id } }) : null;
 
     if (!initiatedBy) {
       res.status(500).json({
