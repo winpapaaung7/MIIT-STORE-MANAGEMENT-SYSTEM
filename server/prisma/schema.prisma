@@ -212,10 +212,12 @@ model users {
   username                              String          @unique(map: "username") @db.VarChar(150)
   email                                 String          @unique(map: "email") @db.VarChar(150)
   phone                                 String?         @db.VarChar(30)
+  image_url                             String?         @db.VarChar(255)
   password_hash                         String          @db.VarChar(255)
   role_id                               Int
   department_id                         Int?
   status                                String          @db.VarChar(20)
+  language                              String          @default("eng") @db.VarChar(5)
   created_at                            DateTime        @default(now()) @db.DateTime(0)
   laptop_rental                         laptop_rental[]
   laptop_rental_as_borrower             laptop_rental[] @relation("rental_teacher_borrower")
@@ -226,4 +228,20 @@ model users {
 
   @@index([department_id], map: "idx_users_department")
   @@index([role_id], map: "idx_users_role")
+}
+
+model activity_log {
+  activity_log_id Int      @id @default(autoincrement())
+  action          String   @db.VarChar(20)
+  module          String   @db.VarChar(50)
+  target_type     String   @db.VarChar(50)
+  target_id       String?  @db.VarChar(100)
+  target_name     String   @db.VarChar(255)
+  actor_name      String   @db.VarChar(100)
+  details         String?  @db.Text
+  created_at      DateTime @default(now()) @db.DateTime(0)
+
+  @@index([action], map: "idx_activity_log_action")
+  @@index([module], map: "idx_activity_log_module")
+  @@index([created_at], map: "idx_activity_log_created_at")
 }

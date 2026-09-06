@@ -1,21 +1,22 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   Bell,
   CalendarDays,
   Clock3,
   Languages,
   LogOut,
-  Search,
   ShieldCheck,
   UserRound,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/context/LanguageContext";
 
 import SettingProfile from "./Settingprofile";
 import AcedemicYear from "./AcedemicYear";
 import History from "./History";
 import Preferences from "./Preferences";
+import type { ProfileDetails } from "./EditProfileModal";
 
 const settingTabs = [
   { id: "profile", label: "My Profile", icon: UserRound },
@@ -26,13 +27,72 @@ const settingTabs = [
 ] as const;
 
 type SettingTab = (typeof settingTabs)[number]["id"];
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";
+
+async function requestProfile(): Promise<ProfileDetails> {
+  const response = await fetch(`${API_BASE_URL}/api/profile`);
+  const payload = await response.json();
+  if (!response.ok || !payload.ok) throw new Error(payload.message ?? "Unable to load profile.");
+  return payload.profile;
+}
 
 export default function SettingPage() {
+  const { language } = useLanguage();
+  const isMyanmar = language === "mm";
   const [activeTab, setActiveTab] = useState<SettingTab>("profile");
   const [twoStep, setTwoStep] = useState(true);
+  const [profile, setProfile] = useState<ProfileDetails | null>(null);
+  const [profileError, setProfileError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void requestProfile()
+      .then((nextProfile) => {
+        if (!cancelled) {
+          setProfile(nextProfile);
+          setProfileError("");
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setProfileError(error instanceof Error ? error.message : "Unable to load profile.");
+        }
+      });
+
+    return () => { cancelled = true; };
+  }, []);
+
+  const loadProfile = () => {
+    void requestProfile()
+      .then((nextProfile) => {
+        setProfile(nextProfile);
+        setProfileError("");
+      })
+      .catch((error) => {
+        setProfileError(error instanceof Error ? error.message : "Unable to load profile.");
+      });
+  };
+
+  const saveProfile = async (nextProfile: ProfileDetails) => {
+    const response = await fetch(`${API_BASE_URL}/api/profile`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(nextProfile),
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.ok) throw new Error(payload.message ?? "Unable to save profile.");
+    setProfile(payload.profile);
+  };
 
   const renderContent = () => {
-    if (activeTab === "profile") return <SettingProfile />;
+    if (activeTab === "profile") {
+      if (profile) return <SettingProfile profile={profile} onSave={saveProfile} />;
+      if (profileError) {
+        return <section className="space-y-3"><h2 className="text-xl font-semibold text-slate-950 dark:text-slate-50">My Profile</h2><p className="text-sm text-rose-600">{profileError}</p><Button variant="outline" onClick={() => { setProfileError(""); void loadProfile(); }}>Try again</Button></section>;
+      }
+      return <section><h2 className="text-xl font-semibold text-slate-950 dark:text-slate-50">My Profile</h2><p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Loading profile...</p></section>;
+    }
     if (activeTab === "academic") return <AcedemicYear />;
     if (activeTab === "history") return <History />;
     if (activeTab === "preferences") return <Preferences />;
@@ -40,24 +100,24 @@ export default function SettingPage() {
     return (
       <section>
         <SectionHeader
-          title="Security"
-          description="Manage account protection and access controls."
+          title={isMyanmar ? "လုံခြုံရေး" : "Security"}
+          description={isMyanmar ? "အကောင့်ကာကွယ်မှုနှင့် ဝင်ရောက်ခွင့်များကို စီမံပါ။" : "Manage account protection and access controls."}
         />
 
         <div className="mt-6 divide-y divide-slate-100">
           <SettingRow
-            title="Password"
-            description="Set a strong password to protect your account."
+            title={isMyanmar ? "စကားဝှက်" : "Password"}
+            description={isMyanmar ? "သင့်အကောင့်ကို ကာကွယ်ရန် ခိုင်မာသော စကားဝှက်တစ်ခု သတ်မှတ်ပါ။" : "Set a strong password to protect your account."}
             action={
               <Button variant="outline" className="h-9 rounded-full px-4">
-                Change Password
+                {isMyanmar ? "စကားဝှက်ပြောင်းရန်" : "Change Password"}
               </Button>
             }
           />
 
           <SettingRow
-            title="2-step verification"
-            description="Require a verification code during sign in."
+            title={isMyanmar ? "အဆင့် ၂ ဆင့် အတည်ပြုခြင်း" : "2-step verification"}
+            description={isMyanmar ? "အကောင့်ဝင်ချိန်တွင် အတည်ပြုကုဒ်တစ်ခု လိုအပ်ပါသည်။" : "Require a verification code during sign in."}
             action={
               <ToggleSwitch
                 checked={twoStep}
@@ -67,11 +127,11 @@ export default function SettingPage() {
           />
 
           <SettingRow
-            title="Notifications"
-            description="Receive alerts about system changes."
+            title={isMyanmar ? "အသိပေးချက်များ" : "Notifications"}
+            description={isMyanmar ? "စနစ်ပြောင်းလဲမှုများအတွက် သတိပေးချက်များကို ရယူပါ။" : "Receive alerts about system changes."}
             action={
-              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
-                Enabled
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                {isMyanmar ? "ဖွင့်ထားသည်" : "Enabled"}
               </span>
             }
           />
@@ -83,48 +143,50 @@ export default function SettingPage() {
   return (
     // FIX 1: Max-height using viewport calculations matching layout layout definitions
     // prevents structural elements from overflowing the page container
-    <div className="flex max-h-[calc(100vh-4rem)] w-full flex-col space-y-6 overflow-hidden">
+    <div className="settings-page flex max-h-[calc(100vh-4rem)] w-full flex-col space-y-6 overflow-hidden">
       {/* Settings Top Header Frame (Completely static/unscrollable) */}
-      <div className="flex flex-col gap-4 shrink-0">
+      <div className="flex shrink-0 items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-950">
-            Settings
-          </h1>
-          <p className="text-sm text-slate-500">
-            Manage account preferences and system records
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-slate-50">{isMyanmar ? "ဆက်တင်များ" : "Settings"}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{isMyanmar ? "အကောင့်နှစ်သက်ရာများနှင့် စနစ်မှတ်တမ်းများကို စီမံပါ" : "Manage account preferences and system records"}</p>
         </div>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative w-full sm:max-w-md">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <input
-              className="h-11 w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 text-sm outline-none transition focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
-              placeholder="Search settings..."
-            />
-          </div>
-
-          <button className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 hover:text-slate-900">
+        <div>
+          <button className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:bg-slate-50 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100">
             <Bell className="h-5 w-5" />
           </button>
         </div>
       </div>
 
       {/* FIX 2: Added 'min-h-0' alongside flex structural settings to strictly cut off page extension */}
-      <div className="grid min-h-0 flex-1 rounded-3xl border border-slate-200 bg-white shadow-sm lg:grid-cols-[260px_1fr] overflow-hidden">
+      <div className="grid min-h-0 flex-1 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm lg:grid-cols-[260px_1fr] dark:border-slate-800 dark:bg-slate-900">
         {/* FIX 3: Replaced 'overflow-y-auto' with 'overflow-hidden' on the side options layout wrapper */}
-        <aside className="flex flex-col border-b border-slate-100 p-5 lg:border-b-0 lg:border-r overflow-hidden shrink-0">
+        <aside className="flex shrink-0 flex-col overflow-hidden border-b border-slate-100 p-5 lg:border-r lg:border-b-0 dark:border-slate-800 dark:bg-[#050814]">
           {/* Identity Card Block */}
-          <div className="mb-6 flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3 shrink-0">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-900 text-white">
-              <UserRound className="h-5 w-5" />
+          <div className="mb-6 flex shrink-0 items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-slate-100 text-sm font-bold text-slate-800 dark:bg-slate-700 dark:text-slate-100">
+              {profile?.image ? (
+                <img
+                  src={profile.image}
+                  alt={`${profile.name}'s profile`}
+                  className="h-full w-full object-cover"
+                />
+              ) : profile ? (
+                profile.name
+                  .split(" ")
+                  .filter(Boolean)
+                  .map((name) => name[0])
+                  .slice(0, 2)
+                  .join("")
+                  .toUpperCase()
+              ) : <UserRound className="h-5 w-5" />}
             </div>
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-950">
-                MIIT Admin
+              <p className="truncate text-sm font-semibold text-slate-950 dark:text-slate-50">
+                {profile?.name ?? "Loading..."}
               </p>
-              <p className="truncate text-xs text-slate-500">
-                admin@miitstore.com
+              <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                {profile?.email ?? ""}
               </p>
             </div>
           </div>
@@ -134,6 +196,9 @@ export default function SettingPage() {
             {settingTabs.map((item) => {
               const Icon = item.icon;
               const active = activeTab === item.id;
+              const labels: Record<SettingTab, string> = isMyanmar
+                ? { profile: "ကိုယ်ရေးအချက်အလက်", security: "လုံခြုံရေး", academic: "ပညာသင်နှစ်", history: "မှတ်တမ်း", preferences: "နှစ်သက်ရာများ" }
+                : Object.fromEntries(settingTabs.map((tab) => [tab.id, tab.label])) as Record<SettingTab, string>;
 
               return (
                 <button
@@ -142,12 +207,12 @@ export default function SettingPage() {
                   onClick={() => setActiveTab(item.id)}
                   className={`flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm transition ${
                     active
-                      ? "bg-slate-900 font-semibold text-white"
-                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                      ? "bg-[#0f172a] font-semibold text-white"
+                      : "text-slate-500 hover:bg-slate-800 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                   }`}
                 >
                   <Icon className="h-4 w-4" />
-                  {item.label}
+                  {labels[item.id]}
                 </button>
               );
             })}
@@ -179,8 +244,8 @@ function SectionHeader({
 }) {
   return (
     <div>
-      <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
-      <p className="mt-1 text-sm text-slate-500">{description}</p>
+      <h2 className="text-xl font-semibold text-slate-950 dark:text-slate-50">{title}</h2>
+      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
     </div>
   );
 }
@@ -197,8 +262,8 @@ function SettingRow({
   return (
     <div className="flex items-center justify-between gap-6 py-5">
       <div>
-        <p className="text-sm font-medium text-slate-950">{title}</p>
-        <p className="mt-1 text-sm text-slate-500">{description}</p>
+        <p className="text-sm font-medium text-slate-950 dark:text-slate-100">{title}</p>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{description}</p>
       </div>
       <div className="shrink-0">{action}</div>
     </div>

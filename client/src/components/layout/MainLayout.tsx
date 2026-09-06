@@ -9,7 +9,7 @@ export default function MainLayout() {
     <div className="min-h-screen overflow-x-hidden" style={{ "--sidebar-width": sidebarWidth } as CSSProperties}>
       <Sidebar collapsed={collapsed} onCollapsedChange={setCollapsed} />
 
-      <main className="ml-[var(--sidebar-width)] min-h-screen min-w-0 bg-slate-100 p-4 sm:p-6">
+      <main className="ml-[var(--sidebar-width)] min-h-screen min-w-0 bg-slate-100 p-4 transition-colors sm:p-6 dark:bg-[#020617]">
         <Outlet />
       </main>
     </div>

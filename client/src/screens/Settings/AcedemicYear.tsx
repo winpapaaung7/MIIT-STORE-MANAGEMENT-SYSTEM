@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useLanguage } from "@/context/LanguageContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +30,7 @@ type LiveAcademicYear = AcademicYear & {
 };
 
 export default function AcedemicYear() {
+  const { t } = useLanguage();
   // Academic Year List
   const [academicYears, setAcademicYears] =
     useState<LiveAcademicYear[]>([]);
@@ -83,11 +85,11 @@ export default function AcedemicYear() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold text-slate-950">
-            Academic Year
+            {t("academicYear")}
           </h2>
 
           <p className="mt-1 text-sm text-slate-500">
-            Manage academic years and current sessions.
+            {t("manageAcademicYears")}
           </p>
         </div>
 
@@ -110,7 +112,7 @@ export default function AcedemicYear() {
         />
 
         <Input
-          placeholder="Search academic year..."
+          placeholder={t("searchAcademicYears")}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-10 rounded-xl"
@@ -139,7 +141,7 @@ export default function AcedemicYear() {
                   text-blue-700
                 "
               >
-                Current Academic Year
+                {t("currentAcademicYear")}
               </Badge>
             )}
 
@@ -215,7 +217,7 @@ export default function AcedemicYear() {
                       ))}
                     </div>
                   ) : (
-                    <p className="mt-2 text-xs text-amber-600">No semesters configured yet.</p>
+                    <p className="mt-2 text-xs text-amber-600">{t("noSemesters")}</p>
                   )}
                 </div>
               </div>
@@ -230,7 +232,7 @@ export default function AcedemicYear() {
                       : "bg-red-100 text-red-700"
                   }
                 >
-                  {item.status}
+                  {item.status === "Active" ? t("active") : t("inactive")}
                 </Badge>
 
                 <DropdownMenu>
@@ -239,7 +241,7 @@ export default function AcedemicYear() {
                       type="button"
                       variant="outline"
                       size="icon"
-                      aria-label="Academic year actions"
+                      aria-label={t("actions")}
                       className="h-11 w-11 rounded-xl border-slate-200 bg-white shadow-sm hover:bg-slate-50"
                     >
                       <MoreHorizontal className="h-5 w-5 text-slate-700" />
@@ -255,7 +257,7 @@ export default function AcedemicYear() {
                           onSelect={(event) => event.preventDefault()}
                         >
                           <Pencil className="h-4 w-4 text-slate-600" />
-                          Edit
+                          {t("edit")}
                         </DropdownMenuItem>
                       }
                     />
@@ -269,7 +271,7 @@ export default function AcedemicYear() {
                           className="text-red-600 focus:text-red-600"
                         >
                           <Trash2 className="h-4 w-4" />
-                          Delete
+                          {t("delete")}
                         </DropdownMenuItem>
                       }
                     />
@@ -282,7 +284,7 @@ export default function AcedemicYear() {
 
         {filteredYears.length === 0 && (
           <Card className="rounded-2xl p-8 text-center text-sm text-slate-500 shadow-sm">
-            No academic years found.
+            {t("noAcademicYears")}
           </Card>
         )}
       </div>

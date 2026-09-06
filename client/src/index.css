@@ -128,3 +128,365 @@
     @apply font-sans;
     }
 }
+
+/* Dashboard colors that remain readable when the global dark theme is active. */
+.dark .dashboard-page {
+  color-scheme: dark;
+}
+
+.dark .dashboard-page .bg-white {
+  background-color: #111827;
+}
+
+.dark .dashboard-page .bg-slate-50 {
+  background-color: #1e293b;
+}
+
+.dark .dashboard-page .border-slate-100,
+.dark .dashboard-page .border-slate-200,
+.dark .dashboard-page .border-slate-200\/90 {
+  border-color: #334155;
+}
+
+.dark .dashboard-page .text-slate-950,
+.dark .dashboard-page .text-slate-900,
+.dark .dashboard-page .text-slate-800 {
+  color: #f8fafc;
+}
+
+.dark .dashboard-page .text-slate-700,
+.dark .dashboard-page .text-slate-600 {
+  color: #cbd5e1;
+}
+
+.dark .dashboard-page .text-slate-500 {
+  color: #94a3b8;
+}
+
+.dark .dashboard-page .bg-blue-50 { background-color: #172554; }
+.dark .dashboard-page .bg-green-50 { background-color: #052e16; }
+.dark .dashboard-page .bg-orange-50 { background-color: #431407; }
+.dark .dashboard-page .bg-red-50 { background-color: #450a0a; }
+
+.dark .dashboard-page .text-blue-600 { color: #93c5fd; }
+.dark .dashboard-page .text-green-600,
+.dark .dashboard-page .text-green-700 { color: #86efac; }
+.dark .dashboard-page .text-orange-600,
+.dark .dashboard-page .text-amber-700 { color: #fdba74; }
+.dark .dashboard-page .text-red-600,
+.dark .dashboard-page .text-red-700 { color: #fca5a5; }
+
+.dark .dashboard-page .recharts-cartesian-axis-tick-value,
+.dark .dashboard-page .recharts-cartesian-axis line,
+.dark .dashboard-page .recharts-cartesian-axis-tick line {
+  fill: #cbd5e1;
+  stroke: #64748b;
+}
+
+/* Use a Myanmar-capable font when the Myanmar language preference is selected. */
+html[lang="my"],
+html[lang="my"] body {
+  font-family: "Myanmar Text", "Noto Sans Myanmar", sans-serif;
+}
+
+/* Keep the inventory workspace readable when the global dark theme is active. */
+.dark .inventory-page {
+  color-scheme: dark;
+}
+
+.dark .inventory-page .bg-white {
+  background-color: #111827;
+}
+
+.dark .inventory-page [class*="bg-slate-50"],
+.dark .inventory-page .bg-slate-100 {
+  background-color: #1e293b;
+}
+
+.dark .inventory-page .border-slate-100,
+.dark .inventory-page .border-slate-200,
+.dark .inventory-page .border-slate-300 {
+  border-color: #334155;
+}
+
+.dark .inventory-page .text-slate-950,
+.dark .inventory-page .text-slate-900,
+.dark .inventory-page .text-slate-800 {
+  color: #f8fafc;
+}
+
+.dark .inventory-page .text-slate-700,
+.dark .inventory-page .text-slate-600 {
+  color: #cbd5e1;
+}
+
+.dark .inventory-page .text-slate-500,
+.dark .inventory-page .text-slate-400 {
+  color: #94a3b8;
+}
+
+.dark .inventory-page .bg-emerald-50 { background-color: #052e16; }
+.dark .inventory-page .bg-rose-50 { background-color: #450a0a; }
+.dark .inventory-page .text-emerald-600 { color: #86efac; }
+.dark .inventory-page .text-rose-600 { color: #fca5a5; }
+
+/* Keep the accessories filters and records table readable in dark mode. */
+.dark .accessories-page {
+  background-color: #020617;
+  color-scheme: dark;
+}
+
+.dark .accessories-page .bg-white {
+  background-color: #111827;
+}
+
+.dark .accessories-page [class*="bg-slate-50"],
+.dark .accessories-page .bg-slate-100 {
+  background-color: #1e293b;
+}
+
+.dark .accessories-page .border-slate-100,
+.dark .accessories-page .border-slate-200,
+.dark .accessories-page .border-slate-300 {
+  border-color: #334155;
+}
+
+.dark .accessories-page .text-slate-950,
+.dark .accessories-page .text-slate-900,
+.dark .accessories-page .text-slate-800 {
+  color: #f8fafc;
+}
+
+.dark .accessories-page .text-slate-700,
+.dark .accessories-page .text-slate-600 {
+  color: #cbd5e1;
+}
+
+.dark .accessories-page .text-slate-500,
+.dark .accessories-page .text-slate-400 {
+  color: #94a3b8;
+}
+
+.dark .accessories-page .bg-emerald-100 { background-color: #052e16; }
+.dark .accessories-page .bg-amber-100 { background-color: #451a03; }
+.dark .accessories-page .bg-rose-100 { background-color: #450a0a; }
+.dark .accessories-page .text-emerald-700 { color: #86efac; }
+.dark .accessories-page .text-amber-700 { color: #fdba74; }
+.dark .accessories-page .text-rose-700 { color: #fda4af; }
+
+/* Popovers are rendered in a portal, outside the page-specific dark-mode scope. */
+.dark [data-slot="popover-content"],
+.dark [data-slot="dropdown-menu-content"] {
+  border-color: #475569;
+  background-color: #111827;
+  color: #f8fafc;
+}
+
+.dark [data-slot="popover-content"] .bg-white,
+.dark [data-slot="dropdown-menu-content"] .bg-white {
+  background-color: #1e293b;
+}
+
+.dark [data-slot="popover-content"] .border-slate-200,
+.dark [data-slot="popover-content"] .border-slate-300,
+.dark [data-slot="dropdown-menu-content"] .border-slate-200 {
+  border-color: #475569;
+}
+
+.dark [data-slot="popover-content"] .text-slate-950,
+.dark [data-slot="popover-content"] .text-slate-900,
+.dark [data-slot="dropdown-menu-content"] .text-slate-950,
+.dark [data-slot="dropdown-menu-content"] .text-slate-900 {
+  color: #f8fafc;
+}
+
+.dark [data-slot="popover-content"] .text-slate-700,
+.dark [data-slot="popover-content"] .text-slate-600,
+.dark [data-slot="popover-content"] .text-slate-500,
+.dark [data-slot="dropdown-menu-content"] .text-slate-500 {
+  color: #cbd5e1;
+}
+
+/* Ensure Laptop Rental cards, filters, and records remain high-contrast in dark mode. */
+.dark .laptop-rental-page {
+  color-scheme: dark;
+}
+
+.dark .laptop-rental-page .bg-white {
+  background-color: #1e293b;
+}
+
+.dark .laptop-rental-page [class*="bg-slate-50"],
+.dark .laptop-rental-page .bg-slate-100 {
+  background-color: #1e293b;
+}
+
+.dark .laptop-rental-page .border-slate-100,
+.dark .laptop-rental-page .border-slate-200,
+.dark .laptop-rental-page .border-slate-300 {
+  border-color: #334155;
+}
+
+.dark .laptop-rental-page .text-slate-950,
+.dark .laptop-rental-page .text-slate-900,
+.dark .laptop-rental-page .text-slate-800 {
+  color: #f8fafc;
+}
+
+.dark .laptop-rental-page .text-slate-700,
+.dark .laptop-rental-page .text-slate-600,
+.dark .laptop-rental-page .text-slate-500,
+.dark .laptop-rental-page .text-slate-400 {
+  color: #cbd5e1;
+}
+
+.dark .laptop-rental-page .bg-blue-50 { background-color: #172554; }
+.dark .laptop-rental-page .bg-green-50 { background-color: #052e16; }
+.dark .laptop-rental-page .bg-amber-50 { background-color: #451a03; }
+.dark .laptop-rental-page .bg-red-50 { background-color: #450a0a; }
+.dark .laptop-rental-page .text-blue-600,
+.dark .laptop-rental-page .text-blue-700 { color: #93c5fd; }
+.dark .laptop-rental-page .text-green-600,
+.dark .laptop-rental-page .text-green-700 { color: #86efac; }
+.dark .laptop-rental-page .text-amber-600,
+.dark .laptop-rental-page .text-amber-700 { color: #fdba74; }
+.dark .laptop-rental-page .text-red-700 { color: #fca5a5; }
+
+/* Component-level utilities on the rental screen need explicit precedence. */
+.dark .laptop-rental-page .text-slate-950,
+.dark .laptop-rental-page .text-slate-900,
+.dark .laptop-rental-page .text-slate-800 {
+  color: #f8fafc !important;
+}
+
+.dark .laptop-rental-page .text-slate-700,
+.dark .laptop-rental-page .text-slate-600,
+.dark .laptop-rental-page .text-slate-500,
+.dark .laptop-rental-page .text-slate-400 {
+  color: #cbd5e1 !important;
+}
+
+.dark .laptop-rental-page .bg-white,
+.dark .laptop-rental-page [class*="bg-slate-50"],
+.dark .laptop-rental-page .bg-slate-100 {
+  background-color: #1e293b !important;
+}
+
+/* Department records and actions use a readable dark surface. */
+.dark .department-page {
+  color-scheme: dark;
+}
+
+.dark .department-page .bg-white,
+.dark .department-page [class*="bg-slate-50"],
+.dark .department-page .bg-slate-100 {
+  background-color: #1e293b !important;
+}
+
+.dark .department-page .border-slate-100,
+.dark .department-page .border-slate-200,
+.dark .department-page .border-slate-300 {
+  border-color: #334155 !important;
+}
+
+.dark .department-page .text-slate-950,
+.dark .department-page .text-slate-900,
+.dark .department-page .text-slate-800 {
+  color: #f8fafc !important;
+}
+
+.dark .department-page .text-slate-700,
+.dark .department-page .text-slate-600,
+.dark .department-page .text-slate-500,
+.dark .department-page .text-slate-400 {
+  color: #cbd5e1 !important;
+}
+
+/* Settings profile cards and sub-pages share the same readable dark surface. */
+.dark .settings-page {
+  color-scheme: dark;
+}
+
+.dark .settings-page .bg-white,
+.dark .settings-page [class*="bg-slate-50"],
+.dark .settings-page .bg-slate-100 {
+  background-color: #1e293b !important;
+}
+
+.dark .settings-page .border-slate-100,
+.dark .settings-page .border-slate-200,
+.dark .settings-page .border-slate-300,
+.dark .settings-page .divide-slate-100 > * {
+  border-color: #334155 !important;
+}
+
+.dark .settings-page .text-slate-950,
+.dark .settings-page .text-slate-900,
+.dark .settings-page .text-slate-800 {
+  color: #f8fafc !important;
+}
+
+.dark .settings-page .text-slate-700,
+.dark .settings-page .text-slate-600,
+.dark .settings-page .text-slate-500,
+.dark .settings-page .text-slate-400 {
+  color: #cbd5e1 !important;
+}
+
+.dark .settings-page .bg-emerald-100 { background-color: #052e16 !important; }
+.dark .settings-page .text-emerald-700 { color: #86efac !important; }
+.dark .settings-page .text-amber-700 { color: #fdba74 !important; }
+
+/* One dark palette for every workspace. */
+.dark {
+  --app-dark-page: #020617;
+  --app-dark-surface: #0f172a;
+  --app-dark-raised: #1e293b;
+  --app-dark-border: #334155;
+  --app-dark-text: #f8fafc;
+  --app-dark-muted: #cbd5e1;
+  --background: var(--app-dark-page);
+  --card: var(--app-dark-surface);
+  --popover: var(--app-dark-surface);
+}
+
+.dark :is(.dashboard-page, .inventory-page, .accessories-page, .laptop-rental-page, .department-page, .settings-page) .bg-white {
+  background-color: var(--app-dark-surface) !important;
+}
+
+.dark :is(.dashboard-page, .inventory-page, .accessories-page, .laptop-rental-page, .department-page, .settings-page) [class*="bg-slate-50"],
+.dark :is(.dashboard-page, .inventory-page, .accessories-page, .laptop-rental-page, .department-page, .settings-page) .bg-slate-100 {
+  background-color: var(--app-dark-raised) !important;
+}
+
+.dark :is(.dashboard-page, .inventory-page, .accessories-page, .laptop-rental-page, .department-page, .settings-page) :is(.border-slate-100, .border-slate-200, .border-slate-300),
+.dark :is(.dashboard-page, .inventory-page, .accessories-page, .laptop-rental-page, .department-page, .settings-page) .divide-slate-100 > * {
+  border-color: var(--app-dark-border) !important;
+}
+
+.dark :is(.dashboard-page, .inventory-page, .accessories-page, .laptop-rental-page, .department-page, .settings-page) :is(.text-slate-950, .text-slate-900, .text-slate-800) {
+  color: var(--app-dark-text) !important;
+}
+
+.dark :is(.dashboard-page, .inventory-page, .accessories-page, .laptop-rental-page, .department-page, .settings-page) :is(.text-slate-700, .text-slate-600, .text-slate-500, .text-slate-400) {
+  color: var(--app-dark-muted) !important;
+}
+
+.dark :is(.dashboard-page, .inventory-page, .accessories-page, .laptop-rental-page, .department-page, .settings-page) .bg-blue-50 { background-color: #172554 !important; }
+.dark :is(.dashboard-page, .inventory-page, .accessories-page, .laptop-rental-page, .department-page, .settings-page) .bg-blue-100 { background-color: #172554 !important; }
+.dark :is(.dashboard-page, .inventory-page, .accessories-page, .laptop-rental-page, .department-page, .settings-page) :is(.bg-green-50, .bg-emerald-50, .bg-emerald-100) { background-color: #052e16 !important; }
+.dark :is(.dashboard-page, .inventory-page, .accessories-page, .laptop-rental-page, .department-page, .settings-page) .bg-green-100 { background-color: #052e16 !important; }
+.dark :is(.dashboard-page, .inventory-page, .accessories-page, .laptop-rental-page, .department-page, .settings-page) :is(.bg-orange-50, .bg-amber-50, .bg-amber-100) { background-color: #451a03 !important; }
+.dark :is(.dashboard-page, .inventory-page, .accessories-page, .laptop-rental-page, .department-page, .settings-page) :is(.bg-red-50, .bg-rose-50, .bg-rose-100) { background-color: #450a0a !important; }
+.dark :is(.dashboard-page, .inventory-page, .accessories-page, .laptop-rental-page, .department-page, .settings-page) .bg-red-100 { background-color: #450a0a !important; }
+
+.dark :is(.dashboard-page, .inventory-page, .accessories-page, .laptop-rental-page, .department-page, .settings-page) :is(.text-blue-600, .text-blue-700) { color: #93c5fd !important; }
+.dark :is(.dashboard-page, .inventory-page, .accessories-page, .laptop-rental-page, .department-page, .settings-page) :is(.text-green-600, .text-green-700, .text-emerald-600, .text-emerald-700) { color: #86efac !important; }
+.dark :is(.dashboard-page, .inventory-page, .accessories-page, .laptop-rental-page, .department-page, .settings-page) :is(.text-orange-600, .text-amber-600, .text-amber-700) { color: #fdba74 !important; }
+.dark :is(.dashboard-page, .inventory-page, .accessories-page, .laptop-rental-page, .department-page, .settings-page) :is(.text-red-600, .text-red-700, .text-rose-600, .text-rose-700) { color: #fda4af !important; }
+
+.dark :is([data-slot="popover-content"], [data-slot="dropdown-menu-content"]) {
+  background-color: var(--app-dark-surface);
+  border-color: var(--app-dark-border);
+  color: var(--app-dark-text);
+}

@@ -1,10 +1,13 @@
 import { BrowserRouter } from "react-router-dom";
 import AppRoutes from "./routes/AppRoutes";
+import { LanguageProvider } from "./context/LanguageContext";
 
 function App() {
   return (
     <BrowserRouter>
-      <AppRoutes />
+      <LanguageProvider>
+        <AppRoutes />
+      </LanguageProvider>
     </BrowserRouter>
   );
 }
