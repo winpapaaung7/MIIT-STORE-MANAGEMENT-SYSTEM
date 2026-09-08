@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/context/LanguageContext"
 
 export interface SearchBarProps {
   searchType: SearchType
@@ -65,6 +66,7 @@ export default function SearchBar({
   onCalendarViewDateChange,
   formatDate,
 }: SearchBarProps) {
+  const { t } = useLanguage()
   const [viewState, setViewState] = useState<SearchBarViewState>({
     popoverOpen: false,
     activeSearchType: null,
@@ -83,12 +85,12 @@ export default function SearchBar({
   )
   const searchTypeLabel =
     searchType === "general"
-      ? "Search"
+      ? t("search")
       : searchType === "id"
-      ? "Search by ID"
+      ? t("searchById")
       : searchType === "academicYear"
-        ? "Academic Year"
-        : "Select Date"
+        ? t("academicYear")
+        : t("selectDate")
   const hasActiveSearchValue =
     (searchType === "general" && searchQuery.trim().length > 0) ||
     (searchType === "id" && searchQuery.trim().length > 0) ||
@@ -96,12 +98,12 @@ export default function SearchBar({
     (searchType === "date" && dateInput.trim().length > 0)
   const activeSearchValue =
     searchType === "general"
-      ? searchQuery || "Search..."
+      ? searchQuery || `${t("search")}...`
       : searchType === "id"
-      ? searchQuery || "Type accessory ID"
+      ? searchQuery || t("searchById")
       : searchType === "academicYear"
-        ? selectedAcademicYear ?? "All academic years"
-        : dateInput || "Choose registration date"
+        ? selectedAcademicYear ?? t("allAcademicYears")
+        : dateInput || t("chooseRegistrationDate")
   const isInlineSearchMode = searchType === "general" || searchType === "id"
 
   const openSearchView = (type: SearchType) => {
@@ -162,8 +164,8 @@ export default function SearchBar({
                 onChange={(event) => onSearchQueryChange(event.target.value)}
                 placeholder={
                   searchType === "id"
-                    ? "Search by ID (e.g., 033-000101)..."
-                    : "Search..."
+                    ? `${t("searchById")} (ဥပမာ၊ 033-000101)...`
+                    : `${t("search")}...`
                 }
                 className="h-full min-w-0 flex-1 border-0 bg-transparent px-0 text-sm font-medium text-slate-950 shadow-none outline-none placeholder:text-slate-500 focus-visible:ring-0"
               />
@@ -189,7 +191,7 @@ export default function SearchBar({
                   </>
                 ) : (
                   <span className="block truncate text-sm font-medium text-slate-500">
-                    Search
+                    {t("search")}
                   </span>
                 )}
               </span>
@@ -214,7 +216,7 @@ export default function SearchBar({
                 onClick={() => openSearchView("id")}
                 className="flex h-10 w-full items-center justify-between rounded-md px-3 text-left text-sm font-medium text-slate-900 transition hover:bg-slate-100"
               >
-                Search by ID
+                {t("searchById")}
                 {searchType === "id" && <Check className="size-4" />}
               </button>
               <button
@@ -222,7 +224,7 @@ export default function SearchBar({
                 onClick={() => openSearchView("academicYear")}
                 className="flex h-10 w-full items-center justify-between rounded-md px-3 text-left text-sm font-medium text-slate-900 transition hover:bg-slate-100"
               >
-                Academic Year
+                {t("academicYear")}
                 {searchType === "academicYear" && <Check className="size-4" />}
               </button>
               <button
@@ -230,7 +232,7 @@ export default function SearchBar({
                 onClick={() => openSearchView("date")}
                 className="flex h-10 w-full items-center justify-between rounded-md px-3 text-left text-sm font-medium text-slate-900 transition hover:bg-slate-100"
               >
-                Select Date
+                {t("selectDate")}
                 {searchType === "date" && <Check className="size-4" />}
               </button>
             </div>
@@ -250,10 +252,10 @@ export default function SearchBar({
                 </Button>
                 <div>
                   <h3 className="text-sm font-semibold text-slate-950">
-                    Academic Year
+                    {t("academicYear")}
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Select a registration year.
+                    {t("selectRegistrationYear")}
                   </p>
                 </div>
               </div>
@@ -271,7 +273,7 @@ export default function SearchBar({
                       "border-slate-950 bg-slate-950 text-white hover:bg-slate-800 hover:text-white"
                   )}
                 >
-                  All Academic Years
+                  {t("allAcademicYears")}
                   {selectedAcademicYear === null && <Check className="size-4" />}
                 </Button>
                 {academicYears.map((year) => (
@@ -313,10 +315,10 @@ export default function SearchBar({
                 </Button>
                 <div className="min-w-0 flex-1">
                   <h3 className="text-sm font-semibold text-slate-950">
-                    Select Date
+                    {t("selectDate")}
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Pick a registration date.
+                    {t("pickRegistrationDate")}
                   </p>
                 </div>
                 <CalendarDays className="size-4 shrink-0 text-slate-500" />

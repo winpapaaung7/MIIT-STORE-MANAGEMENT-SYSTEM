@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2 } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface Department {
   id: number;
@@ -31,6 +32,7 @@ export default function DepartmentTable({
   onEdit,
   onDelete,
 }: DepartmentTableProps) {
+  const { t } = useLanguage();
   return (
     <div className="mt-6 overflow-hidden rounded-3xl border bg-white shadow-sm">
       <div className="max-h-[420px] overflow-auto">
@@ -46,10 +48,10 @@ export default function DepartmentTable({
           <TableHeader className="sticky top-0 z-10 bg-white">
             <TableRow>
               <TableHead className="px-4 py-3 text-left">ID</TableHead>
-              <TableHead className="px-4 py-3 text-left">Department / Classroom</TableHead>
-              <TableHead className="px-4 py-3 text-left">Room</TableHead>
-              <TableHead className="px-4 py-3 text-left">Status</TableHead>
-              <TableHead className="px-4 py-3 text-center">Actions</TableHead>
+              <TableHead className="px-4 py-3 text-left">{t("departmentClassroom")}</TableHead>
+              <TableHead className="px-4 py-3 text-left">{t("room")}</TableHead>
+              <TableHead className="px-4 py-3 text-left">{t("status")}</TableHead>
+              <TableHead className="px-4 py-3 text-center">{t("actions")}</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -60,7 +62,7 @@ export default function DepartmentTable({
                   colSpan={5}
                   className="h-80 px-4 py-6 text-center text-muted-foreground"
                 >
-                  No department records found.
+                  {t("noDepartments")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -101,7 +103,7 @@ export default function DepartmentTable({
                       }
                       className="h-7 rounded-full px-3 text-sm font-semibold"
                     >
-                      {department.status}
+                      {department.status === "Available" ? t("available") : department.status === "Closed" ? t("closed") : department.status}
                     </Badge>
                   </TableCell>
 

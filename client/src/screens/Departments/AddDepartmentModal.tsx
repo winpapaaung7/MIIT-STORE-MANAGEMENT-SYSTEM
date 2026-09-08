@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface DepartmentFormValues {
   department: string;
@@ -48,6 +49,7 @@ export default function AddDepartmentModal({
   initialValues,
   departmentId,
 }: AddDepartmentModalProps) {
+  const { t } = useLanguage();
   const [formValues, setFormValues] =
     useState<DepartmentFormValues>(defaultValues);
 
@@ -98,21 +100,21 @@ export default function AddDepartmentModal({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {mode === "edit" ? "Edit Room" : "Add Room"}
+            {mode === "edit" ? t("editRoom") : t("addRoom")}
           </DialogTitle>
           <DialogDescription>
             {mode === "edit"
-              ? "Update this room under its department."
-              : "Choose the department (for example, Classroom) and enter its room number."}
+              ? t("updateRoom")
+              : t("enterRoom")}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="department">Department / Classroom</Label>
+            <Label htmlFor="department">{t("departmentClassroom")}</Label>
             <Input
               id="department"
-              placeholder="e.g. Computer Science"
+              placeholder={t("department")}
               value={formValues.department}
               onChange={(event) =>
                 setFormValues((current) => ({
@@ -124,10 +126,10 @@ export default function AddDepartmentModal({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="classroom">Room Number</Label>
+            <Label htmlFor="classroom">{t("roomNumber")}</Label>
             <Input
               id="classroom"
-              placeholder="e.g. 101"
+              placeholder="101"
               value={formValues.classroom}
               onChange={(event) =>
                 setFormValues((current) => ({
@@ -139,7 +141,7 @@ export default function AddDepartmentModal({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
+            <Label htmlFor="status">{t("status")}</Label>
             <Select
               value={formValues.status}
               onValueChange={(value) =>
@@ -150,11 +152,11 @@ export default function AddDepartmentModal({
               }
             >
               <SelectTrigger id="status" className="w-full">
-                <SelectValue placeholder="Select status" />
+                <SelectValue placeholder={t("selectStatus")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="Available">Available</SelectItem>
-                <SelectItem value="Closed">Closed</SelectItem>
+                <SelectItem value="Available">{t("available")}</SelectItem>
+                <SelectItem value="Closed">{t("closed")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -165,10 +167,10 @@ export default function AddDepartmentModal({
               variant="outline"
               onClick={() => handleOpenChange(false)}
             >
-              Cancel
+              {t("cancel")}
             </Button>
             <Button type="submit">
-              {mode === "edit" ? "Save Changes" : "Confirm"}
+              {mode === "edit" ? t("saveChanges") : t("confirm")}
             </Button>
           </DialogFooter>
         </form>

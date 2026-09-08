@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { type InventoryItem } from "./data/inventoryData";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface Props {
   categories: string[];
@@ -40,6 +41,7 @@ export default function FilterCategories({
   setSelectedCategory,
   onAddCategory,
 }: Props) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
 
@@ -70,7 +72,7 @@ export default function FilterCategories({
               <span className="flex min-w-0 items-center gap-2">
                 <Folder className="h-4 w-4 shrink-0 text-slate-600" />
                 <span className="truncate">
-                  {selectedCategory === "All" ? "All Category" : selectedCategory}
+                  {selectedCategory === "All" ? t("allCategories") : selectedCategory}
                 </span>
                 <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                   {getCount(selectedCategory)}
@@ -93,7 +95,7 @@ export default function FilterCategories({
                 >
                   <Folder className="h-4 w-4 text-slate-500" />
                   <span className="truncate">
-                    {category === "All" ? "All Category" : category}
+                    {category === "All" ? t("allCategories") : category}
                   </span>
                   <span className="ml-auto mr-3 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
                     {getCount(category)}
@@ -110,28 +112,28 @@ export default function FilterCategories({
           onClick={() => setOpen(true)}
         >
           <Plus className="mr-2 h-4 w-4" />
-          Add Category
+          {t("addCategory")}
         </Button>
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Category</DialogTitle>
+            <DialogTitle>{t("addCategory")}</DialogTitle>
           </DialogHeader>
 
           <Input
-            placeholder="Category name"
+            placeholder={t("categoryName")}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {t("cancel")}
             </Button>
 
-            <Button onClick={handleAdd}>Add</Button>
+            <Button onClick={handleAdd}>{t("add")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

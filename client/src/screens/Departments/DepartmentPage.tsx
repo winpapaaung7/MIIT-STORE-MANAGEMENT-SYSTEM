@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { Input } from "@/components/ui/input";
+import { useLanguage } from "@/context/LanguageContext";
 import AddDepartmentModal from "./AddDepartmentModal";
 import AddNewDeptButton from "./AddNewDeptButton";
 import DepartmentTable from "./DepartmentTable";
@@ -36,6 +37,7 @@ interface UpdateDepartmentResponse {
 }
 
 export default function DepartmentPage() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [departmentError, setDepartmentError] = useState("");
@@ -188,9 +190,9 @@ export default function DepartmentPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="department-page space-y-6">
       <div className="flex flex-col gap-4">
-        <h1 className="text-3xl font-bold">Departments</h1>
+        <h1 className="text-3xl font-bold">{t("departments")}</h1>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative w-full sm:max-w-md">
@@ -198,7 +200,7 @@ export default function DepartmentPage() {
             <Input
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search by department or room"
+              placeholder={t("searchDepartments")}
               className="h-11 pl-9"
             />
           </div>
