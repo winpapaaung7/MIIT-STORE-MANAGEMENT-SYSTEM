@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/context/LanguageContext";
 
 import {
   Dialog,
@@ -31,6 +32,7 @@ interface AddAcademicYearDialogProps {
 export default function AddAcademicYearDialog({
   onAdd,
 }: AddAcademicYearDialogProps) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
 
   // Start Date
@@ -45,6 +47,7 @@ export default function AddAcademicYearDialog({
 
   // Status
   const [status, setStatus] = useState<"Active" | "Inactive">("Active");
+  const monthLabels: Record<string, string> = { January: t("january"), February: t("february"), March: t("march"), April: t("april"), May: t("may"), June: t("june"), July: t("july"), August: t("august"), September: t("september"), October: t("october"), November: t("november"), December: t("december") };
 
   const resetForm = () => {
     setStartDay("1");
@@ -90,25 +93,25 @@ export default function AddAcademicYearDialog({
       <DialogTrigger asChild>
         <Button className="h-10 rounded-lg bg-slate-950 px-5 shadow-sm hover:bg-slate-800">
           <Plus className="mr-2 h-4 w-4" />
-          Add Academic Year
+          {t("addAcademicYear")}
         </Button>
       </DialogTrigger>
 
       <DialogContent className="max-w-2xl rounded-lg">
         <DialogHeader>
-          <DialogTitle>Add Academic Year</DialogTitle>
+          <DialogTitle>{t("addAcademicYear")}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
 
           {/* Start Date */}
-          <AcademicYearDetailTile label="Start Date">
+          <AcademicYearDetailTile label={t("startDate")}>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
 
               <Select value={startDay} onValueChange={setStartDay}>
                 <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white">
-                  <SelectValue placeholder="Day" />
+                  <SelectValue placeholder={t("day")} />
                 </SelectTrigger>
 
                 <SelectContent>
@@ -125,13 +128,13 @@ export default function AddAcademicYearDialog({
                 onValueChange={setStartMonth}
               >
                 <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white">
-                  <SelectValue placeholder="Month" />
+                  <SelectValue placeholder={t("month")} />
                 </SelectTrigger>
 
                 <SelectContent>
                   {months.map((month) => (
                     <SelectItem key={month} value={month}>
-                      {month}
+                      {monthLabels[month] ?? month}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -142,7 +145,7 @@ export default function AddAcademicYearDialog({
                 onValueChange={setStartYear}
               >
                 <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white">
-                  <SelectValue placeholder="Year" />
+                  <SelectValue placeholder={t("year")} />
                 </SelectTrigger>
 
                 <SelectContent>
@@ -158,13 +161,13 @@ export default function AddAcademicYearDialog({
           </AcademicYearDetailTile>
 
           {/* End Date */}
-          <AcademicYearDetailTile label="End Date">
+          <AcademicYearDetailTile label={t("endDate")}>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
 
               <Select value={endDay} onValueChange={setEndDay}>
                 <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white">
-                  <SelectValue placeholder="Day" />
+                  <SelectValue placeholder={t("day")} />
                 </SelectTrigger>
 
                 <SelectContent>
@@ -181,13 +184,13 @@ export default function AddAcademicYearDialog({
                 onValueChange={setEndMonth}
               >
                 <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white">
-                  <SelectValue placeholder="Month" />
+                  <SelectValue placeholder={t("month")} />
                 </SelectTrigger>
 
                 <SelectContent>
                   {months.map((month) => (
                     <SelectItem key={month} value={month}>
-                      {month}
+                      {monthLabels[month] ?? month}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -198,7 +201,7 @@ export default function AddAcademicYearDialog({
                 onValueChange={setEndYear}
               >
                 <SelectTrigger className="h-10 rounded-lg border-slate-200 bg-white">
-                  <SelectValue placeholder="Year" />
+                  <SelectValue placeholder={t("year")} />
                 </SelectTrigger>
 
                 <SelectContent>
@@ -214,7 +217,7 @@ export default function AddAcademicYearDialog({
           </AcademicYearDetailTile>
 
           {/* Status */}
-          <AcademicYearDetailTile label="Status">
+          <AcademicYearDetailTile label={t("status")}>
 
             <Select
               value={status}
@@ -228,11 +231,11 @@ export default function AddAcademicYearDialog({
 
               <SelectContent>
                 <SelectItem value="Active">
-                  Active
+                  {t("active")}
                 </SelectItem>
 
                 <SelectItem value="Inactive">
-                Inactive
+                {t("inactive")}
               </SelectItem>
             </SelectContent>
           </Select>
@@ -249,14 +252,14 @@ export default function AddAcademicYearDialog({
             }}
             className="rounded-lg border-slate-200 bg-white hover:bg-slate-50"
           >
-            Cancel
+            {t("cancel")}
           </Button>
 
           <Button
             onClick={handleSave}
             className="rounded-lg bg-slate-950 hover:bg-slate-800"
           >
-            Save
+            {t("save")}
           </Button>
         </DialogFooter>
       </DialogContent>
