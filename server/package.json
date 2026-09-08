@@ -4,7 +4,10 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "prisma:generate": "prisma generate",
+    "predev": "npm run prisma:generate",
     "dev": "tsx watch src/server.ts",
+    "prebuild": "npm run prisma:generate",
     "build": "tsc",
     "start": "node dist/server.js",
     "seed:roles": "tsx src/scripts/seed-roles.ts",
