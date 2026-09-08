@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
 export type Language = "eng" | "mm";
 
@@ -93,6 +93,271 @@ const translations = {
   },
 } as const;
 
+/*
+ * Shared labels that appear across pages.  Most older screens contain plain
+ * English JSX instead of calling `t()`, so this dictionary is also used by the
+ * page-wide translator below.  Stored data (item names, user names, IDs, etc.)
+ * is deliberately not translated.
+ */
+const myanmarUiText: Record<string, string> = {
+  "Dashboard": "ဒက်ရှ်ဘုတ်",
+  "Inventory": "ပစ္စည်းစာရင်း",
+  "Accessories": "အပိုပစ္စည်းများ",
+  "Accessories Detail": "အပိုပစ္စည်း အသေးစိတ်",
+  "Accessories Details": "အပိုပစ္စည်း အသေးစိတ်",
+  "Laptop Rental": "လက်ပ်တော့ ငှားရမ်းမှု",
+  "Laptop Rental Service": "လက်ပ်တော့ ငှားရမ်းမှု",
+  "Departments": "ဌာနများ",
+  "Settings": "ဆက်တင်များ",
+  "Users": "အသုံးပြုသူများ",
+  "User Management": "အသုံးပြုသူ စီမံခန့်ခွဲမှု",
+  "Sign Out": "ထွက်ရန်",
+  "Import": "တင်သွင်းရန်",
+  "Export": "ထုတ်ယူရန်",
+  "Add Item": "ပစ္စည်းထည့်ရန်",
+  "Add Category": "အမျိုးအစားထည့်ရန်",
+  "Add Department": "ဌာနထည့်ရန်",
+  "Add Room": "အခန်းထည့်ရန်",
+  "Add User": "အသုံးပြုသူထည့်ရန်",
+  "Edit": "ပြင်ဆင်ရန်",
+  "Delete": "ဖျက်ရန်",
+  "Save": "သိမ်းဆည်းရန်",
+  "Save Changes": "ပြောင်းလဲမှုများ သိမ်းဆည်းရန်",
+  "Cancel": "မလုပ်တော့ပါ",
+  "Close": "ပိတ်ရန်",
+  "Confirm": "အတည်ပြုရန်",
+  "Search": "ရှာဖွေရန်",
+  "Search...": "ရှာဖွေရန်...",
+  "Search inventory...": "ပစ္စည်းစာရင်း ရှာဖွေရန်...",
+  "All": "အားလုံး",
+  "All Category": "အမျိုးအစားအားလုံး",
+  "All Categories": "အမျိုးအစားအားလုံး",
+  "Category": "အမျိုးအစား",
+  "Category name": "အမျိုးအစားအမည်",
+  "Item": "ပစ္စည်း",
+  "Items": "ပစ္စည်းများ",
+  "Item Name": "ပစ္စည်းအမည်",
+  "Item ID": "ပစ္စည်း ID",
+  "ID": "ID",
+  "Image": "ပုံ",
+  "Quantity": "အရေအတွက်",
+  "Units": "ယူနစ်",
+  "Status": "အခြေအနေ",
+  "Actions": "လုပ်ဆောင်ချက်များ",
+  "Action": "လုပ်ဆောင်ချက်",
+  "QR Code": "QR ကုဒ်",
+  "Department": "ဌာန",
+  "Room": "အခန်း",
+  "Transfer": "လွှဲပြောင်းရန်",
+  "Academic Year": "ပညာသင်နှစ်",
+  "Available": "အသုံးပြုနိုင်သည်",
+  "In Use": "အသုံးပြုနေသည်",
+  "Damaged": "ပျက်စီးနေသည်",
+  "Pending": "စောင့်ဆိုင်းနေသည်",
+  "Approved": "အတည်ပြုပြီး",
+  "Returned": "ပြန်အပ်ပြီး",
+  "Rejected": "ငြင်းပယ်ပြီး",
+  "Active": "အသုံးပြုနေသည်",
+  "Inactive": "အသုံးမပြုပါ",
+  "Out of Stock": "လက်ကျန်မရှိပါ",
+  "No Image": "ပုံမရှိပါ",
+  "No inventory items found.": "ပစ္စည်းစာရင်း မတွေ့ပါ။",
+  "Manage accessory details and records": "အပိုပစ္စည်း အသေးစိတ်နှင့် မှတ်တမ်းများကို စီမံခန့်ခွဲပါ",
+  "Manage laptop rental requests and records": "လက်ပ်တော့ ငှားရမ်းမှု တောင်းဆိုချက်များနှင့် မှတ်တမ်းများကို စီမံခန့်ခွဲပါ",
+  "Student List": "ကျောင်းသားစာရင်း",
+  "Teacher List": "ဆရာ/ဆရာမစာရင်း",
+  "Issue Rental": "ငှားရမ်းထုတ်ပေးရန်",
+  "Borrower": "ငှားရမ်းသူ",
+  "Role": "အခန်းကဏ္ဍ",
+  "Laptop": "လက်ပ်တော့",
+  "Inventory QR": "ပစ္စည်းစာရင်း QR",
+  "Return Date": "ပြန်အပ်ရမည့်ရက်",
+  "All Quantity": "စုစုပေါင်း အရေအတွက်",
+  "Pending Quantity": "စောင့်ဆိုင်း အရေအတွက်",
+  "In Use Quantity": "အသုံးပြုနေသော အရေအတွက်",
+  "Available Quantity": "အသုံးပြုနိုင်သော အရေအတွက်",
+  "Preferences": "နှစ်သက်ရာ ဆက်တင်များ",
+  "Language": "ဘာသာစကား",
+  "Theme": "အသွင်အပြင်",
+  "Light": "အလင်း",
+  "Dark": "အမှောင်",
+  "English": "အင်္ဂလိပ်",
+  "Myanmar": "မြန်မာ",
+  "Adjust language and display settings.": "ဘာသာစကားနှင့် မျက်နှာပြင်ဆက်တင်များကို ပြင်ဆင်ပါ။",
+  "Choose the language used in the system.": "စနစ်တွင် အသုံးပြုမည့် ဘာသာစကားကို ရွေးပါ။",
+  "Switch between light and dark appearance.": "အလင်းနှင့် အမှောင်အသွင်အပြင်အကြား ပြောင်းလဲပါ။",
+  "Switch to light mode": "အလင်းမုဒ်သို့ ပြောင်းရန်",
+  "Switch to dark mode": "အမှောင်မုဒ်သို့ ပြောင်းရန်",
+  "My Profile": "ကျွန်ုပ်၏ ကိုယ်ရေးအချက်အလက်",
+  "Edit Profile": "ကိုယ်ရေးအချက်အလက် ပြင်ဆင်ရန်",
+  "Edit profile": "ကိုယ်ရေးအချက်အလက် ပြင်ဆင်ရန်",
+  "Manage your account information and access level.": "သင့်အကောင့်အချက်အလက်နှင့် အသုံးပြုခွင့်အဆင့်ကို စီမံခန့်ခွဲပါ။",
+  "Account Access": "အကောင့် အသုံးပြုခွင့်",
+  "Full System Access": "စနစ်တစ်ခုလုံး အသုံးပြုခွင့်",
+  "Administrator access to all modules and settings.": "လုပ်ဆောင်မှုအပိုင်းများနှင့် ဆက်တင်များအားလုံးအတွက် စီမံခန့်ခွဲသူ အသုံးပြုခွင့်။",
+  "View permissions": "အသုံးပြုခွင့်များ ကြည့်ရန်",
+  "Full name": "အမည်အပြည့်အစုံ",
+  "Email address": "အီးမေးလ်လိပ်စာ",
+  "Phone number": "ဖုန်းနံပါတ်",
+  "Account status": "အကောင့်အခြေအနေ",
+  "Account role": "အကောင့် အခန်းကဏ္ဍ",
+  "Personal Information": "ကိုယ်ရေးအချက်အလက်",
+  "Not provided": "မဖော်ပြထားပါ",
+  "Not assigned": "မသတ်မှတ်ထားပါ",
+  "Academic Years": "ပညာသင်နှစ်များ",
+  "Manage academic years and current sessions.": "ပညာသင်နှစ်များနှင့် လက်ရှိကာလများကို စီမံခန့်ခွဲပါ။",
+  "Search academic year...": "ပညာသင်နှစ် ရှာဖွေရန်...",
+  "Current Academic Year": "လက်ရှိ ပညာသင်နှစ်",
+  "No semesters configured yet.": "စာသင်ကာလများ မသတ်မှတ်ရသေးပါ။",
+  "History": "မှတ်တမ်း",
+  "Track who added, edited, or deleted each system record.": "စနစ်မှတ်တမ်းတစ်ခုစီကို မည်သူက ထည့်သွင်း၊ ပြင်ဆင် သို့မဟုတ် ဖျက်ခဲ့သည်ကို ကြည့်ရှုပါ။",
+  "Export CSV": "CSV ထုတ်ယူရန်",
+  "Search record or user": "မှတ်တမ်း သို့မဟုတ် အသုံးပြုသူ ရှာရန်",
+  "All actions": "လုပ်ဆောင်ချက်အားလုံး",
+  "All modules": "လုပ်ဆောင်မှုအပိုင်းအားလုံး",
+  "Clear": "ရှင်းလင်းရန်",
+  "From": "မှ",
+  "To": "သို့",
+  "Edited": "ပြင်ဆင်ပြီး",
+  "Added": "ထည့်သွင်းပြီး",
+  "Deleted": "ဖျက်ပြီး",
+  "Profile": "ကိုယ်ရေးအချက်အလက်",
+  "profile image: updated": "ကိုယ်ရေးပုံ ပြင်ဆင်ပြီး",
+  "Loading...": "လုပ်ဆောင်နေသည်...",
+  "Loading profile...": "ကိုယ်ရေးအချက်အလက် ဖွင့်နေသည်...",
+  "Try again": "ထပ်မံကြိုးစားရန်",
+  "Welcome Back": "ပြန်လည်ကြိုဆိုပါသည်",
+  "Back to Login": "အကောင့်ဝင်ရန်သို့ ပြန်သွားရန်",
+  "Sign in": "အကောင့်ဝင်ရန်",
+  "Password": "စကားဝှက်",
+  "Email": "အီးမေးလ်",
+  "ADMIN": "စီမံခန့်ခွဲသူ",
+  "Administrator": "စီမံခန့်ခွဲသူ",
+  "MIIT Store Administrator": "MIIT Store စီမံခန့်ခွဲသူ",
+  "All Academic Years": "ပညာသင်နှစ်အားလုံး",
+  "All Departments": "ဌာနအားလုံး",
+  "All Status": "အခြေအနေအားလုံး",
+  "All Actions": "လုပ်ဆောင်ချက်အားလုံး",
+  "All Modules": "လုပ်ဆောင်မှုအပိုင်းအားလုံး",
+  "Department Overview": "ဌာနအကျဉ်းချုပ်",
+  "Inventory Health": "ပစ္စည်းစာရင်း အခြေအနေ",
+  "Store Items": "သိုလှောင်ပစ္စည်းများ",
+  "Recently Added Items": "မကြာသေးမီက ထည့်သွင်းထားသော ပစ္စည်းများ",
+  "View All": "အားလုံးကြည့်ရန်",
+  "Total Items": "စုစုပေါင်း ပစ္စည်းများ",
+  "Ready for use": "အသုံးပြုရန် အဆင်သင့်",
+  "Issued units": "ထုတ်ပေးထားသော ယူနစ်များ",
+  "Damaged / Maintenance": "ပျက်စီး / ပြုပြင်ထိန်းသိမ်းရန်",
+  "Needs attention": "ဂရုပြုရန် လိုအပ်သည်",
+  "No item records match this department.": "ဤဌာနနှင့် ကိုက်ညီသော ပစ္စည်းမှတ်တမ်း မရှိပါ။",
+  "No recently added items yet.": "မကြာသေးမီက ထည့်သွင်းထားသော ပစ္စည်း မရှိသေးပါ။",
+  "No item records found.": "ပစ္စည်းမှတ်တမ်း မတွေ့ပါ။",
+  "Select department": "ဌာနရွေးပါ",
+  "Select status": "အခြေအနေရွေးပါ",
+  "Select category": "အမျိုးအစားရွေးပါ",
+  "No Rental": "ငှားရမ်းမှုမရှိပါ",
+  "No students found.": "ကျောင်းသား မတွေ့ပါ။",
+  "No teachers found.": "ဆရာ/ဆရာမ မတွေ့ပါ။",
+  "Student": "ကျောင်းသား",
+  "Teacher": "ဆရာ/ဆရာမ",
+  "Student name": "ကျောင်းသားအမည်",
+  "Teacher name": "ဆရာ/ဆရာမအမည်",
+  "Roll number": "ခုံအမှတ်",
+  "Major": "အထူးပြုဘာသာ",
+  "Batch": "အတန်းခွဲ",
+  "Add Student": "ကျောင်းသားထည့်ရန်",
+  "Add Teacher": "ဆရာ/ဆရာမ ထည့်ရန်",
+  "Update Student": "ကျောင်းသား အချက်အလက်ပြင်ရန်",
+  "Update Teacher": "ဆရာ/ဆရာမ အချက်အလက်ပြင်ရန်",
+  "Search by borrower name, roll number, laptop, or QR...": "ငှားရမ်းသူအမည်၊ ခုံအမှတ်၊ လက်ပ်တော့ သို့မဟုတ် QR ဖြင့် ရှာရန်...",
+  "No laptop rental records match the current filters.": "ရွေးချယ်ထားသော စစ်ထုတ်မှုနှင့် ကိုက်ညီသည့် ငှားရမ်းမှုမှတ်တမ်း မရှိပါ။",
+  "Loading rental records...": "ငှားရမ်းမှုမှတ်တမ်းများ ဖွင့်နေသည်...",
+  "Create and manage authorized MIIT Store accounts.": "MIIT Store အသုံးပြုသူအကောင့်များကို ဖန်တီးပြီး စီမံခန့်ခွဲပါ။",
+  "Create user": "အသုံးပြုသူ ဖန်တီးရန်",
+  "Edit user": "အသုံးပြုသူ ပြင်ဆင်ရန်",
+  "Name": "အမည်",
+  "Temporary password": "ယာယီစကားဝှက်",
+  "Create User": "အသုံးပြုသူ ဖန်တီးရန်",
+  "Update User": "အသုံးပြုသူ ပြင်ဆင်ရန်",
+  "Add Academic Year": "ပညာသင်နှစ် ထည့်ရန်",
+  "Edit Academic Year": "ပညာသင်နှစ် ပြင်ဆင်ရန်",
+  "Delete Academic Year": "ပညာသင်နှစ် ဖျက်ရန်",
+  "Start Date": "စတင်ရက်",
+  "End Date": "ပြီးဆုံးရက်",
+  "Day": "ရက်",
+  "Month": "လ",
+  "Year": "နှစ်",
+  "January": "ဇန်နဝါရီ",
+  "February": "ဖေဖော်ဝါရီ",
+  "March": "မတ်",
+  "April": "ဧပြီ",
+  "May": "မေ",
+  "June": "ဇွန်",
+  "July": "ဇူလိုင်",
+  "August": "ဩဂုတ်",
+  "September": "စက်တင်ဘာ",
+  "October": "အောက်တိုဘာ",
+  "November": "နိုဝင်ဘာ",
+  "December": "ဒီဇင်ဘာ",
+  // Departments, users, history, and shared dialogs
+  "Search by department or room": "ဌာန သို့မဟုတ် အခန်းဖြင့် ရှာရန်",
+  "Search name or email": "အမည် သို့မဟုတ် အီးမေးလ်ဖြင့် ရှာရန်",
+  "Select role": "အခန်းကဏ္ဍ ရွေးပါ",
+  "No department": "ဌာန မသတ်မှတ်ထားပါ",
+  "Save changes": "ပြောင်းလဲမှုများ သိမ်းဆည်းရန်",
+  "Saving...": "သိမ်းဆည်းနေသည်...",
+  "Saving…": "သိမ်းဆည်းနေသည်...",
+  "No users found.": "အသုံးပြုသူ မတွေ့ပါ။",
+  "Loading users...": "အသုံးပြုသူများ ဖွင့်နေသည်...",
+  "Security": "လုံခြုံရေး",
+  "Manage account protection and access controls.": "အကောင့်လုံခြုံရေးနှင့် အသုံးပြုခွင့်များကို စီမံခန့်ခွဲပါ။",
+  "System notifications": "စနစ်အကြောင်းကြားချက်များ",
+  "Receive alerts about system changes.": "စနစ်ပြောင်းလဲမှုများအတွက် အကြောင်းကြားချက်များ ရယူပါ။",
+  "Enabled": "ဖွင့်ထားသည်",
+  "Search history": "မှတ်တမ်း ရှာရန်",
+  "Filter by action": "လုပ်ဆောင်ချက်ဖြင့် စစ်ထုတ်ရန်",
+  "Filter by module": "လုပ်ဆောင်မှုအပိုင်းဖြင့် စစ်ထုတ်ရန်",
+  "Loading activity history...": "လုပ်ဆောင်မှုမှတ်တမ်း ဖွင့်နေသည်...",
+  "Loading activity history…": "လုပ်ဆောင်မှုမှတ်တမ်း ဖွင့်နေသည်...",
+  "No matching activity yet.": "ကိုက်ညီသော လုပ်ဆောင်မှုမှတ်တမ်း မရှိသေးပါ။",
+  "New additions, edits, and deletions will appear here.": "ထည့်သွင်းမှု၊ ပြင်ဆင်မှုနှင့် ဖျက်မှုအသစ်များကို ဤနေရာတွင် ပြသပါမည်။",
+  "No additional details recorded.": "ထပ်ဆောင်းအသေးစိတ် မမှတ်တမ်းတင်ထားပါ။",
+  "Accessory Action": "အပိုပစ္စည်း လုပ်ဆောင်ချက်",
+  "Confirm Delete": "ဖျက်ရန် အတည်ပြုပါ",
+  "Done": "ပြီးပါပြီ",
+  "Current Department": "လက်ရှိဌာန",
+  "Current Room": "လက်ရှိအခန်း",
+  "No room assigned.": "အခန်း မသတ်မှတ်ထားပါ။",
+  "No remark added.": "မှတ်ချက် မထည့်သွင်းထားပါ။",
+  "Edit Item": "ပစ္စည်း ပြင်ဆင်ရန်",
+  "Update the selected accessory record.": "ရွေးချယ်ထားသော အပိုပစ္စည်းမှတ်တမ်းကို ပြင်ဆင်ပါ။",
+  "Create one or more accessory records with generated IDs.": "ထုတ်ပေးထားသော ID များဖြင့် အပိုပစ္စည်းမှတ်တမ်း တစ်ခု သို့မဟုတ် အများအပြား ဖန်တီးပါ။",
+  "Accessory name": "အပိုပစ္စည်းအမည်",
+  "Select room": "အခန်း ရွေးပါ",
+  "Created Date": "ဖန်တီးသည့်ရက်",
+  "Add a note for this item": "ဤပစ္စည်းအတွက် မှတ်ချက်ထည့်ပါ",
+  "Insert Accessories": "အပိုပစ္စည်းများ ထည့်သွင်းရန်",
+  "Export Accessories": "အပိုပစ္စည်းများ ထုတ်ယူရန်",
+  "Exported Records": "ထုတ်ယူမည့် မှတ်တမ်းများ",
+  "File Name": "ဖိုင်အမည်",
+  "No file selected": "ဖိုင် မရွေးချယ်ရသေးပါ",
+  "Accessory QR Code Scan": "အပိုပစ္စည်း QR ကုဒ် စကင်ဖတ်ရန်",
+  "Access restricted": "အသုံးပြုခွင့် ကန့်သတ်ထားသည်",
+  "Go to my workspace": "ကျွန်ုပ်၏ လုပ်ငန်းခွင်သို့ သွားရန်",
+  "Checking your session…": "သင့်အသုံးပြုမှုကို စစ်ဆေးနေသည်...",
+};
+
+function translateMyanmarText(value: string) {
+  const trimmed = value.trim();
+  const itemCount = trimmed.match(/^(\d+) Items?$/i);
+  const unitCount = trimmed.match(/^(\d+) Units?$/i);
+  const translated = myanmarUiText[trimmed]
+    ?? (itemCount ? `${itemCount[1]} ပစ္စည်း` : undefined)
+    ?? (unitCount ? `${unitCount[1]} ယူနစ်` : undefined);
+  if (!translated) return value;
+  return value.replace(trimmed, translated);
+}
+
 export type TranslationKey = keyof typeof translations.eng;
 
 interface LanguageContextValue {
@@ -101,12 +366,16 @@ interface LanguageContextValue {
   t: (key: TranslationKey) => string;
 }
 
+type TranslatedValue = { source: string; rendered: string };
+
 const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<Language>(() =>
     localStorage.getItem("language") === "mm" ? "mm" : "eng",
   );
+  const originalText = useRef(new WeakMap<Text, TranslatedValue>());
+  const originalAttributes = useRef(new WeakMap<Element, Map<string, TranslatedValue>>());
 
   useEffect(() => {
     let cancelled = false;
@@ -134,6 +403,56 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = language === "mm" ? "my" : "en";
   }, [language]);
 
+  useEffect(() => {
+    const attributes = ["placeholder", "aria-label", "title"];
+
+    const applyTranslations = () => {
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      const textNodes: Text[] = [];
+      let node: Text | null;
+      while ((node = walker.nextNode() as Text | null)) textNodes.push(node);
+
+      textNodes.forEach((textNode) => {
+        const tag = textNode.parentElement?.tagName;
+        if (tag === "SCRIPT" || tag === "STYLE") return;
+        const current = textNode.nodeValue ?? "";
+        const previous = originalText.current.get(textNode);
+        const source = !previous || current !== previous.rendered ? current : previous.source;
+        const next = language === "mm" ? translateMyanmarText(source) : source;
+        originalText.current.set(textNode, { source, rendered: next });
+        if (current !== next) textNode.nodeValue = next;
+      });
+
+      document.querySelectorAll<HTMLElement>("[placeholder], [aria-label], [title]").forEach((element) => {
+        let saved = originalAttributes.current.get(element);
+        if (!saved) {
+          saved = new Map<string, TranslatedValue>();
+          originalAttributes.current.set(element, saved);
+        }
+        attributes.forEach((attribute) => {
+          const current = element.getAttribute(attribute);
+          if (current === null) return;
+          const previous = saved.get(attribute);
+          const source = !previous || current !== previous.rendered ? current : previous.source;
+          const next = language === "mm" ? translateMyanmarText(source) : source;
+          saved.set(attribute, { source, rendered: next });
+          if (current !== next) element.setAttribute(attribute, next);
+        });
+      });
+    };
+
+    applyTranslations();
+    const observer = new MutationObserver(applyTranslations);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: attributes,
+    });
+    return () => observer.disconnect();
+  }, [language]);
+
   const changeLanguage = (nextLanguage: Language) => {
     setLanguage(nextLanguage);
     void fetch(`${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000"}/api/preferences/language`, {
@@ -145,7 +464,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const t = (key: TranslationKey) => translations[language][key];
+  const t = (key: TranslationKey) => {
+    // Render the canonical source string. The observer above translates it after
+    // React commits, which also lets hard-coded and `t()` labels switch together.
+    return translations.eng[key];
+  };
 
   return <LanguageContext.Provider value={{ language, setLanguage: changeLanguage, t }}>{children}</LanguageContext.Provider>;
 }

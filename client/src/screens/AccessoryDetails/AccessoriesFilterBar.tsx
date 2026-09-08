@@ -80,7 +80,7 @@ export default function AccessoriesFilterBar({
 }: AccessoriesFilterBarProps) {
   const { t } = useLanguage()
   return (
-    <div className="shrink-0 rounded-lg border border-slate-100 bg-white p-3 shadow-sm shadow-slate-200/70 sm:p-4">
+    <div className="shrink-0 rounded-lg border border-border bg-card p-3 shadow-sm dark:shadow-none sm:p-4">
       <div className="flex flex-col gap-4">
         <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:items-center">
           <Button

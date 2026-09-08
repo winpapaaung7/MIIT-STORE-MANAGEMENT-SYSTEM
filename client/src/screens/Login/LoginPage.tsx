@@ -76,8 +76,8 @@ export default function LoginPage() {
     }
   }
   return (
-    <main className="min-h-screen bg-[#F4F7FB] p-4 sm:p-6 lg:p-8">
-      <div className="mx-auto grid min-h-[calc(100vh-2rem)] max-w-6xl overflow-hidden rounded-2xl border border-[#DCE3ED] bg-white shadow-sm md:grid-cols-[1.08fr_0.92fr] sm:min-h-[calc(100vh-3rem)]">
+    <main className="auth-page min-h-screen bg-[#F4F7FB] p-4 sm:p-6 lg:p-8">
+      <div className="auth-card mx-auto grid min-h-[calc(100vh-2rem)] max-w-6xl overflow-hidden rounded-2xl border border-[#DCE3ED] bg-white shadow-sm md:grid-cols-[1.08fr_0.92fr] sm:min-h-[calc(100vh-3rem)]">
         <section
           className="hidden bg-[#162A46] p-10 text-white md:flex md:flex-col lg:p-14"
           aria-label="System overview"
@@ -120,7 +120,7 @@ export default function LoginPage() {
                 <p className="text-xs text-[#64748B]">Management System</p>
               </div>
             </header>
-            <div className="rounded-xl border border-[#DCE3ED] bg-[#FFFFFF] p-6 shadow-sm sm:p-8">
+            <div className="rounded-xl border border-[#DCE3ED] bg-[#FFFFFF] p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-8">
               <div className="mb-7">
                 <h2 className="text-2xl font-semibold text-[#172033]">
                   Welcome Back

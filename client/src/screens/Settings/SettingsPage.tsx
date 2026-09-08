@@ -4,7 +4,6 @@ import {
   CalendarDays,
   Clock3,
   Languages,
-  LogOut,
   ShieldCheck,
   UserRound,
 } from "lucide-react";
@@ -207,8 +206,8 @@ export default function SettingPage() {
                   onClick={() => setActiveTab(item.id)}
                   className={`flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm transition ${
                     active
-                      ? "bg-[#0f172a] font-semibold text-white"
-                      : "text-slate-500 hover:bg-slate-800 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                      ? "bg-[#16243a] font-semibold text-slate-50 ring-1 ring-[#2a3b55]"
+                      : "text-slate-500 hover:bg-[#1a2940] hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
                   }`}
                 >
                   <Icon className="h-4 w-4" />
@@ -218,11 +217,6 @@ export default function SettingPage() {
             })}
           </nav>
 
-          {/* Logout Action Footer */}
-          <button className="mt-8 flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium text-rose-500 transition hover:bg-rose-50 shrink-0">
-            <LogOut className="h-4 w-4" />
-            Log out
-          </button>
         </aside>
 
         {/* FIX 4: Only this inner container retains custom layout boundaries safely */}

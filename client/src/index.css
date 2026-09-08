@@ -84,6 +84,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.205 0 0);
@@ -132,6 +133,24 @@
 /* Dashboard colors that remain readable when the global dark theme is active. */
 .dark .dashboard-page {
   color-scheme: dark;
+}
+
+/* Recharts uses a pale default cursor; keep chart hover feedback on the dark palette. */
+.dark .dashboard-page .recharts-tooltip-cursor {
+  fill: #1e3a5f !important;
+  fill-opacity: 0.55;
+}
+
+/* Match the Inventory Health donut tooltip to the dashboard's dark cards. */
+.dark .dashboard-page .recharts-default-tooltip {
+  border: 1px solid #2a3b55 !important;
+  border-radius: 0.5rem !important;
+  background-color: #0f1a2b !important;
+  box-shadow: 0 10px 25px rgb(0 0 0 / 0.28) !important;
+}
+
+.dark .dashboard-page .recharts-default-tooltip :is(.recharts-tooltip-label, .recharts-tooltip-item) {
+  color: #dbeafe !important;
 }
 
 .dark .dashboard-page .bg-white {
@@ -497,15 +516,29 @@ html[lang="my"] body {
 
 /* One dark palette for every workspace. */
 .dark {
-  --app-dark-page: #020617;
-  --app-dark-surface: #0f172a;
-  --app-dark-raised: #1e293b;
-  --app-dark-border: #334155;
-  --app-dark-text: #f8fafc;
-  --app-dark-muted: #cbd5e1;
+  /* Shared dark UI palette: canvas → card → raised control. */
+  --app-dark-page: #050814;
+  --app-dark-surface: #0f1a2b;
+  --app-dark-raised: #16243a;
+  --app-dark-border: #2a3b55;
+  --app-dark-primary: #3b82f6;
+  --app-dark-primary-hover: #2563eb;
+  --app-dark-text: #f1f5f9;
+  --app-dark-muted: #aebed3;
   --background: var(--app-dark-page);
+  --foreground: var(--app-dark-text);
   --card: var(--app-dark-surface);
+  --card-foreground: var(--app-dark-text);
   --popover: var(--app-dark-surface);
+  --popover-foreground: var(--app-dark-text);
+  --secondary: var(--app-dark-raised);
+  --secondary-foreground: var(--app-dark-text);
+  --muted: var(--app-dark-raised);
+  --muted-foreground: var(--app-dark-muted);
+  --accent: #1b2b45;
+  --accent-foreground: var(--app-dark-text);
+  --border: var(--app-dark-border);
+  --input: var(--app-dark-border);
 }
 
 .dark
@@ -732,4 +765,150 @@ html[lang="my"] body {
   background-color: var(--app-dark-surface);
   border-color: var(--app-dark-border);
   color: var(--app-dark-text);
+}
+
+.dark .auth-page,
+.dark .status-page {
+  background-color: #020617 !important;
+}
+
+.dark .auth-page .auth-card,
+.dark .status-page .status-card {
+  border-color: #334155 !important;
+  background-color: #0f172a !important;
+  color: #f8fafc;
+}
+
+/* Shared protected-app surface. New pages automatically inherit the same dark
+   treatment instead of requiring a page-specific dark-mode stylesheet. */
+.dark .app-shell {
+  background-color: var(--app-dark-page);
+  color: var(--app-dark-text);
+  color-scheme: dark;
+}
+
+.dark .app-shell .bg-white {
+  background-color: var(--app-dark-surface) !important;
+}
+
+.dark .app-shell :is(.bg-slate-50, .bg-slate-100) {
+  background-color: var(--app-dark-raised) !important;
+}
+
+.dark .app-shell :is(.border-slate-100, .border-slate-200, .border-slate-300) {
+  border-color: var(--app-dark-border) !important;
+}
+
+.dark .app-shell :is(.text-slate-950, .text-slate-900, .text-slate-800) {
+  color: var(--app-dark-text) !important;
+}
+
+.dark .app-shell :is(.text-slate-700, .text-slate-600, .text-slate-500, .text-slate-400) {
+  color: var(--app-dark-muted) !important;
+}
+
+.dark .app-shell :is(input, select, textarea) {
+  border-color: var(--app-dark-border);
+  background-color: var(--app-dark-raised);
+  color: var(--app-dark-text);
+}
+
+/* Primary actions and selected controls share the blue brand accent. */
+.dark .app-shell :is(.bg-slate-900, .bg-slate-950) {
+  border-color: var(--app-dark-primary) !important;
+  background-color: var(--app-dark-primary) !important;
+}
+
+.dark .app-shell :is([class*="hover:bg-slate-800"], [class*="hover:bg-slate-900"]):hover {
+  background-color: var(--app-dark-primary-hover) !important;
+}
+
+/* Keep utility-based states and portal content on the same dark design system. */
+.dark .app-shell [class*="bg-slate-50/"] {
+  background-color: var(--app-dark-raised) !important;
+}
+
+.dark .app-shell :is([class*="hover:bg-slate-50"], [class*="hover:bg-slate-100"]):hover {
+  background-color: var(--app-dark-raised) !important;
+}
+
+.dark .app-shell [class*="shadow-slate"] {
+  box-shadow: none;
+}
+
+.dark .app-shell :is(thead, [data-slot="table-header"]) {
+  box-shadow: inset 0 -1px 0 var(--app-dark-border);
+}
+
+.dark :is(
+  [data-slot="dialog-content"],
+  [data-slot="alert-dialog-content"],
+  [data-slot="popover-content"],
+  [data-slot="dropdown-menu-content"]
+) {
+  border-color: var(--app-dark-border);
+  background-color: var(--app-dark-surface);
+  color: var(--app-dark-text);
+  color-scheme: dark;
+}
+
+.dark :is(
+  [data-slot="dialog-content"],
+  [data-slot="alert-dialog-content"],
+  [data-slot="popover-content"],
+  [data-slot="dropdown-menu-content"]
+) :is(.bg-white, .bg-slate-50, .bg-slate-100) {
+  background-color: var(--app-dark-raised) !important;
+}
+
+.dark :is(
+  [data-slot="dialog-content"],
+  [data-slot="alert-dialog-content"],
+  [data-slot="popover-content"],
+  [data-slot="dropdown-menu-content"]
+) :is(.border-slate-100, .border-slate-200, .border-slate-300) {
+  border-color: var(--app-dark-border) !important;
+}
+
+.dark :is(
+  [data-slot="dialog-content"],
+  [data-slot="alert-dialog-content"],
+  [data-slot="popover-content"],
+  [data-slot="dropdown-menu-content"]
+) :is(.text-slate-950, .text-slate-900, .text-slate-800) {
+  color: var(--app-dark-text) !important;
+}
+
+.dark :is(
+  [data-slot="dialog-content"],
+  [data-slot="alert-dialog-content"],
+  [data-slot="popover-content"],
+  [data-slot="dropdown-menu-content"]
+) :is(.text-slate-700, .text-slate-600, .text-slate-500, .text-slate-400) {
+  color: var(--app-dark-muted) !important;
+}
+
+.dark :is(
+  [data-slot="dialog-content"],
+  [data-slot="alert-dialog-content"],
+  [data-slot="popover-content"],
+  [data-slot="dropdown-menu-content"]
+) :is(input, select, textarea) {
+  border-color: var(--app-dark-border);
+  background-color: var(--app-dark-raised);
+  color: var(--app-dark-text);
+}
+
+/* Inventory and Accessories intentionally share the Laptop Rental workspace
+   hierarchy: layout canvas, dark card surface, then raised table/filter areas. */
+.dark .app-shell :is(.inventory-page, .accessories-page) {
+  background-color: transparent !important;
+}
+
+.dark .app-shell :is(.inventory-page, .accessories-page) :is(.bg-card, .bg-white) {
+  background-color: var(--app-dark-surface) !important;
+}
+
+.dark .app-shell .inventory-page [class*="bg-slate-50/"] {
+  background-color: var(--app-dark-raised) !important;
 }
