@@ -25,9 +25,10 @@ export function createDashboardRouter(prisma: PrismaLike) {
 
   router.get("/overview", async (req: Request, res: Response) => {
     try {
+      const scopedDepartmentId = req.auth?.role.code === "DEPARTMENT_HEAD" ? req.auth.department?.id : undefined;
       const academicYearId = positiveInt(req.query.academicYearId, "academicYearId");
-      const departmentId = positiveInt(req.query.departmentId, "departmentId");
-      const activeDepartmentId = positiveInt(req.query.activeDepartmentId, "activeDepartmentId");
+      const departmentId = scopedDepartmentId ?? positiveInt(req.query.departmentId, "departmentId");
+      const activeDepartmentId = scopedDepartmentId ?? positiveInt(req.query.activeDepartmentId, "activeDepartmentId");
       const categoryId = positiveInt(req.query.categoryId, "categoryId");
       const page = positiveInt(req.query.departmentItemsPage, "departmentItemsPage") ?? 1;
       const limit = positiveInt(req.query.departmentItemsLimit, "departmentItemsLimit", 100) ?? 10;
