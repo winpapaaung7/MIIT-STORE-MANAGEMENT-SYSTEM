@@ -2,7 +2,6 @@ import { type ReactNode, useEffect, useState } from "react";
 import { Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { useLanguage } from "@/context/LanguageContext";
 
 import {
   Dialog,
@@ -36,7 +35,6 @@ export default function EditAcademicYearDialog({
   onUpdate,
   trigger,
 }: EditAcademicYearDialogProps) {
-  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
 
   // Start Date
@@ -52,7 +50,6 @@ export default function EditAcademicYearDialog({
   const [status, setStatus] = useState<"Active" | "Inactive">(
     academicYear.status
   );
-  const monthLabels: Record<string, string> = { January: t("january"), February: t("february"), March: t("march"), April: t("april"), May: t("may"), June: t("june"), July: t("july"), August: t("august"), September: t("september"), October: t("october"), November: t("november"), December: t("december") };
 
   useEffect(() => {
     const start = academicYear.startDate;
@@ -101,7 +98,7 @@ export default function EditAcademicYearDialog({
           <Button
             variant="ghost"
             size="icon"
-            aria-label={t("editAcademicYear")}
+            aria-label="Edit academic year"
           >
             <Pencil className="h-4 w-4" />
           </Button>
@@ -110,13 +107,13 @@ export default function EditAcademicYearDialog({
 
       <DialogContent className="max-w-2xl rounded-lg">
         <DialogHeader>
-          <DialogTitle>{t("editAcademicYear")}</DialogTitle>
+          <DialogTitle>Edit Academic Year</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
 
           {/* Start Date */}
-          <AcademicYearDetailTile label={t("startDate")}>
+          <AcademicYearDetailTile label="Start Date">
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
 
@@ -148,7 +145,7 @@ export default function EditAcademicYearDialog({
                       key={month}
                       value={month}
                     >
-                      {monthLabels[month] ?? month}
+                      {month}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -178,7 +175,7 @@ export default function EditAcademicYearDialog({
           </AcademicYearDetailTile>
 
           {/* End Date */}
-          <AcademicYearDetailTile label={t("endDate")}>
+          <AcademicYearDetailTile label="End Date">
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
 
@@ -210,7 +207,7 @@ export default function EditAcademicYearDialog({
                       key={month}
                       value={month}
                     >
-                      {monthLabels[month] ?? month}
+                      {month}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -240,7 +237,7 @@ export default function EditAcademicYearDialog({
           </AcademicYearDetailTile>
 
           {/* Status */}
-          <AcademicYearDetailTile label={t("status")}>
+          <AcademicYearDetailTile label="Status">
 
             <Select
               value={status}
@@ -254,11 +251,11 @@ export default function EditAcademicYearDialog({
 
               <SelectContent>
                 <SelectItem value="Active">
-                  {t("active")}
+                  Active
                 </SelectItem>
 
                 <SelectItem value="Inactive">
-                {t("inactive")}
+                Inactive
               </SelectItem>
             </SelectContent>
           </Select>
@@ -272,14 +269,14 @@ export default function EditAcademicYearDialog({
             onClick={() => setOpen(false)}
             className="rounded-lg border-slate-200 bg-white hover:bg-slate-50"
           >
-            {t("cancel")}
+            Cancel
           </Button>
 
           <Button
             onClick={handleSave}
             className="rounded-lg bg-slate-950 hover:bg-slate-800"
           >
-            {t("saveChanges")}
+            Save Changes
           </Button>
         </DialogFooter>
       </DialogContent>
