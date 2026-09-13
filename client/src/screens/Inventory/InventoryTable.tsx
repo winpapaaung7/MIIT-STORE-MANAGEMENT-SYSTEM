@@ -12,6 +12,7 @@ import { useState } from "react";
 
 import { type InventoryItem } from "./data/inventoryData";
 import { EditItemModal } from "./EditItemModal";
+import { useLanguage } from "@/context/LanguageContext";
 
 interface InventoryTableProps {
   items: InventoryItem[];
@@ -28,6 +29,7 @@ export default function InventoryTable({
   onEditItem,
   onDeleteItem,
 }: InventoryTableProps) {
+  const { t } = useLanguage();
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   return (
@@ -48,16 +50,16 @@ export default function InventoryTable({
                 ID
               </TableHead>
               <TableHead className="px-4 py-4 text-left text-sm font-semibold text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-8">
-                Item
+                {t("item")}
               </TableHead>
               <TableHead className="px-4 py-4 text-left text-sm font-semibold text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-8">
-                Image
+                {t("image")}
               </TableHead>
               <TableHead className="px-4 py-4 text-left text-sm font-semibold text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-8">
-                Quantity
+                {t("quantity")}
               </TableHead>
               <TableHead className="px-4 py-4 text-center text-sm font-semibold text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-8">
-                Actions
+                {t("actions")}
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -69,7 +71,7 @@ export default function InventoryTable({
                   colSpan={5}
                   className="h-80 px-8 py-6 text-center text-muted-foreground"
                 >
-                  No inventory items found.
+                  {t("noInventoryItems")}
                 </TableCell>
               </TableRow>
             ) : (
@@ -115,7 +117,7 @@ export default function InventoryTable({
                       />
                     ) : (
                       <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-slate-100 bg-slate-50 text-[10px] font-medium text-slate-400">
-                        No Image
+                        {t("noImage")}
                       </div>
                     )}
                   </TableCell>
@@ -129,8 +131,8 @@ export default function InventoryTable({
                       }`}
                     >
                       {item.quantity > 0
-                        ? `${item.quantity} Units`
-                        : "Out of Stock"}
+                        ? `${item.quantity} ${t("units")}`
+                        : t("outOfStock")}
                     </span>
                   </TableCell>
 
@@ -160,7 +162,7 @@ export default function InventoryTable({
           {previewImage && (
             <img
               src={previewImage}
-              alt="Preview"
+              alt={t("preview")}
               className="w-full h-auto rounded-2xl object-contain bg-white shadow-xl"
             />
           )}

@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { TableCell, TableRow } from "@/components/ui/table"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/context/LanguageContext"
 
 export interface AccessoryRowItemProps {
   accessory: AccessoryItem
@@ -31,12 +32,12 @@ export interface AccessoryRowItemProps {
   openActionDialog: (type: TableAction, item: AccessoryItem) => void
 }
 
-function QrCodeMark({ onClick }: { onClick: () => void }) {
+function QrCodeMark({ onClick, label }: { onClick: () => void; label: string }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      aria-label="Open QR code scan"
+      aria-label={label}
       className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-slate-200"
     >
       <QrCode className="size-4 text-slate-800" />
@@ -52,6 +53,8 @@ export default function AccessoryRowItem({
   setSelectedQrItem,
   openActionDialog,
 }: AccessoryRowItemProps) {
+  const { t } = useLanguage()
+  const statusLabel = accessory.status === "Available" ? t("available") : accessory.status === "In Use" ? t("inUse") : accessory.status === "Damaged" ? t("damaged") : accessory.status
   return (
     <TableRow className="border-slate-100">
       <TableCell className="px-4 py-4 text-left font-mono text-sm font-medium text-slate-950 sm:px-8 sm:py-5 sm:text-base">
@@ -73,12 +76,12 @@ export default function AccessoryRowItem({
             statusClasses[accessory.status]
           )}
         >
-          {accessory.status}
+          {statusLabel}
         </Badge>
       </TableCell>
       <TableCell className="px-4 py-4 text-center sm:px-6 sm:py-5">
         <div className="flex justify-center">
-          <QrCodeMark onClick={() => setSelectedQrItem(accessory)} />
+          <QrCodeMark onClick={() => setSelectedQrItem(accessory)} label={t("qrCode")} />
         </div>
       </TableCell>
       <TableCell className="px-4 py-4 text-center sm:px-6 sm:py-5">
@@ -104,20 +107,20 @@ export default function AccessoryRowItem({
               onClick={() => openActionDialog("edit", accessory)}
             >
               <Edit3 className="size-4 text-sky-600" />
-              Edit
+              {t("edit")}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => openActionDialog("remark", accessory)}
             >
               <MessageSquare className="size-4 text-slate-500" />
-              Remark
+              {t("remark")}
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => openActionDialog("delete", accessory)}
               className="text-rose-700 focus:text-rose-700"
             >
               <Trash2 className="size-4" />
-              Delete
+              {t("delete")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

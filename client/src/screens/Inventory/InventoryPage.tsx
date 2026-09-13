@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import FilterCategories from "./FilterCategories";
 import InventoryTable from "./InventoryTable";
 import { Search } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 import { type InventoryItem } from "./data/inventoryData";
 import {
@@ -97,6 +98,7 @@ interface DepartmentApiResponse {
 }
 
 export default function InventoryPage() {
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
@@ -547,27 +549,27 @@ export default function InventoryPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-3rem)] min-h-0 w-full min-w-0 flex-col gap-6 overflow-hidden">
+    <div className="inventory-page flex h-[calc(100vh-3rem)] min-h-0 w-full min-w-0 flex-col gap-6 overflow-hidden">
       {/* Header */}
 
       <header className="shrink-0">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-normal text-slate-950 sm:text-3xl">
-              Inventory
+              {t("inventory")}
             </h1>
 
             <p className="mt-1 text-sm text-slate-500">
-              {filteredInventory.length} Items
+              {filteredInventory.length} {t("items")}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <ImportButton onClick={handleImport} />
+            <ImportButton onClick={handleImport} label={t("import")} />
 
-            <ExportButton onClick={handleExport} />
+            <ExportButton onClick={handleExport} label={t("export")} />
 
-            <AddItemButton onClick={handleAddItem} />
+            <AddItemButton onClick={handleAddItem} label={t("addItem")} />
           </div>
         </div>
       </header>
@@ -598,7 +600,7 @@ export default function InventoryPage() {
         <Input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search inventory..."
+          placeholder={t("searchInventory")}
           className="h-11 rounded-xl pl-10"
         />
       </div>

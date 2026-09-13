@@ -1,7 +1,8 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 import path from "node:path";
 
 import { PrismaClient } from "./generated/prisma/client.js";
@@ -9,6 +10,8 @@ import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { createDashboardRouter } from "./routes/dashboard.js";
 import { createAuthRouter } from "./routes/auth.js";
 import { createUsersRouter } from "./routes/users.js";
+import { createItemsRouter } from "./routes/items.js";
+import { createItemDetailsRouter } from "./routes/item-details.js";
 import { apiAuthorization, requireDepartmentScope } from "./auth/middleware.js";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -29,11 +32,56 @@ app.use("/api/auth", createAuthRouter(prisma));
 app.use("/api", apiAuthorization(prisma));
 app.use("/api/users", createUsersRouter(prisma));
 app.use("/api/dashboard", createDashboardRouter(prisma));
+app.use("/api/items", createItemsRouter(prisma));
+app.use("/api/item-details", createItemDetailsRouter(prisma, recordActivity));
 
 const uploadsDirectory = path.resolve("uploads");
 app.use("/uploads", express.static(uploadsDirectory));
 
+const imageMimeTypes = {
+  "image/png": { extension: "png", signature: (file: Buffer) => file.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])) },
+  "image/jpeg": { extension: "jpg", signature: (file: Buffer) => file.length >= 3 && file[0] === 0xff && file[1] === 0xd8 && file[2] === 0xff },
+  "image/gif": { extension: "gif", signature: (file: Buffer) => file.subarray(0, 6).toString("ascii") === "GIF87a" || file.subarray(0, 6).toString("ascii") === "GIF89a" },
+  "image/webp": { extension: "webp", signature: (file: Buffer) => file.subarray(0, 4).toString("ascii") === "RIFF" && file.subarray(8, 12).toString("ascii") === "WEBP" },
+} as const;
+const maxImageBytes = 4 * 1024 * 1024;
+
 async function saveItemImage(itemId: string, imageData: string) {
+  const match = imageData.match(/^data:(image\/(?:png|jpeg|gif|webp));base64,([A-Za-z0-9+/=]+)$/);
+
+  if (!match) {
+    throw new Error("Image must be a PNG, JPEG, GIF, or WebP file");
+  }
+
+  const [, mimeType, encodedImage] = match;
+  const imageBuffer = Buffer.from(encodedImage, "base64");
+
+  if (imageBuffer.length === 0 || imageBuffer.length > maxImageBytes) {
+    throw new Error("Image must be between 1 byte and 4 MB");
+  }
+  const imageType = imageMimeTypes[mimeType as keyof typeof imageMimeTypes];
+  if (!imageType.signature(imageBuffer)) throw new Error("Image content does not match its declared MIME type");
+
+  await mkdir(uploadsDirectory, { recursive: true });
+
+  const fileName = `item-${itemId}-${randomUUID()}.${imageType.extension}`;
+  await writeFile(path.join(uploadsDirectory, fileName), imageBuffer);
+
+  return `/uploads/${fileName}`;
+}
+
+async function removeOwnedItemImage(itemId: string, imageUrl: string | null) {
+  if (!imageUrl) return;
+  const escapedItemId = itemId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const ownedName = new RegExp(`^item-${escapedItemId}-(?:[0-9]+|[0-9a-f-]{36})\\.(png|jpg|gif|webp)$`, "i");
+  const name = imageUrl.startsWith("/uploads/") ? imageUrl.slice("/uploads/".length) : "";
+  if (!ownedName.test(name)) return;
+  const target = path.resolve(uploadsDirectory, name);
+  if (!target.startsWith(`${uploadsDirectory}${path.sep}`)) return;
+  try { await unlink(target); } catch (error: any) { if (error?.code !== "ENOENT") console.error("Failed to remove item image", error); }
+}
+
+async function saveProfileImage(userId: number, imageData: string) {
   const match = imageData.match(
     /^data:image\/(png|jpeg|gif|webp);base64,([A-Za-z0-9+/=]+)$/,
   );
@@ -52,10 +100,36 @@ async function saveItemImage(itemId: string, imageData: string) {
   await mkdir(uploadsDirectory, { recursive: true });
 
   const extension = imageType === "jpeg" ? "jpg" : imageType;
-  const fileName = `item-${itemId}-${Date.now()}.${extension}`;
+  const fileName = `profile-${userId}-${Date.now()}.${extension}`;
   await writeFile(path.join(uploadsDirectory, fileName), imageBuffer);
 
   return `/uploads/${fileName}`;
+}
+
+function formatProfile(user: {
+  user_id: number;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  status: string;
+  language: string;
+  image_url: string | null;
+  role: { role_name: string };
+  department: { department_name: string } | null;
+}, req: express.Request) {
+  const origin = `${req.protocol}://${req.get("host")}`;
+
+  return {
+    id: user.user_id,
+    name: user.full_name,
+    email: user.email,
+    phone: user.phone ?? "",
+    role: user.role.role_name,
+    department: user.department?.department_name ?? "",
+    status: user.status,
+    language: user.language === "mm" ? "mm" : "eng",
+    image: user.image_url ? `${origin}${user.image_url}` : "",
+  };
 }
 
 function buildDepartmentCode(departmentName: string) {
@@ -97,6 +171,50 @@ async function findOrCreateDepartment(departmentName: string) {
   });
 }
 
+type AuditAction = "created" | "updated" | "deleted";
+
+type ActivityDetails = Record<string, unknown>;
+
+async function recordActivity(
+  action: AuditAction,
+  module: string,
+  target: { type: string; id?: string | number; name: string },
+  details?: ActivityDetails,
+) {
+  try {
+    // Until authentication is added, the active profile is the user performing changes.
+    const actor = await prisma.users.findFirst({
+      where: { status: "Active" },
+      orderBy: { user_id: "asc" },
+      select: { full_name: true },
+    });
+
+    await prisma.$executeRawUnsafe(
+      "INSERT INTO activity_log (action, module, target_type, target_id, target_name, actor_name, details) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      action,
+      module,
+      target.type,
+      target.id === undefined ? null : String(target.id),
+      target.name,
+      actor?.full_name ?? "System",
+      details ? JSON.stringify(details) : null,
+    );
+  } catch (error) {
+    // Audit logging must never prevent a successful inventory or settings change.
+    console.error("Failed to record activity", error);
+  }
+}
+
+function parseActivityDetails(value: unknown) {
+  if (typeof value !== "string" || !value) return null;
+
+  try {
+    return JSON.parse(value) as ActivityDetails;
+  } catch {
+    return null;
+  }
+}
+
 app.get("/test-db", async (req, res) => {
   try {
     const usersCount = await prisma.users.count();
@@ -112,6 +230,171 @@ app.get("/test-db", async (req, res) => {
       message: "Database connection failed",
       error: error instanceof Error ? error.message : String(error),
     });
+  }
+});
+
+app.get("/api/activity-log", async (req, res) => {
+  try {
+    const action = normalizeString(req.query.action).toLowerCase();
+    const module = normalizeString(req.query.module);
+    const search = normalizeString(req.query.search);
+    const from = normalizeString(req.query.from);
+    const to = normalizeString(req.query.to);
+    const where: string[] = [];
+    const values: unknown[] = [];
+
+    if (["created", "updated", "deleted"].includes(action)) {
+      where.push("action = ?");
+      values.push(action);
+    }
+    if (module) {
+      where.push("module = ?");
+      values.push(module);
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(from)) {
+      where.push("created_at >= ?");
+      values.push(`${from} 00:00:00`);
+    }
+    if (/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+      where.push("created_at < DATE_ADD(?, INTERVAL 1 DAY)");
+      values.push(to);
+    }
+    if (search) {
+      where.push("(target_name LIKE ? OR actor_name LIKE ? OR details LIKE ?)");
+      const term = `%${search}%`;
+      values.push(term, term, term);
+    }
+
+    const rows = await prisma.$queryRawUnsafe<Array<{
+      activity_log_id: number;
+      action: AuditAction;
+      module: string;
+      target_type: string;
+      target_id: string | null;
+      target_name: string;
+      actor_name: string;
+      details: string | null;
+      created_at: Date;
+    }>>(
+      `SELECT activity_log_id, action, module, target_type, target_id, target_name, actor_name, details, created_at
+       FROM activity_log${where.length ? ` WHERE ${where.join(" AND ")}` : ""}
+       ORDER BY created_at DESC, activity_log_id DESC
+       LIMIT 250`,
+      ...values,
+    );
+
+    res.json({
+      ok: true,
+      activities: rows.map((row) => ({ ...row, details: parseActivityDetails(row.details) })),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ ok: false, message: "Failed to load activity history." });
+  }
+});
+
+app.get("/api/profile", async (req, res) => {
+  try {
+    const user = await prisma.users.findUnique({
+      where: { user_id: req.auth!.id },
+      include: { role: true, department: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({ ok: false, message: "No active user profile was found." });
+    }
+
+    res.json({ ok: true, profile: formatProfile(user, req) });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ ok: false, message: "Failed to load profile." });
+  }
+});
+
+app.put("/api/preferences/language", async (req, res) => {
+  const language = req.body.language === "mm" ? "mm" : req.body.language === "eng" ? "eng" : null;
+
+  if (!language) {
+    return res.status(400).json({ ok: false, message: "Language must be 'eng' or 'mm'." });
+  }
+
+  try {
+    const currentUser = await prisma.users.findUnique({ where: { user_id: req.auth!.id } });
+
+    if (!currentUser) {
+      return res.status(404).json({ ok: false, message: "No active user profile was found." });
+    }
+
+    await prisma.users.update({
+      where: { user_id: currentUser.user_id },
+      data: { language },
+    });
+
+    res.json({ ok: true, language });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ ok: false, message: "Failed to save language preference." });
+  }
+});
+
+app.put("/api/profile", async (req, res) => {
+  const name = normalizeString(req.body.name);
+  const email = normalizeString(req.body.email).toLowerCase();
+  const phone = normalizeString(req.body.phone);
+  const departmentName = normalizeString(req.body.department);
+  const image = typeof req.body.image === "string" ? req.body.image : undefined;
+
+  if (!name || !email || !/^\S+@\S+\.\S+$/.test(email)) {
+    return res.status(400).json({ ok: false, message: "Provide a full name and valid email address." });
+  }
+
+  try {
+    const currentUser = await prisma.users.findUnique({ where: { user_id: req.auth!.id } });
+
+    if (!currentUser) {
+      return res.status(404).json({ ok: false, message: "No active user profile was found." });
+    }
+
+    const department = departmentName ? await findOrCreateDepartment(departmentName) : null;
+    const imageUrl = image === ""
+      ? null
+      : image?.startsWith("data:image/")
+        ? await saveProfileImage(currentUser.user_id, image)
+        : undefined;
+
+    const user = await prisma.users.update({
+      where: { user_id: currentUser.user_id },
+      data: {
+        full_name: name,
+        email,
+        phone: phone || null,
+        department_id: department?.department_id ?? null,
+        ...(imageUrl !== undefined ? { image_url: imageUrl } : {}),
+      },
+      include: { role: true, department: true },
+    });
+
+    const changedFields = {
+      ...(currentUser.full_name !== name ? { name: { from: currentUser.full_name, to: name } } : {}),
+      ...(currentUser.email !== email ? { email: { from: currentUser.email, to: email } } : {}),
+      ...(currentUser.phone !== (phone || null) ? { phone: { from: currentUser.phone, to: phone || null } } : {}),
+      ...(imageUrl !== undefined ? { profile_image: "updated" } : {}),
+    };
+    await recordActivity("updated", "Profile", {
+      type: "User profile",
+      id: user.user_id,
+      name: user.full_name,
+    }, changedFields);
+
+    res.json({ ok: true, profile: formatProfile(user, req) });
+  } catch (error) {
+    console.error(error);
+    const message = error instanceof Error && error.message.includes("Unique constraint")
+      ? "That email address is already in use."
+      : error instanceof Error && error.message.startsWith("Image")
+        ? error.message
+        : "Failed to save profile.";
+    res.status(409).json({ ok: false, message });
   }
 });
 
@@ -158,6 +441,11 @@ app.post("/api/academic-years", async (req, res) => {
       if (status === "Active") await tx.budget_year.updateMany({ where: { status: "Active" }, data: { status: "Inactive" } });
       return tx.budget_year.create({ data: { year_name, start_date, end_date, status } });
     });
+    await recordActivity("created", "Academic year", {
+      type: "Academic year",
+      id: year.budget_year_id,
+      name: year.year_name,
+    }, { start_date: year.start_date, end_date: year.end_date, status: year.status });
     res.status(201).json({ ok: true, year });
   } catch { res.status(409).json({ ok: false, message: "Unable to create academic year." }); }
 });
@@ -186,9 +474,21 @@ app.put("/api/academic-years/:id", async (req, res) => {
   const status = normalizeString(req.body.status) === "Active" ? "Active" : "Inactive";
   if (!Number.isInteger(budget_year_id) || !year_name || Number.isNaN(start_date.getTime()) || Number.isNaN(end_date.getTime()) || start_date >= end_date) return res.status(400).json({ ok: false, message: "Provide a name and valid dates." });
   try {
+    const previousYear = await prisma.budget_year.findUnique({ where: { budget_year_id } });
+    if (!previousYear) return res.status(404).json({ ok: false, message: "Academic year not found." });
     const year = await prisma.$transaction(async (tx) => {
       if (status === "Active") await tx.budget_year.updateMany({ where: { status: "Active", NOT: { budget_year_id } }, data: { status: "Inactive" } });
       return tx.budget_year.update({ where: { budget_year_id }, data: { year_name, start_date, end_date, status } });
+    });
+    await recordActivity("updated", "Academic year", {
+      type: "Academic year",
+      id: year.budget_year_id,
+      name: year.year_name,
+    }, {
+      year_name: { from: previousYear.year_name, to: year.year_name },
+      start_date: { from: previousYear.start_date, to: year.start_date },
+      end_date: { from: previousYear.end_date, to: year.end_date },
+      status: { from: previousYear.status, to: year.status },
     });
     res.json({ ok: true, year });
   } catch { res.status(404).json({ ok: false, message: "Academic year not found." }); }
@@ -201,6 +501,11 @@ app.delete("/api/academic-years/:id", async (req, res) => {
   if (!year) return res.status(404).json({ ok: false, message: "Academic year not found." });
   if (year._count.item_detail || year._count.semester) return res.status(409).json({ ok: false, message: "This academic year has linked records and cannot be deleted." });
   await prisma.budget_year.delete({ where: { budget_year_id } });
+  await recordActivity("deleted", "Academic year", {
+    type: "Academic year",
+    id: year.budget_year_id,
+    name: year.year_name,
+  }, { start_date: year.start_date, end_date: year.end_date, status: year.status });
   res.json({ ok: true });
 });
 
@@ -325,56 +630,7 @@ function validateItemId(itemId: string) {
   return typeof itemId === "string" && itemId.length === 4;
 }
 
-app.get("/api/items/next-generated-id", async (req, res) => {
-  try {
-    const itemName = normalizeString(req.query.item_name);
-    const categoryName = normalizeString(req.query.category_name);
 
-    if (!itemName || !categoryName) {
-      res.status(400).json({
-        ok: false,
-        message: "item_name and category_name are required",
-      });
-      return;
-    }
-
-    const category = await prisma.category.findFirst({
-      where: { category_name: categoryName },
-      select: { category_id: true },
-    });
-
-    if (!category) {
-      res.status(404).json({ ok: false, message: "Category not found" });
-      return;
-    }
-
-    const existingItem = await prisma.item.findFirst({
-      where: {
-        item_name: itemName,
-        category_id: category.category_id,
-      },
-      select: {
-        item_id: true,
-        _count: {
-          select: { item_detail: true },
-        },
-      },
-    });
-
-    res.json({
-      ok: true,
-      item_id: existingItem?.item_id ?? (await generateNextItemId()),
-      next_serial: (existingItem?._count.item_detail ?? 0) + 1,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      ok: false,
-      message: "Failed to generate item ID preview",
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
-});
 
 app.get("/api/departments", async (req, res) => {
   try {
@@ -447,6 +703,12 @@ app.post("/api/departments", async (req, res) => {
         department: true,
       },
     });
+
+    await recordActivity("created", "Department", {
+      type: "Department room",
+      id: room.room_id,
+      name: `${room.department.department_name} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ${room.building_name ?? "Unassigned room"}`,
+    }, { status: room.status ? "Available" : "Closed" });
 
     res.status(201).json({
       ok: true,
@@ -689,91 +951,9 @@ app.get("/api/qr-codes/:id", async (req, res) => {
   }
 });
 
-app.get("/api/items", async (req, res) => {
-  try {
-    const items = await prisma.item.findMany({
-      where: req.auth?.role.code === "DEPARTMENT_HEAD" ? { item_detail: { some: { current_department_id: req.auth.department!.id } } } : undefined,
-      include: {
-        category: true,
-        _count: {
-          select: {
-            item_detail: true,
-          },
-        },
-      },
-      orderBy: { item_id: "asc" },
-    });
 
-    res.json({
-      ok: true,
-      items: items.map((item) => ({
-        item_id: item.item_id,
-        item_name: item.item_name,
-        category_name: item.category.category_name,
-        image_url: item.image_url,
-        quantity: item._count.item_detail,
-      })),
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      ok: false,
-      message: "Failed to fetch items",
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
-});
 
-app.get("/api/item-details", async (req, res) => {
-  try {
-    const details = await prisma.item_detail.findMany({
-      where: req.auth?.role.code === "DEPARTMENT_HEAD" ? { current_department_id: req.auth.department!.id } : undefined,
-      include: {
-        item: {
-          include: {
-            category: true,
-          },
-        },
-        room: {
-          include: {
-            department: true,
-          },
-        },
-        department: true,
-        budget_year: true,
-      },
-      orderBy: { item_detail_id: "asc" },
-    });
 
-    res.json({
-      ok: true,
-      items: details.map((detail) => ({
-        id: detail.detail_code,
-        item_name: detail.item.item_name,
-        category_name: detail.item.category.category_name,
-        status: detail.status,
-        department:
-          detail.department?.department_name ??
-          detail.room?.department.department_name ??
-          "Store",
-        room: detail.room?.building_name ?? "",
-        academic_year: detail.budget_year.year_name,
-        registered_date:
-          detail.purchase_date?.toISOString().split("T")[0] ??
-          detail.created_at.toISOString().split("T")[0],
-        created_at: detail.created_at.toISOString(),
-        remark: detail.notes ?? "",
-      })),
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      ok: false,
-      message: "Failed to fetch accessory details",
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
-});
 
 app.get("/api/accessories/by-code/:code", async (req, res) => {
   try {
@@ -799,12 +979,6 @@ app.get("/api/accessories/by-code/:code", async (req, res) => {
         },
         department: true,
         budget_year: true,
-        laptop_rental: {
-          where: { rental_status: { in: ["pending", "approved", "active", "issued"] } },
-          orderBy: { issue_date: "desc" },
-          take: 1,
-          include: { student: true, teacher: true },
-        },
       },
     });
 
@@ -813,7 +987,6 @@ app.get("/api/accessories/by-code/:code", async (req, res) => {
       return;
     }
 
-    const activeRental = detail.item.category.category_name.toLowerCase() === "laptop" ? detail.laptop_rental[0] : null;
     res.json({
       ok: true,
       accessory: {
@@ -833,8 +1006,6 @@ app.get("/api/accessories/by-code/:code", async (req, res) => {
           detail.created_at.toISOString().split("T")[0],
         created_at: detail.created_at.toISOString(),
         remark: detail.notes ?? "",
-        borrower_name: activeRental?.student?.student_name ?? activeRental?.teacher?.full_name ?? null,
-        borrower_id: activeRental?.student?.roll_number ?? activeRental?.teacher?.email ?? null,
       },
     });
   } catch (error) {
@@ -847,61 +1018,7 @@ app.get("/api/accessories/by-code/:code", async (req, res) => {
   }
 });
 
-app.put("/api/item-details/:detailCode", async (req, res) => {
-  try {
-    const detailCode = normalizeString(req.params.detailCode);
-    const status = normalizeString(req.body.status);
-    const remark =
-      typeof req.body.remark === "string" ? req.body.remark.trim() : "";
-    const allowedStatuses = ["Available", "In Use", "Damaged"];
 
-    if (!detailCode || !allowedStatuses.includes(status)) {
-      res.status(400).json({
-        ok: false,
-        message: "A valid item detail code and status are required",
-      });
-      return;
-    }
-
-    if (remark.length > 255) {
-      res.status(400).json({
-        ok: false,
-        message: "Remark must not exceed 255 characters",
-      });
-      return;
-    }
-
-    const itemDetail = await prisma.item_detail.findUnique({
-      where: { detail_code: detailCode },
-      select: { item_detail_id: true },
-    });
-
-    if (!itemDetail) {
-      res.status(404).json({
-        ok: false,
-        message: "Item detail not found",
-      });
-      return;
-    }
-
-    await prisma.item_detail.update({
-      where: { item_detail_id: itemDetail.item_detail_id },
-      data: {
-        status,
-        notes: remark || null,
-      },
-    });
-
-    res.json({ ok: true });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      ok: false,
-      message: "Failed to update accessory details",
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
-});
 
 app.get("/api/students", async (_req, res) => {
   const students = await prisma.student.findMany({
@@ -1378,32 +1495,29 @@ app.post("/api/transfers", async (req, res) => {
       return;
     }
 
+    if (new Set(itemDetailIds).size !== itemDetailIds.length) {
+      res.status(400).json({ ok: false, message: "Duplicate item detail IDs are not allowed in one transfer" });
+      return;
+    }
+
     const isDepartmentHead = req.auth?.role.code === "DEPARTMENT_HEAD";
-    const fromDepartment = isDepartmentHead
-      ? await prisma.department.findFirst({ where: { department_name: fromDepartmentName } })
-      : await findOrCreateDepartment(fromDepartmentName);
-    const toDepartment = isDepartmentHead
-      ? await prisma.department.findFirst({ where: { department_name: toDepartmentName } })
-      : await findOrCreateDepartment(toDepartmentName);
+    const fromDepartment = await prisma.department.findFirst({ where: { department_name: fromDepartmentName } });
+    const toDepartment = await prisma.department.findFirst({ where: { department_name: toDepartmentName } });
     if (!fromDepartment || !toDepartment) {
       res.status(404).json({ ok: false, message: "Department not found" });
       return;
     }
     if (!requireDepartmentScope(fromDepartment.department_id, res, req.auth)) return;
 
-    const fromRoom = fromRoomName
-      ? (isDepartmentHead
-          ? await prisma.room.findFirst({ where: { department_id: fromDepartment.department_id, building_name: fromRoomName } })
-          : await findOrCreateRoom(fromDepartment.department_id, fromRoomName))
-      : null;
+    const fromRoom = fromRoomName ? await prisma.room.findFirst({ where: { department_id: fromDepartment.department_id, building_name: fromRoomName } }) : null;
 
-    const toRoom = toRoomName
-      ? (isDepartmentHead
-          ? await prisma.room.findFirst({ where: { department_id: toDepartment.department_id, building_name: toRoomName } })
-          : await findOrCreateRoom(toDepartment.department_id, toRoomName))
-      : null;
-    if (isDepartmentHead && (fromRoomName && !fromRoom || !toRoom)) {
+    const toRoom = await prisma.room.findFirst({ where: { department_id: toDepartment.department_id, building_name: toRoomName } });
+    if ((fromRoomName && !fromRoom) || !toRoom) {
       res.status(404).json({ ok: false, message: "Room not found" });
+      return;
+    }
+    if (fromDepartment.department_id === toDepartment.department_id && fromRoom?.room_id === toRoom.room_id) {
+      res.status(400).json({ ok: false, message: "Destination department and room must differ from the current location" });
       return;
     }
 
@@ -1411,6 +1525,7 @@ app.post("/api/transfers", async (req, res) => {
       where: {
         detail_code: { in: itemDetailIds },
       },
+      include: { laptop_rental: { where: { rental_status: { in: ["pending", "approved", "active", "issued"] } }, select: { rental_id: true } } },
     });
 
     if (itemDetails.length !== itemDetailIds.length) {
@@ -1430,6 +1545,10 @@ app.post("/api/transfers", async (req, res) => {
         ok: false,
         message: "Only assets with Available or Damaged status can be transferred",
       });
+      return;
+    }
+    if (itemDetails.some((detail) => detail.laptop_rental.length > 0)) {
+      res.status(400).json({ ok: false, message: "Assets with an active or pending rental cannot be transferred" });
       return;
     }
 
@@ -1496,7 +1615,7 @@ app.post("/api/transfers", async (req, res) => {
         },
       });
 
-      await tx.item_detail.updateMany({
+      const updatedItems = await tx.item_detail.updateMany({
         where: {
           detail_code: { in: itemDetailIds },
         },
@@ -1505,6 +1624,7 @@ app.post("/api/transfers", async (req, res) => {
           current_room_id: toRoom?.room_id ?? null,
         },
       });
+      if (updatedItems.count !== itemDetailIds.length) throw new Error("Transfer items changed before they could be updated");
 
       return createdTransfer;
     });
@@ -1558,6 +1678,14 @@ app.delete("/api/items/:id", async (req, res) => {
       where: { item_id: itemId },
     });
 
+    await removeOwnedItemImage(existingItem.item_id, existingItem.image_url);
+
+    await recordActivity("deleted", "Inventory", {
+      type: "Item",
+      id: existingItem.item_id,
+      name: existingItem.item_name,
+    }, { removed_units: existingItem.item_detail.length });
+
     res.json({
       ok: true,
       message: "Item deleted successfully",
@@ -1588,7 +1716,7 @@ app.put("/api/items/:id/image", async (req, res) => {
 
     const existingItem = await prisma.item.findUnique({
       where: { item_id: itemId },
-      select: { item_id: true },
+      select: { item_id: true, item_name: true, image_url: true },
     });
 
     if (!existingItem) {
@@ -1605,6 +1733,14 @@ app.put("/api/items/:id/image", async (req, res) => {
         _count: { select: { item_detail: true } },
       },
     });
+
+    await removeOwnedItemImage(existingItem.item_id, existingItem.image_url);
+
+    await recordActivity("updated", "Inventory", {
+      type: "Item image",
+      id: item.item_id,
+      name: existingItem.item_name,
+    }, { image: "updated" });
 
     res.json({
       ok: true,
@@ -1641,11 +1777,26 @@ app.put("/api/items/:id/category", async (req, res) => {
       return;
     }
 
+    const existingItem = await prisma.item.findUnique({
+      where: { item_id: itemId },
+      include: { category: true },
+    });
+    if (!existingItem) {
+      res.status(404).json({ ok: false, message: "Item not found" });
+      return;
+    }
+
     const item = await prisma.item.update({
       where: { item_id: itemId },
       data: { category_id: category.category_id },
       include: { _count: { select: { item_detail: true } } },
     });
+
+    await recordActivity("updated", "Inventory", {
+      type: "Item category",
+      id: item.item_id,
+      name: item.item_name,
+    }, { category: { from: existingItem.category.category_name, to: category.category_name } });
 
     res.json({
       ok: true,
@@ -1841,6 +1992,17 @@ app.post("/api/items", async (req, res) => {
 
     const totalQuantity = startingSerial + quantity - 1;
 
+    await recordActivity(existingItem ? "updated" : "created", "Inventory", {
+      type: "Item",
+      id: item.item_id,
+      name: item.item_name,
+    }, {
+      ...(existingItem ? { added_units: quantity, quantity_before: existingItem._count.item_detail, quantity_after: totalQuantity } : { added_units: quantity }),
+      category: category.category_name,
+      room: room.building_name ?? "Unassigned room",
+      notes: remark || null,
+    });
+
     res.status(existingItem ? 200 : 201).json({
       ok: true,
       item: {
@@ -1887,6 +2049,15 @@ app.put("/api/departments/:id", async (req, res) => {
       return;
     }
 
+    const previousRoom = await prisma.room.findUnique({
+      where: { room_id: roomId },
+      include: { department: true },
+    });
+    if (!previousRoom) {
+      res.status(404).json({ ok: false, message: "Department room not found" });
+      return;
+    }
+
     const conflictingRoom = await prisma.room.findFirst({
       where: {
         building_name: classroom,
@@ -1915,6 +2086,16 @@ app.put("/api/departments/:id", async (req, res) => {
       include: {
         department: true,
       },
+    });
+
+    await recordActivity("updated", "Department", {
+      type: "Department room",
+      id: room.room_id,
+      name: `${room.department.department_name} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ${room.building_name ?? "Unassigned room"}`,
+    }, {
+      department: { from: previousRoom.department.department_name, to: room.department.department_name },
+      classroom: { from: previousRoom.building_name ?? "", to: room.building_name ?? "" },
+      status: { from: previousRoom.status ? "Available" : "Closed", to: room.status ? "Available" : "Closed" },
     });
 
     res.json({
@@ -1948,9 +2129,24 @@ app.delete("/api/departments/:id", async (req, res) => {
       return;
     }
 
+    const room = await prisma.room.findUnique({
+      where: { room_id: roomId },
+      include: { department: true },
+    });
+    if (!room) {
+      res.status(404).json({ ok: false, message: "Department room not found" });
+      return;
+    }
+
     await prisma.room.delete({
       where: { room_id: roomId },
     });
+
+    await recordActivity("deleted", "Department", {
+      type: "Department room",
+      id: room.room_id,
+      name: `${room.department.department_name} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ${room.building_name ?? "Unassigned room"}`,
+    }, { status: room.status ? "Available" : "Closed" });
 
     res.json({ ok: true });
   } catch (error) {
@@ -1964,3 +2160,4 @@ app.delete("/api/departments/:id", async (req, res) => {
 });
 
 export default app;
+

@@ -6,7 +6,7 @@ export function ProtectedRoute({ roles }: { roles?: RoleCode[] }) {
   const location = useLocation();
   if (loading)
     return (
-      <div className="grid min-h-screen place-items-center bg-[#F4F7FB] text-sm text-[#64748B]">
+      <div className="status-page grid min-h-screen place-items-center bg-[#F4F7FB] text-sm text-[#64748B]">
         Checking your session…
       </div>
     );
@@ -22,8 +22,8 @@ export function ForbiddenPage() {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
   return (
-    <main className="grid min-h-screen place-items-center bg-[#F4F7FB] p-6">
-      <section className="max-w-md rounded-xl border border-[#DCE3ED] bg-white p-8 text-center shadow-sm">
+    <main className="status-page grid min-h-screen place-items-center bg-[#F4F7FB] p-6">
+      <section className="status-card max-w-md rounded-xl border border-[#DCE3ED] bg-white p-8 text-center shadow-sm">
         <h1 className="text-2xl font-semibold text-[#172033]">
           Access restricted
         </h1>

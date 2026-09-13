@@ -7,6 +7,7 @@ import FilterDropdowns from "@/screens/AccessoryDetails/Searchbar components/Fil
 import SearchBar from "@/screens/AccessoryDetails/Searchbar components/SearchBar"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/context/LanguageContext"
 
 export interface AccessoriesFilterBarProps {
   hasActiveFilters: FilterChoice | Date | undefined
@@ -77,8 +78,9 @@ export default function AccessoriesFilterBar({
   noneFilterValue,
   onTransferClick,
 }: AccessoriesFilterBarProps) {
+  const { t } = useLanguage()
   return (
-    <div className="shrink-0 rounded-lg border border-slate-100 bg-white p-3 shadow-sm shadow-slate-200/70 sm:p-4">
+    <div className="shrink-0 rounded-lg border border-border bg-card p-3 shadow-sm dark:shadow-none sm:p-4">
       <div className="flex flex-col gap-4">
         <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:items-center">
           <Button
@@ -92,7 +94,7 @@ export default function AccessoriesFilterBar({
                 : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50"
             )}
           >
-            All
+            {t("all")}
           </Button>
 
           <FilterDropdowns
@@ -112,7 +114,7 @@ export default function AccessoriesFilterBar({
             noneFilterValue={noneFilterValue}
           />
 
-          <ActionButtons onTransferClick={onTransferClick} />
+          <ActionButtons onTransferClick={onTransferClick} label={t("transfer")} />
         </div>
 
         <SearchBar

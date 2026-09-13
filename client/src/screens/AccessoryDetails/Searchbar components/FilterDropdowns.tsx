@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/context/LanguageContext"
 
 interface FilterDropdownConfig {
   label: string
@@ -61,6 +62,7 @@ function FilterDropdown({
   noneFilterValue,
   className,
 }: FilterDropdownProps) {
+  const { t } = useLanguage()
   const selected = value !== null
 
   return (
@@ -77,7 +79,7 @@ function FilterDropdown({
           )}
         >
           <span className="truncate text-left">
-            {filterLabel(value, label, noneFilterValue)}
+            {value === noneFilterValue ? t("none") : filterLabel(value, label, noneFilterValue)}
           </span>
           <ChevronDown className="ml-auto size-4 shrink-0 opacity-70" />
         </Button>
@@ -85,11 +87,11 @@ function FilterDropdown({
       <DropdownMenuContent align="start" className="w-56">
         <DropdownMenuItem onClick={() => onChange(null)}>
           {value === null && <Check className="size-4" />}
-          All
+          {t("all")}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onChange(noneFilterValue)}>
           {isNoneFilter(value) && <Check className="size-4" />}
-          None
+          {t("none")}
         </DropdownMenuItem>
         {options.map((option) => (
           <DropdownMenuItem key={option} onClick={() => onChange(option)}>
@@ -118,28 +120,29 @@ export default function FilterDropdowns({
   isNoneFilter,
   noneFilterValue,
 }: FilterDropdownsProps) {
+  const { t } = useLanguage()
   const dropdowns: FilterDropdownConfig[] = [
     {
-      label: "Category",
+      label: t("category"),
       value: selectedCategory,
       options: [...categories],
       onChange: selectCategory,
     },
     {
-      label: "Item Name",
+      label: t("itemName"),
       value: selectedItemName,
       options: itemNames,
       onChange: setSelectedItemName,
       className: "sm:min-w-44",
     },
     {
-      label: "Department",
+      label: t("department"),
       value: selectedDepartment,
       options: departmentOptions,
       onChange: onDepartmentChange,
     },
     {
-      label: "Room",
+      label: t("room"),
       value: selectedRoom,
       options: rooms,
       onChange: selectRoom,

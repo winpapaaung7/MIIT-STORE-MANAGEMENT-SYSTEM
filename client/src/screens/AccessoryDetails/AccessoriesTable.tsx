@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { useLanguage } from "@/context/LanguageContext"
 
 export interface AccessoriesTableProps {
   filteredAccessories: AccessoryItem[]
@@ -29,6 +30,7 @@ export default function AccessoriesTable({
   setSelectedQrItem,
   openActionDialog,
 }: AccessoriesTableProps) {
+  const { t } = useLanguage()
   return (
     <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-slate-100 bg-white shadow-sm shadow-slate-200/80">
       <div className="max-h-[min(550px,calc(100vh-20rem))] min-h-[260px] overflow-auto overscroll-contain scroll-smooth [scrollbar-color:#cbd5e1_transparent] [scrollbar-width:thin]">
@@ -39,16 +41,16 @@ export default function AccessoriesTable({
                 ID
               </TableHead>
               <TableHead className="sticky top-0 z-10 min-w-56 bg-slate-50 px-4 text-left text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:min-w-64 sm:px-8">
-                Item Name
+                {t("itemName")}
               </TableHead>
               <TableHead className="sticky top-0 z-10 w-36 bg-slate-50 px-4 text-center text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-6">
-                Status
+                {t("status")}
               </TableHead>
               <TableHead className="sticky top-0 z-10 w-28 bg-slate-50 px-4 text-center text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:w-36 sm:px-6">
-                QR Code
+                {t("qrCode")}
               </TableHead>
               <TableHead className="sticky top-0 z-10 w-24 bg-slate-50 px-4 text-center text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:w-32 sm:px-6">
-                Action
+                {t("action")}
               </TableHead>
             </TableRow>
           </TableHeader>

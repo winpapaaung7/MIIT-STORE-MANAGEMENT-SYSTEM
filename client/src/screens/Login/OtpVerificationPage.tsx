@@ -3,7 +3,7 @@ import { ArrowLeft, LoaderCircle, MailCheck, ShieldCheck } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth, type AuthenticatedUser } from "@/auth/AuthContext";
-const API = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";
+import { API_BASE_URL as API } from "@/lib/api";
 type ChallengeState = {
   challengeId: string;
   email: string;
@@ -164,9 +164,9 @@ export default function OtpVerificationPage() {
   }
   if (!challenge) return null;
   return (
-    <main className="min-h-screen bg-[#F4F7FB] p-4 sm:p-6">
+    <main className="auth-page min-h-screen bg-[#F4F7FB] p-4 sm:p-6">
       <section className="mx-auto flex min-h-[calc(100vh-2rem)] max-w-lg items-center justify-center">
-        <div className="w-full rounded-2xl border border-[#DCE3ED] bg-white p-6 shadow-sm sm:p-8">
+        <div className="auth-card w-full rounded-2xl border border-[#DCE3ED] bg-white p-6 shadow-sm sm:p-8">
           <button
             type="button"
             onClick={backToLogin}
