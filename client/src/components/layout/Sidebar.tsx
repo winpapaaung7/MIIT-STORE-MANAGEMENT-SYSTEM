@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, LogOut, User } from "lucide-react";
 import msmLogo from "@/assets/MSM logo_r.png";
 import { useAuth } from "@/auth/AuthContext";
 import { allowedNavigation } from "@/routes/routePermissions";
+import { API_BASE_URL } from "@/lib/api";
 export function Sidebar({
   collapsed,
   onCollapsedChange,
@@ -14,9 +15,8 @@ export function Sidebar({
     navigate = useNavigate();
   const menuItems = user ? allowedNavigation(user) : [];
   async function logout() {
-    const api = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";
     try {
-      await fetch(`${api}/api/auth/logout`, {
+      await fetch(`${API_BASE_URL}/api/auth/logout`, {
         method: "POST",
         credentials: "include",
       });

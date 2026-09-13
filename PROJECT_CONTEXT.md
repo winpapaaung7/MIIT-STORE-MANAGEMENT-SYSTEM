@@ -57,3 +57,29 @@ AUTH_REFRESH_TOKEN_DAYS="30"
 ```
 
 After editing server environment settings, restart the server. Existing sessions keep the expiry recorded when they were issued; newly authenticated sessions use the updated duration.
+
+## API URL development setup
+
+The React client reads its API origin from `VITE_API_BASE_URL`. Copy
+`client/.env.example` to `client/.env` and use a URL without a trailing slash:
+
+```env
+VITE_API_BASE_URL="http://localhost:5000"
+```
+
+When the React app runs on another device, set this value to the computer's
+reachable LAN URL, for example `http://YOUR_SERVER_IP:5000`. Include that
+client origin in the server's `CLIENT_ORIGIN` setting.
+
+The Flutter scanner reads `API_BASE_URL` only from a compile-time Dart define.
+It falls back to `http://localhost:5000` for local desktop development. A
+physical phone must use the server's reachable LAN URL:
+
+```bash
+cd scanner_app
+flutter run --dart-define=API_BASE_URL=http://YOUR_SERVER_IP:5000
+```
+
+The scanner continues to use the server's intentionally public, read-only
+`/api/accessories/by-code/:code` endpoint; no browser cookie is required for
+that lookup.

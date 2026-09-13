@@ -77,6 +77,14 @@ export default function UsersPage() {
     void load();
   }, [accessToken]);
   const save = async () => {
+    if (!editing && draft.password.length < 12) {
+      setError("Temporary password must be at least 12 characters.");
+      return;
+    }
+    if (!draft.name.trim() || !draft.email.trim() || !draft.roleId) {
+      setError("Name, email, and role are required.");
+      return;
+    }
     setSaving(true);
     setError("");
     try {
@@ -122,6 +130,15 @@ export default function UsersPage() {
       `New password for ${user.name} (minimum 12 characters):`,
     );
     if (!password) return;
+    if (password.length < 12) {
+      setError("New password must be at least 12 characters.");
+      return;
+    }
+    const confirmation = window.prompt("Confirm the new password:");
+    if (confirmation !== password) {
+      setError("Passwords do not match. Password was not changed.");
+      return;
+    }
     const response = await fetch(`${API}/api/users/${user.id}/reset-password`, {
       method: "POST",
       headers,
@@ -225,7 +242,9 @@ export default function UsersPage() {
                 type="password"
                 value={draft.password}
                 onChange={(e) => field("password", e.target.value)}
-                placeholder="Temporary password"
+              placeholder="Temporary password"
+              minLength={12}
+              autoComplete="new-password"
                 className="h-10 w-full rounded border px-3"
               />
             )}

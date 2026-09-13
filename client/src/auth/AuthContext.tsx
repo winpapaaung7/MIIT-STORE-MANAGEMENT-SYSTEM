@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { API_BASE_URL } from "@/lib/api";
 export type AuthenticatedUser = {
   id: number;
   name: string;
@@ -36,9 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const nativeFetch = useRef(window.fetch.bind(window));
   useEffect(() => {
-    const api = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";
     void nativeFetch
-      .current(`${api}/api/auth/refresh`, {
+      .current(`${API_BASE_URL}/api/auth/refresh`, {
         method: "POST",
         credentials: "include",
       })
@@ -53,7 +53,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
   useEffect(() => {
-    const api = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";
     const originalFetch = nativeFetch.current;
     window.fetch = (input, init) => {
       const url =
@@ -64,8 +63,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             : input.toString();
       if (
         !accessToken ||
-        !url.startsWith(`${api}/api/`) ||
-        url.startsWith(`${api}/api/auth/`)
+        !url.startsWith(`${API_BASE_URL}/api/`) ||
+        url.startsWith(`${API_BASE_URL}/api/auth/`)
       )
         return originalFetch(input, init);
       const headers = new Headers(

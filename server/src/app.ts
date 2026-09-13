@@ -1,7 +1,8 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
 import path from "node:path";
 
 import { PrismaClient } from "./generated/prisma/client.js";
@@ -9,6 +10,8 @@ import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { createDashboardRouter } from "./routes/dashboard.js";
 import { createAuthRouter } from "./routes/auth.js";
 import { createUsersRouter } from "./routes/users.js";
+import { createItemsRouter } from "./routes/items.js";
+import { createItemDetailsRouter } from "./routes/item-details.js";
 import { apiAuthorization, requireDepartmentScope } from "./auth/middleware.js";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -29,33 +32,53 @@ app.use("/api/auth", createAuthRouter(prisma));
 app.use("/api", apiAuthorization(prisma));
 app.use("/api/users", createUsersRouter(prisma));
 app.use("/api/dashboard", createDashboardRouter(prisma));
+app.use("/api/items", createItemsRouter(prisma));
+app.use("/api/item-details", createItemDetailsRouter(prisma, recordActivity));
 
 const uploadsDirectory = path.resolve("uploads");
 app.use("/uploads", express.static(uploadsDirectory));
 
+const imageMimeTypes = {
+  "image/png": { extension: "png", signature: (file: Buffer) => file.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])) },
+  "image/jpeg": { extension: "jpg", signature: (file: Buffer) => file.length >= 3 && file[0] === 0xff && file[1] === 0xd8 && file[2] === 0xff },
+  "image/gif": { extension: "gif", signature: (file: Buffer) => file.subarray(0, 6).toString("ascii") === "GIF87a" || file.subarray(0, 6).toString("ascii") === "GIF89a" },
+  "image/webp": { extension: "webp", signature: (file: Buffer) => file.subarray(0, 4).toString("ascii") === "RIFF" && file.subarray(8, 12).toString("ascii") === "WEBP" },
+} as const;
+const maxImageBytes = 4 * 1024 * 1024;
+
 async function saveItemImage(itemId: string, imageData: string) {
-  const match = imageData.match(
-    /^data:image\/(png|jpeg|gif|webp);base64,([A-Za-z0-9+/=]+)$/,
-  );
+  const match = imageData.match(/^data:(image\/(?:png|jpeg|gif|webp));base64,([A-Za-z0-9+/=]+)$/);
 
   if (!match) {
     throw new Error("Image must be a PNG, JPEG, GIF, or WebP file");
   }
 
-  const [, imageType, encodedImage] = match;
+  const [, mimeType, encodedImage] = match;
   const imageBuffer = Buffer.from(encodedImage, "base64");
 
-  if (imageBuffer.length === 0 || imageBuffer.length > 4 * 1024 * 1024) {
+  if (imageBuffer.length === 0 || imageBuffer.length > maxImageBytes) {
     throw new Error("Image must be between 1 byte and 4 MB");
   }
+  const imageType = imageMimeTypes[mimeType as keyof typeof imageMimeTypes];
+  if (!imageType.signature(imageBuffer)) throw new Error("Image content does not match its declared MIME type");
 
   await mkdir(uploadsDirectory, { recursive: true });
 
-  const extension = imageType === "jpeg" ? "jpg" : imageType;
-  const fileName = `item-${itemId}-${Date.now()}.${extension}`;
+  const fileName = `item-${itemId}-${randomUUID()}.${imageType.extension}`;
   await writeFile(path.join(uploadsDirectory, fileName), imageBuffer);
 
   return `/uploads/${fileName}`;
+}
+
+async function removeOwnedItemImage(itemId: string, imageUrl: string | null) {
+  if (!imageUrl) return;
+  const escapedItemId = itemId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const ownedName = new RegExp(`^item-${escapedItemId}-(?:[0-9]+|[0-9a-f-]{36})\\.(png|jpg|gif|webp)$`, "i");
+  const name = imageUrl.startsWith("/uploads/") ? imageUrl.slice("/uploads/".length) : "";
+  if (!ownedName.test(name)) return;
+  const target = path.resolve(uploadsDirectory, name);
+  if (!target.startsWith(`${uploadsDirectory}${path.sep}`)) return;
+  try { await unlink(target); } catch (error: any) { if (error?.code !== "ENOENT") console.error("Failed to remove item image", error); }
 }
 
 async function saveProfileImage(userId: number, imageData: string) {
@@ -272,10 +295,9 @@ app.get("/api/activity-log", async (req, res) => {
 
 app.get("/api/profile", async (req, res) => {
   try {
-    const user = await prisma.users.findFirst({
-      where: { status: "Active" },
+    const user = await prisma.users.findUnique({
+      where: { user_id: req.auth!.id },
       include: { role: true, department: true },
-      orderBy: { user_id: "asc" },
     });
 
     if (!user) {
@@ -297,10 +319,7 @@ app.put("/api/preferences/language", async (req, res) => {
   }
 
   try {
-    const currentUser = await prisma.users.findFirst({
-      where: { status: "Active" },
-      orderBy: { user_id: "asc" },
-    });
+    const currentUser = await prisma.users.findUnique({ where: { user_id: req.auth!.id } });
 
     if (!currentUser) {
       return res.status(404).json({ ok: false, message: "No active user profile was found." });
@@ -330,10 +349,7 @@ app.put("/api/profile", async (req, res) => {
   }
 
   try {
-    const currentUser = await prisma.users.findFirst({
-      where: { status: "Active" },
-      orderBy: { user_id: "asc" },
-    });
+    const currentUser = await prisma.users.findUnique({ where: { user_id: req.auth!.id } });
 
     if (!currentUser) {
       return res.status(404).json({ ok: false, message: "No active user profile was found." });
@@ -614,56 +630,7 @@ function validateItemId(itemId: string) {
   return typeof itemId === "string" && itemId.length === 4;
 }
 
-app.get("/api/items/next-generated-id", async (req, res) => {
-  try {
-    const itemName = normalizeString(req.query.item_name);
-    const categoryName = normalizeString(req.query.category_name);
 
-    if (!itemName || !categoryName) {
-      res.status(400).json({
-        ok: false,
-        message: "item_name and category_name are required",
-      });
-      return;
-    }
-
-    const category = await prisma.category.findFirst({
-      where: { category_name: categoryName },
-      select: { category_id: true },
-    });
-
-    if (!category) {
-      res.status(404).json({ ok: false, message: "Category not found" });
-      return;
-    }
-
-    const existingItem = await prisma.item.findFirst({
-      where: {
-        item_name: itemName,
-        category_id: category.category_id,
-      },
-      select: {
-        item_id: true,
-        _count: {
-          select: { item_detail: true },
-        },
-      },
-    });
-
-    res.json({
-      ok: true,
-      item_id: existingItem?.item_id ?? (await generateNextItemId()),
-      next_serial: (existingItem?._count.item_detail ?? 0) + 1,
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      ok: false,
-      message: "Failed to generate item ID preview",
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
-});
 
 app.get("/api/departments", async (req, res) => {
   try {
@@ -740,7 +707,7 @@ app.post("/api/departments", async (req, res) => {
     await recordActivity("created", "Department", {
       type: "Department room",
       id: room.room_id,
-      name: `${room.department.department_name} — ${room.building_name ?? "Unassigned room"}`,
+      name: `${room.department.department_name} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ${room.building_name ?? "Unassigned room"}`,
     }, { status: room.status ? "Available" : "Closed" });
 
     res.status(201).json({
@@ -984,91 +951,9 @@ app.get("/api/qr-codes/:id", async (req, res) => {
   }
 });
 
-app.get("/api/items", async (req, res) => {
-  try {
-    const items = await prisma.item.findMany({
-      where: req.auth?.role.code === "DEPARTMENT_HEAD" ? { item_detail: { some: { current_department_id: req.auth.department!.id } } } : undefined,
-      include: {
-        category: true,
-        _count: {
-          select: {
-            item_detail: true,
-          },
-        },
-      },
-      orderBy: { item_id: "asc" },
-    });
 
-    res.json({
-      ok: true,
-      items: items.map((item) => ({
-        item_id: item.item_id,
-        item_name: item.item_name,
-        category_name: item.category.category_name,
-        image_url: item.image_url,
-        quantity: item._count.item_detail,
-      })),
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      ok: false,
-      message: "Failed to fetch items",
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
-});
 
-app.get("/api/item-details", async (req, res) => {
-  try {
-    const details = await prisma.item_detail.findMany({
-      where: req.auth?.role.code === "DEPARTMENT_HEAD" ? { current_department_id: req.auth.department!.id } : undefined,
-      include: {
-        item: {
-          include: {
-            category: true,
-          },
-        },
-        room: {
-          include: {
-            department: true,
-          },
-        },
-        department: true,
-        budget_year: true,
-      },
-      orderBy: { item_detail_id: "asc" },
-    });
 
-    res.json({
-      ok: true,
-      items: details.map((detail) => ({
-        id: detail.detail_code,
-        item_name: detail.item.item_name,
-        category_name: detail.item.category.category_name,
-        status: detail.status,
-        department:
-          detail.department?.department_name ??
-          detail.room?.department.department_name ??
-          "Store",
-        room: detail.room?.building_name ?? "",
-        academic_year: detail.budget_year.year_name,
-        registered_date:
-          detail.purchase_date?.toISOString().split("T")[0] ??
-          detail.created_at.toISOString().split("T")[0],
-        created_at: detail.created_at.toISOString(),
-        remark: detail.notes ?? "",
-      })),
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      ok: false,
-      message: "Failed to fetch accessory details",
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
-});
 
 app.get("/api/accessories/by-code/:code", async (req, res) => {
   try {
@@ -1094,12 +979,6 @@ app.get("/api/accessories/by-code/:code", async (req, res) => {
         },
         department: true,
         budget_year: true,
-        laptop_rental: {
-          where: { rental_status: { in: ["pending", "approved", "active", "issued"] } },
-          orderBy: { issue_date: "desc" },
-          take: 1,
-          include: { student: true, teacher: true },
-        },
       },
     });
 
@@ -1108,7 +987,6 @@ app.get("/api/accessories/by-code/:code", async (req, res) => {
       return;
     }
 
-    const activeRental = detail.item.category.category_name.toLowerCase() === "laptop" ? detail.laptop_rental[0] : null;
     res.json({
       ok: true,
       accessory: {
@@ -1128,8 +1006,6 @@ app.get("/api/accessories/by-code/:code", async (req, res) => {
           detail.created_at.toISOString().split("T")[0],
         created_at: detail.created_at.toISOString(),
         remark: detail.notes ?? "",
-        borrower_name: activeRental?.student?.student_name ?? activeRental?.teacher?.full_name ?? null,
-        borrower_id: activeRental?.student?.roll_number ?? activeRental?.teacher?.email ?? null,
       },
     });
   } catch (error) {
@@ -1142,61 +1018,7 @@ app.get("/api/accessories/by-code/:code", async (req, res) => {
   }
 });
 
-app.put("/api/item-details/:detailCode", async (req, res) => {
-  try {
-    const detailCode = normalizeString(req.params.detailCode);
-    const status = normalizeString(req.body.status);
-    const remark =
-      typeof req.body.remark === "string" ? req.body.remark.trim() : "";
-    const allowedStatuses = ["Available", "In Use", "Damaged"];
 
-    if (!detailCode || !allowedStatuses.includes(status)) {
-      res.status(400).json({
-        ok: false,
-        message: "A valid item detail code and status are required",
-      });
-      return;
-    }
-
-    if (remark.length > 255) {
-      res.status(400).json({
-        ok: false,
-        message: "Remark must not exceed 255 characters",
-      });
-      return;
-    }
-
-    const itemDetail = await prisma.item_detail.findUnique({
-      where: { detail_code: detailCode },
-      select: { item_detail_id: true },
-    });
-
-    if (!itemDetail) {
-      res.status(404).json({
-        ok: false,
-        message: "Item detail not found",
-      });
-      return;
-    }
-
-    await prisma.item_detail.update({
-      where: { item_detail_id: itemDetail.item_detail_id },
-      data: {
-        status,
-        notes: remark || null,
-      },
-    });
-
-    res.json({ ok: true });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      ok: false,
-      message: "Failed to update accessory details",
-      error: error instanceof Error ? error.message : String(error),
-    });
-  }
-});
 
 app.get("/api/students", async (_req, res) => {
   const students = await prisma.student.findMany({
@@ -1673,32 +1495,29 @@ app.post("/api/transfers", async (req, res) => {
       return;
     }
 
+    if (new Set(itemDetailIds).size !== itemDetailIds.length) {
+      res.status(400).json({ ok: false, message: "Duplicate item detail IDs are not allowed in one transfer" });
+      return;
+    }
+
     const isDepartmentHead = req.auth?.role.code === "DEPARTMENT_HEAD";
-    const fromDepartment = isDepartmentHead
-      ? await prisma.department.findFirst({ where: { department_name: fromDepartmentName } })
-      : await findOrCreateDepartment(fromDepartmentName);
-    const toDepartment = isDepartmentHead
-      ? await prisma.department.findFirst({ where: { department_name: toDepartmentName } })
-      : await findOrCreateDepartment(toDepartmentName);
+    const fromDepartment = await prisma.department.findFirst({ where: { department_name: fromDepartmentName } });
+    const toDepartment = await prisma.department.findFirst({ where: { department_name: toDepartmentName } });
     if (!fromDepartment || !toDepartment) {
       res.status(404).json({ ok: false, message: "Department not found" });
       return;
     }
     if (!requireDepartmentScope(fromDepartment.department_id, res, req.auth)) return;
 
-    const fromRoom = fromRoomName
-      ? (isDepartmentHead
-          ? await prisma.room.findFirst({ where: { department_id: fromDepartment.department_id, building_name: fromRoomName } })
-          : await findOrCreateRoom(fromDepartment.department_id, fromRoomName))
-      : null;
+    const fromRoom = fromRoomName ? await prisma.room.findFirst({ where: { department_id: fromDepartment.department_id, building_name: fromRoomName } }) : null;
 
-    const toRoom = toRoomName
-      ? (isDepartmentHead
-          ? await prisma.room.findFirst({ where: { department_id: toDepartment.department_id, building_name: toRoomName } })
-          : await findOrCreateRoom(toDepartment.department_id, toRoomName))
-      : null;
-    if (isDepartmentHead && (fromRoomName && !fromRoom || !toRoom)) {
+    const toRoom = await prisma.room.findFirst({ where: { department_id: toDepartment.department_id, building_name: toRoomName } });
+    if ((fromRoomName && !fromRoom) || !toRoom) {
       res.status(404).json({ ok: false, message: "Room not found" });
+      return;
+    }
+    if (fromDepartment.department_id === toDepartment.department_id && fromRoom?.room_id === toRoom.room_id) {
+      res.status(400).json({ ok: false, message: "Destination department and room must differ from the current location" });
       return;
     }
 
@@ -1706,6 +1525,7 @@ app.post("/api/transfers", async (req, res) => {
       where: {
         detail_code: { in: itemDetailIds },
       },
+      include: { laptop_rental: { where: { rental_status: { in: ["pending", "approved", "active", "issued"] } }, select: { rental_id: true } } },
     });
 
     if (itemDetails.length !== itemDetailIds.length) {
@@ -1725,6 +1545,10 @@ app.post("/api/transfers", async (req, res) => {
         ok: false,
         message: "Only assets with Available or Damaged status can be transferred",
       });
+      return;
+    }
+    if (itemDetails.some((detail) => detail.laptop_rental.length > 0)) {
+      res.status(400).json({ ok: false, message: "Assets with an active or pending rental cannot be transferred" });
       return;
     }
 
@@ -1791,7 +1615,7 @@ app.post("/api/transfers", async (req, res) => {
         },
       });
 
-      await tx.item_detail.updateMany({
+      const updatedItems = await tx.item_detail.updateMany({
         where: {
           detail_code: { in: itemDetailIds },
         },
@@ -1800,6 +1624,7 @@ app.post("/api/transfers", async (req, res) => {
           current_room_id: toRoom?.room_id ?? null,
         },
       });
+      if (updatedItems.count !== itemDetailIds.length) throw new Error("Transfer items changed before they could be updated");
 
       return createdTransfer;
     });
@@ -1853,6 +1678,8 @@ app.delete("/api/items/:id", async (req, res) => {
       where: { item_id: itemId },
     });
 
+    await removeOwnedItemImage(existingItem.item_id, existingItem.image_url);
+
     await recordActivity("deleted", "Inventory", {
       type: "Item",
       id: existingItem.item_id,
@@ -1889,7 +1716,7 @@ app.put("/api/items/:id/image", async (req, res) => {
 
     const existingItem = await prisma.item.findUnique({
       where: { item_id: itemId },
-      select: { item_id: true, item_name: true },
+      select: { item_id: true, item_name: true, image_url: true },
     });
 
     if (!existingItem) {
@@ -1906,6 +1733,8 @@ app.put("/api/items/:id/image", async (req, res) => {
         _count: { select: { item_detail: true } },
       },
     });
+
+    await removeOwnedItemImage(existingItem.item_id, existingItem.image_url);
 
     await recordActivity("updated", "Inventory", {
       type: "Item image",
@@ -2262,7 +2091,7 @@ app.put("/api/departments/:id", async (req, res) => {
     await recordActivity("updated", "Department", {
       type: "Department room",
       id: room.room_id,
-      name: `${room.department.department_name} — ${room.building_name ?? "Unassigned room"}`,
+      name: `${room.department.department_name} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ${room.building_name ?? "Unassigned room"}`,
     }, {
       department: { from: previousRoom.department.department_name, to: room.department.department_name },
       classroom: { from: previousRoom.building_name ?? "", to: room.building_name ?? "" },
@@ -2316,7 +2145,7 @@ app.delete("/api/departments/:id", async (req, res) => {
     await recordActivity("deleted", "Department", {
       type: "Department room",
       id: room.room_id,
-      name: `${room.department.department_name} — ${room.building_name ?? "Unassigned room"}`,
+      name: `${room.department.department_name} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ${room.building_name ?? "Unassigned room"}`,
     }, { status: room.status ? "Available" : "Closed" });
 
     res.json({ ok: true });
@@ -2331,3 +2160,4 @@ app.delete("/api/departments/:id", async (req, res) => {
 });
 
 export default app;
+

@@ -3,7 +3,7 @@ import { ArrowLeft, LoaderCircle, MailCheck, ShieldCheck } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth, type AuthenticatedUser } from "@/auth/AuthContext";
-const API = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";
+import { API_BASE_URL as API } from "@/lib/api";
 type ChallengeState = {
   challengeId: string;
   email: string;
