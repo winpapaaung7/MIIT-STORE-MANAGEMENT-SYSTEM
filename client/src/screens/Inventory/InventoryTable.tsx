@@ -6,6 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Card } from "@/components/ui/card";
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState } from "react";
@@ -33,9 +34,9 @@ export default function InventoryTable({
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   return (
-    <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
-      <div className="h-full overflow-y-auto overflow-x-hidden [scrollbar-color:#cbd5e1_transparent] [scrollbar-thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-white [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb:hover]:bg-slate-400 [&::-webkit-scrollbar-track]:bg-transparent">
-        <Table className="w-full table-fixed">
+    <Card className="workspace-table-card min-h-0 flex-1 overflow-hidden border-slate-200 shadow-sm">
+      <div className="h-full overflow-auto [scrollbar-color:#cbd5e1_transparent] [scrollbar-thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-white [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb:hover]:bg-slate-400 [&::-webkit-scrollbar-track]:bg-transparent">
+        <Table className="workspace-table w-full min-w-[780px] text-sm">
           <colgroup>
             <col className="w-27.5" />
             <col className="w-65" />
@@ -44,21 +45,21 @@ export default function InventoryTable({
             <col className="w-30" />
           </colgroup>
 
-          <TableHeader className="sticky top-0 z-10 border-b border-slate-100 bg-slate-50/90 backdrop-blur">
-            <TableRow className="h-14 hover:bg-transparent">
-              <TableHead className="px-4 py-4 text-left text-sm font-semibold text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-8">
+          <TableHeader className="workspace-table-head border-b bg-slate-50 text-left text-xs text-slate-500">
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="px-4 py-3 text-left text-xs font-medium text-slate-500">
                 ID
               </TableHead>
-              <TableHead className="px-4 py-4 text-left text-sm font-semibold text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-8">
+              <TableHead className="px-4 py-3 text-left text-xs font-medium text-slate-500">
                 {t("item")}
               </TableHead>
-              <TableHead className="px-4 py-4 text-left text-sm font-semibold text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-8">
+              <TableHead className="px-4 py-3 text-left text-xs font-medium text-slate-500">
                 {t("image")}
               </TableHead>
-              <TableHead className="px-4 py-4 text-left text-sm font-semibold text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-8">
+              <TableHead className="px-4 py-3 text-left text-xs font-medium text-slate-500">
                 {t("quantity")}
               </TableHead>
-              <TableHead className="px-4 py-4 text-center text-sm font-semibold text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-8">
+              <TableHead className="px-4 py-3 text-center text-xs font-medium text-slate-500">
                 {t("actions")}
               </TableHead>
             </TableRow>
@@ -69,7 +70,7 @@ export default function InventoryTable({
               <TableRow>
                 <TableCell
                   colSpan={5}
-                  className="h-80 px-8 py-6 text-center text-muted-foreground"
+                  className="h-80 px-4 py-6 text-center text-sm text-muted-foreground"
                 >
                   {t("noInventoryItems")}
                 </TableCell>
@@ -87,15 +88,15 @@ export default function InventoryTable({
                       onOpenItem(item);
                     }
                   }}
-                  className="h-24 cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                  className="workspace-table-row cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
                 >
-                  <TableCell className="px-4 py-5 text-left font-mono text-sm font-medium text-slate-950 sm:px-8 sm:text-base">
+                  <TableCell className="px-4 py-4 text-left font-mono text-xs text-slate-600">
                     {item.id}
                   </TableCell>
 
-                  <TableCell className="px-4 py-5 text-left sm:px-8">
+                  <TableCell className="px-4 py-4 text-left">
                     <div className="flex flex-col gap-0.5">
-                      <span className="font-semibold text-slate-950">
+                      <span className="font-medium text-slate-950">
                         {item.name}
                       </span>
                       <span className="mt-1 text-sm text-slate-500">
@@ -104,7 +105,7 @@ export default function InventoryTable({
                     </div>
                   </TableCell>
 
-                  <TableCell className="px-4 py-5 text-left sm:px-8">
+                  <TableCell className="px-4 py-4 text-left">
                     {item.image ? (
                       <img
                         src={item.image}
@@ -122,7 +123,7 @@ export default function InventoryTable({
                     )}
                   </TableCell>
 
-                  <TableCell className="px-4 py-5 text-left sm:px-8">
+                  <TableCell className="px-4 py-4 text-left">
                     <span
                       className={`inline-flex items-center justify-center rounded-full px-4 py-1.5 text-sm font-semibold ${
                         item.quantity > 0
@@ -137,7 +138,7 @@ export default function InventoryTable({
                   </TableCell>
 
                   <TableCell
-                    className="px-4 py-5 text-center sm:px-8"
+                    className="px-4 py-4 text-center"
                     onClick={(event) => event.stopPropagation()}
                   >
                     <div className="flex items-center justify-center">
@@ -168,6 +169,6 @@ export default function InventoryTable({
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </Card>
   );
 }

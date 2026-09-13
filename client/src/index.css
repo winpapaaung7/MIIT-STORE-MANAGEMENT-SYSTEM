@@ -912,3 +912,48 @@ html[lang="my"] body {
 .dark .app-shell .inventory-page [class*="bg-slate-50/"] {
   background-color: var(--app-dark-raised) !important;
 }
+
+/* One fixed table palette for the Inventory and Accessories record lists. */
+.dark .app-shell .workspace-table-card,
+.dark .app-shell .workspace-table,
+.dark .app-shell .workspace-table-row {
+  background-color: var(--app-dark-surface) !important;
+}
+
+.dark .app-shell .workspace-table-head {
+  background-color: var(--app-dark-raised) !important;
+  color: var(--app-dark-muted) !important;
+}
+
+.dark .app-shell .workspace-table :is(th, td, tr) {
+  border-color: var(--app-dark-border);
+}
+
+/* Inventory uses the same record-table colors as Accessories, including cells. */
+.dark .app-shell .inventory-page .workspace-table-card,
+.dark .app-shell .inventory-page .workspace-table,
+.dark .app-shell .inventory-page .workspace-table tbody,
+.dark .app-shell .inventory-page .workspace-table-row,
+.dark .app-shell .inventory-page .workspace-table-row td {
+  background-color: #0f1a2b !important;
+}
+
+.dark .app-shell .inventory-page .workspace-table-head,
+.dark .app-shell .inventory-page .workspace-table-head :is(tr, th) {
+  background-color: #16243a !important;
+  color: #aebed3 !important;
+}
+
+.dark .app-shell .department-page .workspace-table-card,
+.dark .app-shell .department-page .workspace-table,
+.dark .app-shell .department-page .workspace-table tbody,
+.dark .app-shell .department-page .workspace-table-row,
+.dark .app-shell .department-page .workspace-table-row td {
+  background-color: #0f1a2b !important;
+}
+
+.dark .app-shell .department-page .workspace-table-head,
+.dark .app-shell .department-page .workspace-table-head :is(tr, th) {
+  background-color: #16243a !important;
+  color: #aebed3 !important;
+}

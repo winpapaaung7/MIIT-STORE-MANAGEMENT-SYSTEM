@@ -9,7 +9,9 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/auth/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
+import { API_BASE_URL } from "@/lib/api";
 
 import SettingProfile from "./Settingprofile";
 import AcedemicYear from "./AcedemicYear";
@@ -26,16 +28,25 @@ const settingTabs = [
 ] as const;
 
 type SettingTab = (typeof settingTabs)[number]["id"];
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";
 
-async function requestProfile(): Promise<ProfileDetails> {
-  const response = await fetch(`${API_BASE_URL}/api/profile`);
+function profileRequestHeaders(accessToken: string) {
+  return {
+    Authorization: `Bearer ${accessToken}`,
+  };
+}
+
+async function requestProfile(accessToken: string): Promise<ProfileDetails> {
+  const response = await fetch(`${API_BASE_URL}/api/profile`, {
+    headers: profileRequestHeaders(accessToken),
+    credentials: "include",
+  });
   const payload = await response.json();
   if (!response.ok || !payload.ok) throw new Error(payload.message ?? "Unable to load profile.");
   return payload.profile;
 }
 
 export default function SettingPage() {
+  const { accessToken } = useAuth();
   const { language } = useLanguage();
   const isMyanmar = language === "mm";
   const [activeTab, setActiveTab] = useState<SettingTab>("profile");
@@ -44,9 +55,11 @@ export default function SettingPage() {
   const [profileError, setProfileError] = useState("");
 
   useEffect(() => {
+    if (!accessToken) return;
+
     let cancelled = false;
 
-    void requestProfile()
+    void requestProfile(accessToken)
       .then((nextProfile) => {
         if (!cancelled) {
           setProfile(nextProfile);
@@ -60,10 +73,12 @@ export default function SettingPage() {
       });
 
     return () => { cancelled = true; };
-  }, []);
+  }, [accessToken]);
 
   const loadProfile = () => {
-    void requestProfile()
+    if (!accessToken) return;
+
+    void requestProfile(accessToken)
       .then((nextProfile) => {
         setProfile(nextProfile);
         setProfileError("");
@@ -74,9 +89,15 @@ export default function SettingPage() {
   };
 
   const saveProfile = async (nextProfile: ProfileDetails) => {
+    if (!accessToken) throw new Error("Your session has expired. Please sign in again.");
+
     const response = await fetch(`${API_BASE_URL}/api/profile`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...profileRequestHeaders(accessToken),
+      },
+      credentials: "include",
       body: JSON.stringify(nextProfile),
     });
     const payload = await response.json();
@@ -146,7 +167,7 @@ export default function SettingPage() {
       {/* Settings Top Header Frame (Completely static/unscrollable) */}
       <div className="flex shrink-0 items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-950 dark:text-slate-50">{isMyanmar ? "ဆက်တင်များ" : "Settings"}</h1>
+          <h1 className="text-2xl font-bold tracking-normal text-slate-950 sm:text-3xl dark:text-slate-50">{isMyanmar ? "ဆက်တင်များ" : "Settings"}</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">{isMyanmar ? "အကောင့်နှစ်သက်ရာများနှင့် စနစ်မှတ်တမ်းများကို စီမံပါ" : "Manage account preferences and system records"}</p>
         </div>
 

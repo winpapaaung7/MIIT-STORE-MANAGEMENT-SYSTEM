@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
+import { AsyncLocalStorage } from "node:async_hooks";
 import path from "node:path";
 
 import { PrismaClient } from "./generated/prisma/client.js";
@@ -25,11 +26,13 @@ const prisma = new PrismaClient({
 });
 
 const app = express();
+const auditActorContext = new AsyncLocalStorage<string>();
 const allowedOrigins = (process.env.CLIENT_ORIGIN ?? "http://localhost:5173,http://localhost:4173").split(",").map((origin) => origin.trim());
 app.use(cors({ origin: (origin, callback) => callback(null, !origin || allowedOrigins.includes(origin)), credentials: true }));
 app.use(express.json({ limit: "6mb" }));
 app.use("/api/auth", createAuthRouter(prisma));
 app.use("/api", apiAuthorization(prisma));
+app.use((req, _res, next) => auditActorContext.run(req.auth?.name ?? "System", next));
 app.use("/api/users", createUsersRouter(prisma));
 app.use("/api/dashboard", createDashboardRouter(prisma));
 app.use("/api/items", createItemsRouter(prisma));
@@ -171,7 +174,7 @@ async function findOrCreateDepartment(departmentName: string) {
   });
 }
 
-type AuditAction = "created" | "updated" | "deleted";
+type AuditAction = "created" | "updated" | "deleted" | "transferred";
 
 type ActivityDetails = Record<string, unknown>;
 
@@ -182,13 +185,6 @@ async function recordActivity(
   details?: ActivityDetails,
 ) {
   try {
-    // Until authentication is added, the active profile is the user performing changes.
-    const actor = await prisma.users.findFirst({
-      where: { status: "Active" },
-      orderBy: { user_id: "asc" },
-      select: { full_name: true },
-    });
-
     await prisma.$executeRawUnsafe(
       "INSERT INTO activity_log (action, module, target_type, target_id, target_name, actor_name, details) VALUES (?, ?, ?, ?, ?, ?, ?)",
       action,
@@ -196,7 +192,7 @@ async function recordActivity(
       target.type,
       target.id === undefined ? null : String(target.id),
       target.name,
-      actor?.full_name ?? "System",
+      auditActorContext.getStore() ?? "System",
       details ? JSON.stringify(details) : null,
     );
   } catch (error) {
@@ -240,16 +236,21 @@ app.get("/api/activity-log", async (req, res) => {
     const search = normalizeString(req.query.search);
     const from = normalizeString(req.query.from);
     const to = normalizeString(req.query.to);
+    const requestedPage = Number(req.query.page);
+    const requestedLimit = Number(req.query.limit);
+    const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+    const limit = Number.isInteger(requestedLimit) ? Math.min(Math.max(requestedLimit, 1), 100) : 20;
     const where: string[] = [];
     const values: unknown[] = [];
 
-    if (["created", "updated", "deleted"].includes(action)) {
+    if (["created", "updated", "deleted", "transferred"].includes(action)) {
       where.push("action = ?");
       values.push(action);
     }
     if (module) {
-      where.push("module = ?");
-      values.push(module);
+      const modules = module === "Settings" ? ["Profile", "Academic year"] : [module];
+      where.push(`module IN (${modules.map(() => "?").join(", ")})`);
+      values.push(...modules);
     }
     if (/^\d{4}-\d{2}-\d{2}$/.test(from)) {
       where.push("created_at >= ?");
@@ -265,6 +266,15 @@ app.get("/api/activity-log", async (req, res) => {
       values.push(term, term, term);
     }
 
+    const totalRows = await prisma.$queryRawUnsafe<Array<{ total: number | bigint }>>(
+      `SELECT COUNT(*) AS total FROM activity_log${where.length ? ` WHERE ${where.join(" AND ")}` : ""}`,
+      ...values,
+    );
+    const total = Number(totalRows[0]?.total ?? 0);
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const currentPage = Math.min(page, totalPages);
+    const offset = (currentPage - 1) * limit;
+
     const rows = await prisma.$queryRawUnsafe<Array<{
       activity_log_id: number;
       action: AuditAction;
@@ -276,16 +286,23 @@ app.get("/api/activity-log", async (req, res) => {
       details: string | null;
       created_at: Date;
     }>>(
-      `SELECT activity_log_id, action, module, target_type, target_id, target_name, actor_name, details, created_at
+      // MariaDB stores DATETIME values without timezone metadata. This database
+      // writes audit timestamps in Myanmar time (+06:30); return a UTC instant
+      // so browsers can render the actual local change time correctly.
+      `SELECT activity_log_id, action, module, target_type, target_id, target_name, actor_name, details,
+              DATE_SUB(created_at, INTERVAL 390 MINUTE) AS created_at
        FROM activity_log${where.length ? ` WHERE ${where.join(" AND ")}` : ""}
        ORDER BY created_at DESC, activity_log_id DESC
-       LIMIT 250`,
+       LIMIT ? OFFSET ?`,
       ...values,
+      limit,
+      offset,
     );
 
     res.json({
       ok: true,
       activities: rows.map((row) => ({ ...row, details: parseActivityDetails(row.details) })),
+      pagination: { page: currentPage, limit, total, totalPages },
     });
   } catch (error) {
     console.error(error);
@@ -1627,6 +1644,21 @@ app.post("/api/transfers", async (req, res) => {
       if (updatedItems.count !== itemDetailIds.length) throw new Error("Transfer items changed before they could be updated");
 
       return createdTransfer;
+    });
+
+    await recordActivity("transferred", "Transfer", {
+      type: "Item transfer",
+      id: transfer.transfer_id,
+      name: transfer.transfer_code,
+    }, {
+      from_department: fromDepartment.department_name,
+      from_room: fromRoom?.building_name ?? "Not set",
+      to_department: toDepartment.department_name,
+      to_room: toRoom.building_name ?? "Not set",
+      item_count: itemDetails.length,
+      item_detail_codes: itemDetails.map((detail) => detail.detail_code).join(", "),
+      transfer_date: transferDate,
+      remarks,
     });
 
     res.status(201).json({

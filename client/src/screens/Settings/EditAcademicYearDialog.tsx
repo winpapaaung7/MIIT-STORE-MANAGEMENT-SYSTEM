@@ -21,12 +21,12 @@ import {
 } from "@/components/ui/select";
 
 import AcademicYearDetailTile from "./AcademicYearDetailTile";
-import { days, months, years } from "./data/academicYearOptions";
-import type { AcademicYear } from "./data/academicYearData";
+import { days, months, years } from "./academicYearFormOptions";
+import type { AcademicYear } from "./academicYear";
 
 interface EditAcademicYearDialogProps {
   academicYear: AcademicYear;
-  onUpdate: (academicYear: AcademicYear) => void;
+  onUpdate: (academicYear: AcademicYear) => Promise<void>;
   trigger?: ReactNode;
 }
 
@@ -66,7 +66,7 @@ export default function EditAcademicYearDialog({
     setStatus(academicYear.status);
   }, [academicYear]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const updatedAcademicYear: AcademicYear = {
       ...academicYear,
 
@@ -87,7 +87,7 @@ export default function EditAcademicYearDialog({
       current: status === "Active",
     };
 
-    onUpdate(updatedAcademicYear);
+    await onUpdate(updatedAcademicYear);
     setOpen(false);
   };
 

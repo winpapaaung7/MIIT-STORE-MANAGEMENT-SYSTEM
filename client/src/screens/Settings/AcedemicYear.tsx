@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   CalendarDays,
   MoreHorizontal,
@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useAuth } from "@/auth/AuthContext";
+import { API_BASE_URL } from "@/lib/api";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,50 +24,111 @@ import AddAcademicYearDialog from "./AddAcademicYearDialog";
 import EditAcademicYearDialog from "./EditAcademicYearDialog";
 import DeleteAcademicYearDialog from "./DeleteAcademicYearDialog";
 
-import { type AcademicYear } from "./data/academicYearData";
+import { type AcademicYear, type AcademicYearSemester } from "./academicYear";
 
 type LiveAcademicYear = AcademicYear & {
-  semesters?: { semester_name: string; start_date: string; end_date: string }[];
+  semesters?: AcademicYearSemester[];
 };
 
+type AcademicYearResponse = {
+  budget_year_id: number;
+  start_date: string;
+  end_date: string;
+  status: string;
+  semester?: AcademicYearSemester[];
+};
+
+function toAcademicYear(year: AcademicYearResponse): LiveAcademicYear {
+  const status = year.status === "Active" ? "Active" : "Inactive";
+
+  return {
+    id: year.budget_year_id,
+    startDate: new Date(year.start_date),
+    endDate: new Date(year.end_date),
+    status,
+    current: status === "Active",
+    semesters: year.semester ?? [],
+  };
+}
+
 export default function AcedemicYear() {
-  // Academic Year List
-  const [academicYears, setAcademicYears] =
-    useState<LiveAcademicYear[]>([]);
-
-  // Search
+  const { accessToken } = useAuth();
+  const [academicYears, setAcademicYears] = useState<LiveAcademicYear[]>([]);
   const [search, setSearch] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000"}/api/academic-years`)
-      .then((response) => response.json())
-      .then((payload) => {
-        if (!payload.ok) return;
-        setAcademicYears((payload.years ?? []).map((year: any) => ({
-          id: year.budget_year_id,
-          startDate: new Date(year.start_date),
-          endDate: new Date(year.end_date),
-          status: year.status === "Active" ? "Active" : "Inactive",
-          current: year.status === "Active",
-          semesters: year.semester ?? [],
-        })));
+  const loadAcademicYears = useCallback(async () => {
+    if (!accessToken) return;
+
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/academic-years`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        credentials: "include",
       });
-  }, []);
+      const payload = await response.json() as { ok?: boolean; message?: string; years?: AcademicYearResponse[] };
+      if (!response.ok || !payload.ok) throw new Error(payload.message ?? "Unable to load academic years.");
+      setAcademicYears((payload.years ?? []).map(toAcademicYear));
+      setError("");
+    } catch (requestError) {
+      setError(requestError instanceof Error ? requestError.message : "Unable to load academic years.");
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken]);
+
+  useEffect(() => { void loadAcademicYears(); }, [loadAcademicYears]);
 
   // ----------------------------
   // Add Academic Year
   // ----------------------------
-  const handleAdd = async (newYear: AcademicYear) => { const response = await fetch((import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000") + "/api/academic-years", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ year_name: newYear.startDate.getFullYear() + "-" + newYear.endDate.getFullYear(), start_date: newYear.startDate.toISOString(), end_date: newYear.endDate.toISOString(), status: newYear.status }) }); const payload = await response.json(); if (!response.ok || !payload.ok) throw new Error(payload.message ?? "Unable to save academic year"); setAcademicYears((previous) => [{ id: payload.year.budget_year_id, startDate: new Date(payload.year.start_date), endDate: new Date(payload.year.end_date), status: payload.year.status, current: payload.year.status === "Active" }, ...previous]); };
+  const handleAdd = async (newYear: AcademicYear) => {
+    if (!accessToken) throw new Error("Your session has expired. Please sign in again.");
+
+    const response = await fetch(`${API_BASE_URL}/api/academic-years`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+      credentials: "include",
+      body: JSON.stringify({ year_name: `${newYear.startDate.getFullYear()}-${newYear.endDate.getFullYear()}`, start_date: newYear.startDate.toISOString(), end_date: newYear.endDate.toISOString(), status: newYear.status }),
+    });
+    const payload = await response.json() as { ok?: boolean; message?: string };
+    if (!response.ok || !payload.ok) throw new Error(payload.message ?? "Unable to save academic year.");
+    await loadAcademicYears();
+  };
 
   // ----------------------------
   // Update Academic Year
   // ----------------------------
-  const handleUpdate = async (updatedYear: AcademicYear) => { const response = await fetch((import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000") + "/api/academic-years/" + updatedYear.id, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ year_name: updatedYear.startDate.getFullYear() + "-" + updatedYear.endDate.getFullYear(), start_date: updatedYear.startDate.toISOString(), end_date: updatedYear.endDate.toISOString(), status: updatedYear.status }) }); const payload = await response.json(); if (!response.ok || !payload.ok) throw new Error(payload.message ?? "Unable to update academic year"); setAcademicYears((previous) => previous.map((year) => year.id === updatedYear.id ? { ...updatedYear, current: updatedYear.status === "Active" } : updatedYear.status === "Active" ? { ...year, status: "Inactive", current: false } : year)); };
+  const handleUpdate = async (updatedYear: AcademicYear) => {
+    if (!accessToken) throw new Error("Your session has expired. Please sign in again.");
+
+    const response = await fetch(`${API_BASE_URL}/api/academic-years/${updatedYear.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+      credentials: "include",
+      body: JSON.stringify({ year_name: `${updatedYear.startDate.getFullYear()}-${updatedYear.endDate.getFullYear()}`, start_date: updatedYear.startDate.toISOString(), end_date: updatedYear.endDate.toISOString(), status: updatedYear.status }),
+    });
+    const payload = await response.json() as { ok?: boolean; message?: string };
+    if (!response.ok || !payload.ok) throw new Error(payload.message ?? "Unable to update academic year.");
+    await loadAcademicYears();
+  };
 
   // ----------------------------
   // Delete Academic Year
   // ----------------------------
-  const handleDelete = async (id: number) => { const response = await fetch((import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000") + "/api/academic-years/" + id, { method: "DELETE" }); const payload = await response.json(); if (!response.ok || !payload.ok) throw new Error(payload.message ?? "Unable to delete academic year"); setAcademicYears((previous) => previous.filter((year) => year.id !== id)); };
+  const handleDelete = async (id: number) => {
+    if (!accessToken) throw new Error("Your session has expired. Please sign in again.");
+
+    const response = await fetch(`${API_BASE_URL}/api/academic-years/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${accessToken}` },
+      credentials: "include",
+    });
+    const payload = await response.json() as { ok?: boolean; message?: string };
+    if (!response.ok || !payload.ok) throw new Error(payload.message ?? "Unable to delete academic year.");
+    await loadAcademicYears();
+  };
 
   // ----------------------------
   // Search Filter
@@ -120,7 +183,20 @@ export default function AcedemicYear() {
       {/* Academic Year Cards */}
 
       <div className="space-y-4">
-        {filteredYears.map((item) => (
+        {error ? (
+          <Card className="rounded-2xl border-rose-200 p-4 text-sm text-rose-700">
+            {error}
+            <Button variant="outline" size="sm" className="ml-3" onClick={() => void loadAcademicYears()}>
+              Try again
+            </Button>
+          </Card>
+        ) : null}
+
+        {loading ? (
+          <Card className="rounded-2xl p-8 text-center text-sm text-slate-500 shadow-sm">
+            Loading academic years...
+          </Card>
+        ) : filteredYears.map((item) => (
           <Card
             key={item.id}
             className="
@@ -280,7 +356,7 @@ export default function AcedemicYear() {
           </Card>
         ))}
 
-        {filteredYears.length === 0 && (
+        {!loading && filteredYears.length === 0 && (
           <Card className="rounded-2xl p-8 text-center text-sm text-slate-500 shadow-sm">
             No academic years found.
           </Card>

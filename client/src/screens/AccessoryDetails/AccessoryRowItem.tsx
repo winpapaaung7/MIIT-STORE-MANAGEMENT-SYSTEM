@@ -56,19 +56,19 @@ export default function AccessoryRowItem({
   const { t } = useLanguage()
   const statusLabel = accessory.status === "Available" ? t("available") : accessory.status === "In Use" ? t("inUse") : accessory.status === "Damaged" ? t("damaged") : accessory.status
   return (
-    <TableRow className="border-slate-100">
-      <TableCell className="px-4 py-4 text-left font-mono text-sm font-medium text-slate-950 sm:px-8 sm:py-5 sm:text-base">
+    <TableRow className="workspace-table-row border-b border-slate-100 last:border-0">
+      <TableCell className="px-4 py-4 text-left font-mono text-xs text-slate-600">
         {accessory.id}
       </TableCell>
-      <TableCell className="px-4 py-4 text-left sm:px-8 sm:py-5">
-        <div className="font-semibold text-slate-950">
+      <TableCell className="px-4 py-4 text-left">
+        <div className="font-medium text-slate-950">
           {accessory.itemName}
         </div>
         <div className="mt-1 text-sm text-slate-500">
           {accessory.subCategory}
         </div>
       </TableCell>
-      <TableCell className="px-4 py-4 text-center sm:px-6 sm:py-5">
+      <TableCell className="px-4 py-4 text-center">
         <Badge
           variant="secondary"
           className={cn(
@@ -79,12 +79,12 @@ export default function AccessoryRowItem({
           {statusLabel}
         </Badge>
       </TableCell>
-      <TableCell className="px-4 py-4 text-center sm:px-6 sm:py-5">
+      <TableCell className="px-4 py-4 text-center">
         <div className="flex justify-center">
           <QrCodeMark onClick={() => setSelectedQrItem(accessory)} label={t("qrCode")} />
         </div>
       </TableCell>
-      <TableCell className="px-4 py-4 text-center sm:px-6 sm:py-5">
+      <TableCell className="px-4 py-4 text-center">
         <DropdownMenu
           open={openActionId === accessory.id}
           onOpenChange={(open) =>

@@ -13,11 +13,11 @@ import {
 
 import { Button } from "@/components/ui/button";
 
-import type { AcademicYear } from "./data/academicYearData";
+import type { AcademicYear } from "./academicYear";
 
 interface DeleteAcademicYearDialogProps {
   academicYear: AcademicYear;
-  onDelete: (id: number) => void;
+  onDelete: (id: number) => Promise<void>;
   trigger?: ReactNode;
 }
 
@@ -28,8 +28,8 @@ export default function DeleteAcademicYearDialog({
 }: DeleteAcademicYearDialogProps) {
   const [open, setOpen] = useState(false);
 
-  const handleDelete = () => {
-    onDelete(academicYear.id);
+  const handleDelete = async () => {
+    await onDelete(academicYear.id);
     setOpen(false);
   };
 

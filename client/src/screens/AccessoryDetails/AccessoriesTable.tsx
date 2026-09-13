@@ -11,6 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Card } from "@/components/ui/card"
 import { useLanguage } from "@/context/LanguageContext"
 
 export interface AccessoriesTableProps {
@@ -32,24 +33,24 @@ export default function AccessoriesTable({
 }: AccessoriesTableProps) {
   const { t } = useLanguage()
   return (
-    <div className="min-h-0 flex-1 overflow-hidden rounded-lg border border-slate-100 bg-white shadow-sm shadow-slate-200/80">
+    <Card className="workspace-table-card min-h-0 flex-1 overflow-hidden border-slate-200 shadow-sm">
       <div className="max-h-[min(550px,calc(100vh-20rem))] min-h-[260px] overflow-auto overscroll-contain scroll-smooth [scrollbar-color:#cbd5e1_transparent] [scrollbar-width:thin]">
-        <Table className="min-w-[760px]">
-          <TableHeader className="sticky top-0 z-10 bg-slate-50">
-            <TableRow className="border-slate-100 bg-slate-50 hover:bg-slate-50">
-              <TableHead className="sticky top-0 z-10 w-36 bg-slate-50 px-4 text-left text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-8">
+        <Table className="workspace-table w-full min-w-[760px] text-sm">
+          <TableHeader className="workspace-table-head border-b bg-slate-50 text-left text-xs text-slate-500">
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="w-36 px-4 py-3 text-left text-xs font-medium text-slate-500">
                 ID
               </TableHead>
-              <TableHead className="sticky top-0 z-10 min-w-56 bg-slate-50 px-4 text-left text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:min-w-64 sm:px-8">
+              <TableHead className="min-w-56 px-4 py-3 text-left text-xs font-medium text-slate-500 sm:min-w-64">
                 {t("itemName")}
               </TableHead>
-              <TableHead className="sticky top-0 z-10 w-36 bg-slate-50 px-4 text-center text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:px-6">
+              <TableHead className="w-36 px-4 py-3 text-center text-xs font-medium text-slate-500">
                 {t("status")}
               </TableHead>
-              <TableHead className="sticky top-0 z-10 w-28 bg-slate-50 px-4 text-center text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:w-36 sm:px-6">
+              <TableHead className="w-28 px-4 py-3 text-center text-xs font-medium text-slate-500 sm:w-36">
                 {t("qrCode")}
               </TableHead>
-              <TableHead className="sticky top-0 z-10 w-24 bg-slate-50 px-4 text-center text-slate-500 shadow-[inset_0_-1px_0_#f1f5f9] sm:w-32 sm:px-6">
+              <TableHead className="w-24 px-4 py-3 text-center text-xs font-medium text-slate-500 sm:w-32">
                 {t("action")}
               </TableHead>
             </TableRow>
@@ -69,6 +70,6 @@ export default function AccessoriesTable({
           </TableBody>
         </Table>
       </div>
-    </div>
+    </Card>
   )
 }

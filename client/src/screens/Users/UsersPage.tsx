@@ -219,7 +219,7 @@ export default function UsersPage() {
           {message}
         </p>
       )}
-      <div className="grid gap-6 xl:grid-cols-[340px_minmax(0,1fr)]">
+      <div className="grid gap-6 xl:grid-cols-[260px_minmax(0,1fr)]">
         <section className="rounded-xl border bg-white p-5">
           <h2 className="font-semibold">
             {editing ? "Edit user" : "Create user"}
