@@ -14,15 +14,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { API_BASE_URL } from "@/lib/api";
+import { useAuth, type AuthenticatedUser } from "@/auth/AuthContext";
 type LoginResponse = {
   requiresOtp?: boolean;
   challengeId?: string;
   expiresIn?: number;
   resendAfter?: number;
+  accessToken?: string;
+  user?: AuthenticatedUser;
   message?: string;
 };
 export default function LoginPage() {
   const navigate = useNavigate();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -51,7 +55,14 @@ export default function LoginPage() {
         body: JSON.stringify({ email: normalizedEmail, password }),
       });
       const payload = (await response.json()) as LoginResponse;
-      if (!response.ok || !payload.requiresOtp || !payload.challengeId)
+      if (!response.ok)
+        throw new Error(payload.message ?? "Unable to start secure sign in.");
+      if (payload.accessToken && payload.user) {
+        signIn(payload.accessToken, payload.user);
+        navigate(payload.user.role.code === "LAPTOP_RENTAL" ? "/laptop-rental" : "/", { replace: true });
+        return;
+      }
+      if (!payload.requiresOtp || !payload.challengeId)
         throw new Error(payload.message ?? "Unable to start secure sign in.");
       // This is intentionally only a pending challenge; no user session is created here.
       setChallenge(payload);
@@ -121,10 +132,10 @@ export default function LoginPage() {
             </header>
             <div className="rounded-xl border border-[#DCE3ED] bg-[#FFFFFF] p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-8">
               <div className="mb-7">
-                <h2 className="text-2xl font-semibold text-[#172033]">
+                <h2 className="text-2xl font-semibold text-[#172033] dark:text-slate-50">
                   Welcome Back
                 </h2>
-                <p className="mt-2 text-sm leading-6 text-[#64748B]">
+                <p className="mt-2 text-sm leading-6 text-[#64748B] dark:text-slate-300">
                   Sign in with your assigned MIIT Store account.
                 </p>
               </div>
@@ -152,18 +163,18 @@ export default function LoginPage() {
               ) : (
                 <form className="space-y-5" onSubmit={handleSubmit} noValidate>
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-[#172033]">
+                    <Label htmlFor="email" className="text-[#172033] dark:text-slate-100">
                       Email address
                     </Label>
                     <div className="relative">
-                      <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#64748B]" />
+                      <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#64748B] dark:text-slate-300" />
                       <Input
                         id="email"
                         type="email"
                         autoComplete="email"
                         value={email}
                         onChange={(event) => setEmail(event.target.value)}
-                        className="h-11 border-[#DCE3ED] pl-10 text-[#172033] focus-visible:ring-[#2563EB]"
+                        className="h-11 border-[#DCE3ED] pl-10 text-[#172033] focus-visible:ring-[#2563EB] dark:border-[#365778] dark:bg-[#16243a] dark:text-slate-50 dark:placeholder:text-slate-400"
                         placeholder="name@miit.edu.mm"
                         disabled={loading}
                         required
@@ -171,18 +182,18 @@ export default function LoginPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-[#172033]">
+                    <Label htmlFor="password" className="text-[#172033] dark:text-slate-100">
                       Password
                     </Label>
                     <div className="relative">
-                      <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#64748B]" />
+                      <LockKeyhole className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#64748B] dark:text-slate-300" />
                       <Input
                         id="password"
                         type={showPassword ? "text" : "password"}
                         autoComplete="current-password"
                         value={password}
                         onChange={(event) => setPassword(event.target.value)}
-                        className="h-11 border-[#DCE3ED] px-10 text-[#172033] focus-visible:ring-[#2563EB]"
+                        className="h-11 border-[#DCE3ED] px-10 text-[#172033] focus-visible:ring-[#2563EB] dark:border-[#365778] dark:bg-[#16243a] dark:text-slate-50 dark:placeholder:text-slate-400"
                         placeholder="Enter your password"
                         disabled={loading}
                         required
@@ -193,7 +204,7 @@ export default function LoginPage() {
                           showPassword ? "Hide password" : "Show password"
                         }
                         onClick={() => setShowPassword((value) => !value)}
-                        className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-md text-[#64748B] hover:bg-slate-100 hover:text-[#172033] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB]"
+                        className="absolute right-2 top-1/2 grid size-8 -translate-y-1/2 place-items-center rounded-md text-[#64748B] hover:bg-slate-100 hover:text-[#172033] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] dark:text-slate-300 dark:hover:bg-[#365778] dark:hover:text-white"
                         disabled={loading}
                       >
                         {showPassword ? (
@@ -214,7 +225,7 @@ export default function LoginPage() {
                 </form>
               )}
             </div>
-            <p className="mt-5 text-center text-xs leading-5 text-[#64748B]">
+            <p className="mt-5 text-center text-xs leading-5 text-[#64748B] dark:text-slate-300">
               Use only your assigned institutional account. Contact a system
               administrator if you need access.
             </p>

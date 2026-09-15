@@ -27,7 +27,7 @@ export function Sidebar({
   }
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-40 flex h-screen flex-col overflow-hidden border-r border-[#111827] bg-[#050814] p-[clamp(0.75rem,2vh,1rem)] text-slate-300 transition-all duration-200 ${collapsed ? "w-16" : "w-[260px]"}`}
+      className={`fixed inset-y-0 left-0 z-40 flex h-screen flex-col overflow-hidden border-r border-[#111827] bg-[#050814] p-[clamp(0.75rem,2vh,1rem)] text-slate-300 transition-all duration-200 dark:border-[#29415f] dark:bg-[#050814] dark:text-slate-100 ${collapsed ? "w-16" : "w-[260px]"}`}
     >
       <div className="min-h-0">
         <div className="flex items-center justify-between px-1 py-2">
@@ -46,13 +46,13 @@ export function Sidebar({
           <button
             aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
             onClick={() => onCollapsedChange(!collapsed)}
-            className="rounded-md p-1 hover:bg-[#0f172a]/40"
+            className="rounded-md p-1 hover:bg-[#0f172a]/40 dark:hover:bg-[#3d6081]"
           >
             {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
           </button>
         </div>
         <div
-          className={`mx-1 my-3 rounded-lg border border-[#1e293b]/50 bg-[#0f172a]/60 ${collapsed ? "flex h-16 items-center justify-center" : "h-16 p-3"}`}
+          className={`mx-1 my-3 rounded-lg border border-[#1e293b]/50 bg-[#0f172a]/60 dark:border-[#587898] dark:bg-[#365778] ${collapsed ? "flex h-16 items-center justify-center" : "h-16 p-3"}`}
         >
           {collapsed ? (
             <User size={18} />
@@ -61,7 +61,7 @@ export function Sidebar({
               <p className="truncate text-[10px] font-bold uppercase text-[#f59e0b]">
                 {user?.role.name}
               </p>
-              <p className="mt-1 truncate text-xs font-semibold text-slate-300">
+              <p className="mt-1 truncate text-xs font-semibold text-slate-300 dark:text-slate-100">
                 {user?.name}
               </p>
             </>
@@ -77,14 +77,14 @@ export function Sidebar({
                 to={item.path}
                 end={item.path === "/"}
                 className={({ isActive }) =>
-                  `group relative flex h-11 items-center rounded-lg transition-colors ${collapsed ? "justify-center" : "gap-3 px-3"} ${isActive ? "bg-[#0f172a] font-medium text-white" : "text-slate-400 hover:bg-[#0f172a]/40 hover:text-slate-200"}`
+                  `group relative flex h-11 items-center rounded-lg transition-colors ${collapsed ? "justify-center" : "gap-3 px-3"} ${isActive ? "bg-[#0f172a] font-medium text-white dark:bg-[#1f3b5c]" : "text-slate-400 hover:bg-[#0f172a]/40 hover:text-slate-200 dark:!text-[#e5eef8] dark:hover:bg-[#3d6081] dark:hover:!text-white"}`
                 }
               >
                 {({ isActive }) => (
                   <>
                     <Icon
                       size={18}
-                      className={isActive ? "text-white" : "text-slate-400"}
+                      className={isActive ? "text-white" : "text-slate-400 dark:!text-[#b9cbe0]"}
                     />
                     {!collapsed && <span className="text-[13px]">{label}</span>}
                     {collapsed && (
@@ -102,7 +102,7 @@ export function Sidebar({
       <div className="mt-auto px-1 pb-0 pt-3">
         <button
           onClick={() => void logout()}
-          className={`flex w-full items-center justify-center gap-2 rounded-lg border border-[#1e293b] py-2 text-[13px] font-medium text-slate-300 transition hover:bg-[#0f172a]/50 ${collapsed ? "px-0" : ""}`}
+          className={`flex w-full items-center justify-center gap-2 rounded-lg border border-[#1e293b] py-2 text-[13px] font-medium text-slate-300 transition hover:bg-[#0f172a]/50 dark:border-[#6685a4] dark:text-slate-100 dark:hover:bg-[#3d6081] ${collapsed ? "px-0" : ""}`}
         >
           <LogOut size={18} />
           {!collapsed && <span>Sign Out</span>}

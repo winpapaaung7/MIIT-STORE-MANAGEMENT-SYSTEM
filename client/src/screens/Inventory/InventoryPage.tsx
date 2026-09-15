@@ -352,14 +352,16 @@ export default function InventoryPage() {
     const defaultDepartment =
       departments.find(
         (department) => department.toLowerCase() === "store",
-      ) ?? "";
+      ) ?? "Store";
+    const defaultRoom =
+      departmentRoomMapState[defaultDepartment]?.[0] ?? "Storage";
 
     setNewAccessory({
       ...emptyNewAccessoryForm,
       itemName: "",
       subCategory: firstCategory ?? "",
       department: defaultDepartment as Department,
-      room: departmentRoomMapState[defaultDepartment]?.[0] ?? "",
+      room: defaultRoom,
       status: "Available",
       remark: "",
     });
@@ -376,8 +378,9 @@ export default function InventoryPage() {
       !itemName ||
       !categoryName ||
       categoryName === "All" ||
-      !payload.departmentId ||
-      !payload.roomId
+      ((!payload.departmentId || !payload.roomId) &&
+        !(payload.department.toLowerCase() === "store" &&
+          payload.room.toLowerCase() === "storage"))
     ) {
       return;
     }
@@ -395,6 +398,7 @@ export default function InventoryPage() {
           quantity,
           department_id: payload.departmentId,
           room_id: payload.roomId,
+          status: payload.status,
           remark: payload.remark,
           image_data: payload.image || null,
         }),

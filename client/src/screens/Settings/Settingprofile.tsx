@@ -44,7 +44,7 @@ export default function SettingProfile({ profile, onSave }: SettingProfileProps)
           <h2 className="text-2xl font-bold tracking-normal text-slate-950 sm:text-3xl dark:text-slate-50">{t("myProfile")}</h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t("manageProfile")}</p>
         </div>
-        <EditProfileModal profile={profile} onSave={onSave} trigger={<Button className="h-10 rounded-lg bg-[#071a3a] px-4 text-sm hover:bg-[#102b59] dark:bg-blue-600 dark:hover:bg-blue-500"><PencilLine className="h-4 w-4" />{t("editProfile")}</Button>} />
+        <EditProfileModal profile={profile} onSave={onSave} trigger={<Button className="h-10 rounded-lg bg-[#071a3a] px-4 text-sm hover:bg-[#102b59] dark:bg-[#365778] dark:hover:bg-[#2c4b6c]"><PencilLine className="h-4 w-4" />{t("editProfile")}</Button>} />
       </div>
 
       <div className="flex flex-col gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between dark:border-slate-700 dark:bg-slate-900">

@@ -14,6 +14,7 @@ import { createUsersRouter } from "./routes/users.js";
 import { createItemsRouter } from "./routes/items.js";
 import { createItemDetailsRouter } from "./routes/item-details.js";
 import { apiAuthorization, requireDepartmentScope } from "./auth/middleware.js";
+import { hashPassword, verifyPassword } from "./auth/service.js";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -116,6 +117,7 @@ function formatProfile(user: {
   phone: string | null;
   status: string;
   language: string;
+  two_step_enabled: boolean;
   image_url: string | null;
   role: { role_name: string };
   department: { department_name: string } | null;
@@ -131,6 +133,7 @@ function formatProfile(user: {
     department: user.department?.department_name ?? "",
     status: user.status,
     language: user.language === "mm" ? "mm" : "eng",
+    twoStepEnabled: user.two_step_enabled,
     image: user.image_url ? `${origin}${user.image_url}` : "",
   };
 }
@@ -232,6 +235,7 @@ app.get("/test-db", async (req, res) => {
 app.get("/api/activity-log", async (req, res) => {
   try {
     const action = normalizeString(req.query.action).toLowerCase();
+    const rentalStatus = normalizeString(req.query.rentalStatus).toLowerCase();
     const module = normalizeString(req.query.module);
     const search = normalizeString(req.query.search);
     const from = normalizeString(req.query.from);
@@ -246,6 +250,10 @@ app.get("/api/activity-log", async (req, res) => {
     if (["created", "updated", "deleted", "transferred"].includes(action)) {
       where.push("action = ?");
       values.push(action);
+    }
+    if (["approved", "pending", "returned", "rejected"].includes(rentalStatus)) {
+      where.push("(details LIKE ? OR details LIKE ?)");
+      values.push(`%\"status\":\"${rentalStatus}\"%`, `%\"to\":\"${rentalStatus}\"%`);
     }
     if (module) {
       const modules = module === "Settings" ? ["Profile", "Academic year"] : [module];
@@ -412,6 +420,77 @@ app.put("/api/profile", async (req, res) => {
         ? error.message
         : "Failed to save profile.";
     res.status(409).json({ ok: false, message });
+  }
+});
+
+app.put("/api/profile/password", async (req, res) => {
+  const currentPassword = typeof req.body.currentPassword === "string" ? req.body.currentPassword : "";
+  const newPassword = typeof req.body.newPassword === "string" ? req.body.newPassword : "";
+
+  if (!currentPassword || newPassword.length < 12) {
+    return res.status(400).json({ ok: false, message: "Enter your current password and a new password of at least 12 characters." });
+  }
+
+  try {
+    const result = await prisma.$transaction(async (tx: any) => {
+      const currentUser = await tx.users.findUnique({ where: { user_id: req.auth!.id } });
+
+      if (!currentUser) return "NOT_FOUND";
+      if (!(await verifyPassword(currentPassword, currentUser.password_hash))) return "INVALID_CURRENT_PASSWORD";
+      if (await verifyPassword(newPassword, currentUser.password_hash)) return "SAME_PASSWORD";
+
+      await tx.users.update({
+        where: { user_id: currentUser.user_id },
+        data: { password_hash: await hashPassword(newPassword) },
+      });
+      await tx.refresh_token.updateMany({
+        where: { user_id: currentUser.user_id, revoked_at: null },
+        data: { revoked_at: new Date() },
+      });
+
+      return "UPDATED";
+    });
+
+    if (result === "NOT_FOUND") return res.status(404).json({ ok: false, message: "No active user profile was found." });
+    if (result === "INVALID_CURRENT_PASSWORD") return res.status(400).json({ ok: false, message: "Your current password is incorrect." });
+    if (result === "SAME_PASSWORD") return res.status(400).json({ ok: false, message: "Choose a password different from your current password." });
+
+    await recordActivity("updated", "Profile", {
+      type: "User profile",
+      id: req.auth!.id,
+      name: req.auth!.name,
+    }, { password: "changed", sessions: "revoked" });
+
+    return res.json({ ok: true, message: "Password changed. Please sign in again." });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ ok: false, message: "Unable to change password." });
+  }
+});
+
+app.put("/api/profile/two-step-verification", async (req, res) => {
+  const enabled = req.body.enabled;
+
+  if (typeof enabled !== "boolean") {
+    return res.status(400).json({ ok: false, message: "Two-step verification must be enabled or disabled." });
+  }
+
+  try {
+    const user = await prisma.users.update({
+      where: { user_id: req.auth!.id },
+      data: { two_step_enabled: enabled },
+    });
+
+    await recordActivity("updated", "Profile", {
+      type: "User profile",
+      id: user.user_id,
+      name: user.full_name,
+    }, { two_step_verification: enabled ? "enabled" : "disabled" });
+
+    return res.json({ ok: true, twoStepEnabled: user.two_step_enabled });
+  } catch (error) {
+    console.error(error);
+    return res.status(404).json({ ok: false, message: "No active user profile was found." });
   }
 });
 
@@ -1165,7 +1244,7 @@ app.post("/api/laptop-rentals/bulk-issue", async (req, res) => {
   if (!borrowerIds.length || Number.isNaN(dueDate.getTime())) return res.status(400).json({ ok: false, message: "Select at least one borrower and a valid return date." });
   try {
     const result = await prisma.$transaction(async (tx) => {
-      const issuer = await tx.users.findFirst({ where: { status: "Active" }, orderBy: { user_id: "asc" } }) ?? await tx.users.findFirst({ orderBy: { user_id: "asc" } });
+      const issuer = await tx.users.findUnique({ where: { user_id: req.auth!.id } });
       let semester = Number.isInteger(requestedSemesterId) && requestedSemesterId > 0
         ? await tx.semester.findUnique({ where: { semester_id: requestedSemesterId } })
         : await tx.semester.findFirst({ where: { status: "Active" }, orderBy: { semester_id: "desc" } }) ?? await tx.semester.findFirst({ orderBy: { semester_id: "desc" } });
@@ -1183,10 +1262,11 @@ app.post("/api/laptop-rentals/bulk-issue", async (req, res) => {
       const laptops = await tx.item_detail.findMany({ where: { status: "Available", item: { category: { rental_allowed: true } }, qr_code: { some: { is_active: true } }, laptop_rental: { none: { rental_status: { in: ["pending", "approved", "active", "issued"] } } } }, orderBy: { detail_code: "asc" }, take: borrowers.length });
       if (laptops.length < borrowers.length) throw new Error("Not enough available rental laptops for the selected borrowers.");
       const issueDate = new Date();
-      await tx.laptop_rental.createMany({ data: borrowers.map((borrower: any, index) => ({ student_id: borrowerRole === "student" ? borrower.student_id : null, teacher_user_id: borrowerRole === "teacher" ? borrower.user_id : null, item_detail_id: laptops[index].item_detail_id, semester_id: semester.semester_id, issued_by: issuer.user_id, issue_date: issueDate, due_date: dueDate, rental_status: "pending", condition_out: "Good" })) });
-      return { issued: borrowers.length, role: borrowerRole, semester: semester.semester_name };
+      const rentals = await Promise.all(borrowers.map((borrower: any, index) => tx.laptop_rental.create({ data: { student_id: borrowerRole === "student" ? borrower.student_id : null, teacher_user_id: borrowerRole === "teacher" ? borrower.user_id : null, item_detail_id: laptops[index].item_detail_id, semester_id: semester.semester_id, issued_by: issuer.user_id, issue_date: issueDate, due_date: dueDate, rental_status: "pending", condition_out: "Good" } })));
+      return { issued: borrowers.length, role: borrowerRole, semester: semester.semester_name, activities: rentals.map((rental, index) => { const borrower = borrowers[index] as any; return { id: rental.rental_id, laptop: laptops[index].detail_code, borrower: borrowerRole === "student" ? borrower.student_name : borrower.full_name, dueDate }; }) };
     });
-    res.status(201).json({ ok: true, ...result });
+    await Promise.all(result.activities.map((activity) => recordActivity("created", "Laptop Rental", { type: "Laptop rental", id: activity.id, name: activity.laptop }, { borrower: activity.borrower, status: "pending", due_date: activity.dueDate.toISOString() })));
+    res.status(201).json({ ok: true, issued: result.issued, role: result.role, semester: result.semester });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to issue bulk rentals.";
     res.status(400).json({ ok: false, message });
@@ -1198,10 +1278,11 @@ app.post("/api/laptop-rentals/import", async (req, res) => {
   if (!rows.length) return res.status(400).json({ ok: false, message: "No rental rows were provided." });
   try {
     const result = await prisma.$transaction(async (tx) => {
-      const issuer = await tx.users.findFirst({ where: { status: "Active" }, orderBy: { user_id: "asc" } });
+      const issuer = await tx.users.findUnique({ where: { user_id: req.auth!.id } });
       let semester = await tx.semester.findFirst({ where: { status: "Active" }, orderBy: { semester_id: "desc" } });
       if (!issuer) throw new Error("No active system user is available to issue rentals.");
       if (!semester) { const year = new Date().getFullYear(); semester = await tx.semester.create({ data: { academic_year: String(year) + "-" + String(year + 1), semester_name: "Rental", start_date: new Date(year, 0, 1), end_date: new Date(year, 11, 31), status: "Active" } }); }
+      const activities: Array<{ id: number; laptop: string; borrower: string; status: string }> = [];
       for (const raw of rows) {
         const role = normalizeString(raw.role).toLowerCase() === "teacher" ? "teacher" : "student";
         const borrowerKey = normalizeString(raw.borrower_id || raw.roll_number || raw.email);
@@ -1219,12 +1300,14 @@ app.post("/api/laptop-rentals/import", async (req, res) => {
         // in use only after it has been approved/issued.
         const active = ["approved", "active", "issued"].includes(status);
         const borrowerRecord: any = borrower;
-        await tx.laptop_rental.create({ data: { student_id: role === "student" ? borrowerRecord.student_id : null, teacher_user_id: role === "teacher" ? borrowerRecord.user_id : null, item_detail_id: qr.item_detail_id, semester_id: semester.semester_id, issued_by: issuer.user_id, issue_date: new Date(), due_date: dueDate, return_date: active ? null : new Date(), rental_status: status, condition_out: "Good", condition_in: active ? null : "Good" } });
+        const rental = await tx.laptop_rental.create({ data: { student_id: role === "student" ? borrowerRecord.student_id : null, teacher_user_id: role === "teacher" ? borrowerRecord.user_id : null, item_detail_id: qr.item_detail_id, semester_id: semester.semester_id, issued_by: issuer.user_id, issue_date: new Date(), due_date: dueDate, return_date: active ? null : new Date(), rental_status: status, condition_out: "Good", condition_in: active ? null : "Good" } });
+        activities.push({ id: rental.rental_id, laptop: qr.item_detail.detail_code, borrower: role === "student" ? borrowerRecord.student_name : borrowerRecord.full_name, status });
         if (active) await tx.item_detail.update({ where: { item_detail_id: qr.item_detail_id }, data: { status: "In Use" } });
       }
-      return rows.length;
+      return { imported: rows.length, activities };
     });
-    res.status(201).json({ ok: true, imported: result });
+    await Promise.all(result.activities.map((activity) => recordActivity("created", "Laptop Rental", { type: "Laptop rental", id: activity.id, name: activity.laptop }, { borrower: activity.borrower, status: activity.status, source: "import" })));
+    res.status(201).json({ ok: true, imported: result.imported });
   } catch (error) {
     res.status(400).json({ ok: false, message: error instanceof Error ? error.message : "Unable to import rentals." });
   }
@@ -1234,14 +1317,16 @@ app.post("/api/laptop-rentals/:id/return", async (req, res) => {
   const rentalId = Number(req.params.id);
   if (!Number.isInteger(rentalId)) return res.status(400).json({ ok: false, message: "Invalid rental record." });
   try {
-    await prisma.$transaction(async (tx) => {
-      const rental = await tx.laptop_rental.findUnique({ where: { rental_id: rentalId } });
+    const rental = await prisma.$transaction(async (tx) => {
+      const rental = await tx.laptop_rental.findUnique({ where: { rental_id: rentalId }, include: { student: true, teacher: true, item_detail: true } });
       if (!rental) throw new Error("Rental record not found.");
       if (["returned", "completed"].includes(rental.rental_status.toLowerCase())) throw new Error("This laptop has already been returned.");
       await tx.laptop_rental.update({ where: { rental_id: rentalId }, data: { rental_status: "returned", return_date: new Date(), condition_in: "Good" } });
       const remainingActiveRentals = await tx.laptop_rental.count({ where: { item_detail_id: rental.item_detail_id, rental_status: { in: ["approved", "active", "issued"] } } });
       await tx.item_detail.update({ where: { item_detail_id: rental.item_detail_id }, data: { status: remainingActiveRentals ? "In Use" : "Available" } });
+      return rental;
     });
+    await recordActivity("updated", "Laptop Rental", { type: "Laptop rental", id: rental.rental_id, name: rental.item_detail.detail_code }, { borrower: rental.student?.student_name ?? rental.teacher?.full_name ?? "-", status: { from: rental.rental_status, to: "returned" } });
     res.json({ ok: true, message: "Laptop returned and made available." });
   } catch (error) {
     res.status(400).json({ ok: false, message: error instanceof Error ? error.message : "Unable to return laptop." });
@@ -1255,8 +1340,8 @@ app.patch("/api/laptop-rentals/:id/status", async (req, res) => {
   const rentalStatus = statusMap[requestedStatus];
   if (!Number.isInteger(rentalId) || !rentalStatus) return res.status(400).json({ ok: false, message: "Choose Pending, Approved, Returned, or Rejected." });
   try {
-    await prisma.$transaction(async (tx) => {
-      const rental = await tx.laptop_rental.findUnique({ where: { rental_id: rentalId } });
+    const rental = await prisma.$transaction(async (tx) => {
+      const rental = await tx.laptop_rental.findUnique({ where: { rental_id: rentalId }, include: { student: true, teacher: true, item_detail: true } });
       if (!rental) throw new Error("Rental record not found.");
       const releasing = ["returned", "rejected"].includes(rentalStatus);
       const terminalRental = ["returned", "rejected", "completed"].includes(rental.rental_status.toLowerCase());
@@ -1269,7 +1354,9 @@ app.patch("/api/laptop-rentals/:id/status", async (req, res) => {
       await tx.laptop_rental.update({ where: { rental_id: rentalId }, data: { rental_status: rentalStatus, return_date: releasing ? new Date() : null, condition_in: releasing ? "Good" : null } });
       const remainingActiveRentals = await tx.laptop_rental.count({ where: { item_detail_id: rental.item_detail_id, rental_status: { in: ["approved", "active", "issued"] } } });
       await tx.item_detail.update({ where: { item_detail_id: rental.item_detail_id }, data: { status: remainingActiveRentals ? "In Use" : "Available" } });
+      return rental;
     });
+    await recordActivity("updated", "Laptop Rental", { type: "Laptop rental", id: rental.rental_id, name: rental.item_detail.detail_code }, { borrower: rental.student?.student_name ?? rental.teacher?.full_name ?? "-", status: { from: rental.rental_status, to: rentalStatus } });
     res.json({ ok: true, message: "Rental status updated." });
   } catch (error) {
     res.status(400).json({ ok: false, message: error instanceof Error ? error.message : "Unable to update rental status." });
@@ -1317,6 +1404,7 @@ app.get("/api/laptop-rentals", async (req, res) => {
         include: {
           student: true,
           teacher: { include: { department: true } },
+          users: { select: { full_name: true, email: true } },
           semester: true,
           item_detail: { include: { item: true, department: true, room: true, qr_code: { where: { is_active: true }, orderBy: { generated_at: "asc" }, take: 1 } } },
         },
@@ -1343,8 +1431,10 @@ app.get("/api/laptop-rentals", async (req, res) => {
       inventoryRoom: rental.item_detail.room?.building_name ?? "",
       inventoryRegisteredDate: rental.item_detail.purchase_date?.toISOString() ?? rental.item_detail.created_at.toISOString(),
       inventoryRemark: rental.item_detail.notes ?? "",
-      issueDate: rental.issue_date,
-      returnDate: rental.due_date,
+      issuedAt: rental.issue_date,
+      dueDate: rental.due_date,
+      returnedAt: rental.return_date,
+      issuedBy: rental.users.full_name,
       status: rental.rental_status,
       role: rental.student ? "Student" : "Teacher",
       academicYear: rental.semester.academic_year,
@@ -1860,25 +1950,37 @@ app.post("/api/items", async (req, res) => {
       typeof req.body.image_data === "string" ? req.body.image_data : "";
     const remark =
       typeof req.body.remark === "string" ? req.body.remark.trim() : "";
-    const departmentId = Number(req.body.department_id);
-    const roomId = Number(req.body.room_id);
+    const status =
+      typeof req.body.status === "string" ? req.body.status.trim() : "Available";
+    let departmentId = Number(req.body.department_id);
+    let roomId = Number(req.body.room_id);
 
     if (
       !itemName ||
       !categoryName ||
       quantity < 1 ||
-      !Number.isInteger(departmentId) ||
-      departmentId <= 0 ||
-      !Number.isInteger(roomId) ||
-      roomId <= 0 ||
-      remark.length > 255
+      remark.length > 255 ||
+      !["Available", "In Use", "Damaged"].includes(status)
     ) {
       res.status(400).json({
         ok: false,
         message:
-          "item_name, category_name, quantity, department_id and room_id are required; remark must not exceed 255 characters",
+          "item_name, category_name and quantity are required; status must be valid and remark must not exceed 255 characters",
       });
       return;
+    }
+
+    // Inventory items belong in Store by default.  This also makes a new
+    // installation usable before the location list has finished loading.
+    if (
+      !Number.isInteger(departmentId) ||
+      departmentId <= 0 ||
+      !Number.isInteger(roomId) ||
+      roomId <= 0
+    ) {
+      const defaultStore = await getDefaultStoreLocation();
+      departmentId = defaultStore.department.department_id;
+      roomId = defaultStore.room.room_id;
     }
 
     const category = Number.isInteger(categoryId) && categoryId > 0
@@ -1983,7 +2085,7 @@ app.post("/api/items", async (req, res) => {
         item_id: createdOrExistingItem.item_id,
         detail_code: detailCode,
         budget_year_id: budgetYear.budget_year_id,
-        status: "Available",
+        status,
         notes: remark || null,
         current_department_id: departmentId,
         current_room_id: room.room_id,
@@ -2030,6 +2132,7 @@ app.post("/api/items", async (req, res) => {
       name: item.item_name,
     }, {
       ...(existingItem ? { added_units: quantity, quantity_before: existingItem._count.item_detail, quantity_after: totalQuantity } : { added_units: quantity }),
+      qr_codes: createdDetailCodes,
       category: category.category_name,
       room: room.building_name ?? "Unassigned room",
       notes: remark || null,

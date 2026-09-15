@@ -16,7 +16,7 @@ function ToggleSwitch({ checked, onClick }: { checked: boolean; onClick: () => v
       aria-pressed={checked}
       aria-label={checked ? "Switch to light mode" : "Switch to dark mode"}
       onClick={onClick}
-      className={`relative h-8 w-14 rounded-full border shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${checked ? "border-sky-400 bg-sky-500" : "border-slate-500 bg-slate-700"}`}
+      className={`relative h-8 w-14 rounded-full border shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 dark:focus-visible:ring-[#4e759c] ${checked ? "border-sky-400 bg-sky-500 dark:border-[#4e759c] dark:bg-[#365778]" : "border-slate-500 bg-slate-700"}`}
     >
       <span className={`absolute top-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#f8fafc] shadow-sm ring-1 ring-black/10 transition ${checked ? "left-7" : "left-1"}`}>
         {checked ? <Moon className="h-4 w-4 text-[#0f172a]" /> : <Sun className="h-4 w-4 text-amber-500" />}

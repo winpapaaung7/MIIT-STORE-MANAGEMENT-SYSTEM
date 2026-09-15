@@ -263,6 +263,24 @@ function ItemModalContent({
           : "",
     [defaultValues.id, generatedItemId, mode, nextSerial],
   );
+  const hasValidLocation =
+    Boolean(departmentIds?.[formState.values.department]) &&
+    Boolean(
+      roomIds?.[
+        `${formState.values.department}\u0000${formState.values.room}`
+      ],
+    );
+  const usesDefaultStoreLocation =
+    formState.values.department.trim().toLowerCase() === "store" &&
+    formState.values.room.trim().toLowerCase() === "storage";
+  const hasSubmittableLocation = hasValidLocation || usesDefaultStoreLocation;
+  const locationMessage = !formState.values.department
+    ? "Select a department."
+    : !formState.values.room
+      ? "Select a room."
+      : !hasSubmittableLocation
+        ? "This department and room are not registered in the system. Add the room in Departments, then try again."
+        : "";
   const idRange = useMemo(() => {
     const startId = generatedId;
     const endId = incrementAccessoryId(startId, formState.quantity - 1);
@@ -362,7 +380,8 @@ function ItemModalContent({
       (mode === "add" &&
         (!idPattern.test(generatedId) ||
           !formState.values.itemName.trim() ||
-          !formState.values.room.trim())) ||
+          !formState.values.room.trim() ||
+          !hasSubmittableLocation)) ||
       !formState.values.status
     ) {
       return;
@@ -388,7 +407,8 @@ function ItemModalContent({
       ? formState.values.status.length > 0
       : idPattern.test(generatedId) &&
         formState.values.itemName.trim().length > 0 &&
-        formState.values.room.trim().length > 0;
+        formState.values.room.trim().length > 0 &&
+        hasSubmittableLocation;
   const formId = mode === "edit" ? "edit-accessory-form" : "add-accessory-form";
 
   return (
@@ -506,6 +526,11 @@ function ItemModalContent({
                 </Select>
               </div>
               </div>
+              {locationMessage ? (
+                <p className="text-xs font-medium text-amber-700">
+                  {locationMessage}
+                </p>
+              ) : null}
 
             <div className="grid gap-2">
               <Label htmlFor="accessory-quantity">Quantity</Label>

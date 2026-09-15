@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useAuth } from "@/auth/AuthContext";
 
 import {
   academicYears,
@@ -124,6 +125,7 @@ interface TransferRequestPayload {
 }
 
 export function useAccessoryDetails() {
+  const { accessToken, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
   const initialCategory = searchParams.get("category");
   const initialItemName = searchParams.get("item");
@@ -458,10 +460,16 @@ export function useAccessoryDetails() {
   };
 
   useEffect(() => {
+    // Department and room IDs are required to create a physical item.  Wait
+    // until session restoration has completed so these protected requests do
+    // not fail once and leave the modal with text-only fallback locations.
+    if (authLoading || !accessToken) return;
     void loadAccessoryDetails();
-  }, []);
+  }, [accessToken, authLoading]);
 
   useEffect(() => {
+    if (authLoading || !accessToken) return;
+
     const loadDepartments = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/api/departments`);
@@ -519,7 +527,7 @@ export function useAccessoryDetails() {
     };
 
     void loadDepartments();
-  }, []);
+  }, [accessToken, authLoading]);
 
   const handleTransfer = async (
     payload: TransferRequestPayload,
@@ -626,9 +634,13 @@ export function useAccessoryDetails() {
     if (
       !itemName ||
       !categoryName ||
-      !payload.departmentId ||
-      !payload.roomId
+      ((!payload.departmentId || !payload.roomId) &&
+        !(payload.department.toLowerCase() === "store" &&
+          payload.room.toLowerCase() === "storage"))
     ) {
+      setAccessoryError(
+        "Choose a registered department and room before adding an item.",
+      );
       return;
     }
 
@@ -641,9 +653,11 @@ export function useAccessoryDetails() {
         body: JSON.stringify({
           item_name: itemName,
           category_name: categoryName,
+          category_id: payload.categoryId,
           quantity,
           department_id: payload.departmentId,
           room_id: payload.roomId,
+          status: payload.status,
           remark: payload.remark,
           image_data: payload.image || null,
         }),
@@ -715,7 +729,7 @@ export function useAccessoryDetails() {
     const defaultRoom =
       serverDepartmentRoomMap[defaultDepartment]?.[0] ??
       departmentRoomMapState[defaultDepartment]?.[0] ??
-      "";
+      "Storage";
 
     setNewAccessory({
       ...emptyNewAccessoryForm,
@@ -723,6 +737,7 @@ export function useAccessoryDetails() {
       room: defaultRoom,
       registeredDate: formatDate(new Date()),
     });
+    setAccessoryError("");
     setToolbarAction("add");
   };
 

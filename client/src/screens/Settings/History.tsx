@@ -15,6 +15,7 @@ import {
 import { useAuth } from "@/auth/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { QRCodeSVG } from "qrcode.react";
 import {
   Dialog,
   DialogContent,
@@ -56,6 +57,8 @@ const modules = [
   { value: "Users", label: "Users" },
 ];
 
+const rentalStatuses = ["approved", "pending", "returned", "rejected"] as const;
+
 function dateTime(value: string) {
   return new Date(value).toLocaleString(undefined, {
     dateStyle: "medium",
@@ -66,6 +69,26 @@ function dateTime(value: string) {
 function csvCell(value: unknown) {
   const text = String(value ?? "").replace(/"/g, '""');
   return `"${text}"`;
+}
+
+function activityQrCodes(module: string, details: Record<string, unknown> | null) {
+  const generatedCodes = details?.qr_codes;
+
+  if (Array.isArray(generatedCodes)) {
+    return generatedCodes.filter((code): code is string => typeof code === "string" && code.trim().length > 0);
+  }
+
+  // Transfer activities record the physical item codes as one comma-separated
+  // value. They are the same values stored in each item's QR code.
+  if (module === "Transfer" && typeof details?.item_detail_codes === "string") {
+    return details.item_detail_codes.split(",").map((code) => code.trim()).filter(Boolean);
+  }
+
+  return [];
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[character]!);
 }
 
 function detailText(details: Record<string, unknown> | null) {
@@ -105,7 +128,7 @@ export default function History() {
     setLoading(true);
     const query = new URLSearchParams();
     if (search.trim()) query.set("search", search.trim());
-    if (action) query.set("action", action);
+    if (action) query.set(module === "Laptop Rental" ? "rentalStatus" : "action", action);
     if (module) query.set("module", module);
     if (from) query.set("from", from);
     if (to) query.set("to", to);
@@ -143,6 +166,12 @@ export default function History() {
     updated: t("edited"),
     deleted: t("deleted"),
     transferred: t("transfer"),
+  })[value];
+  const rentalStatusLabel = (value: typeof rentalStatuses[number]) => ({
+    approved: "Approved",
+    pending: "Pending",
+    returned: "Returned",
+    rejected: "Rejected",
   })[value];
 
   const exportCsv = () => {
@@ -212,14 +241,19 @@ export default function History() {
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={t("searchHistory")} className="h-10 rounded-xl border-slate-200 bg-white pl-9 text-sm dark:border-slate-700 dark:bg-slate-900" />
           </div>
-          <FilterSelect value={action} onChange={setAction} ariaLabel={t("allActions")}>
-            <option value="">{t("allActions")}</option>
-            <option value="created">{t("added")}</option>
-            <option value="updated">{t("edited")}</option>
-            <option value="deleted">{t("deleted")}</option>
-            <option value="transferred">{t("transfer")}</option>
+          <FilterSelect value={action} onChange={setAction} ariaLabel={module === "Laptop Rental" ? "Rental status" : t("allActions")}>
+            {module === "Laptop Rental" ? <>
+              <option value="">Status</option>
+              {rentalStatuses.map((status) => <option key={status} value={status}>{rentalStatusLabel(status)}</option>)}
+            </> : <>
+              <option value="">{t("allActions")}</option>
+              <option value="created">{t("added")}</option>
+              <option value="updated">{t("edited")}</option>
+              <option value="deleted">{t("deleted")}</option>
+              <option value="transferred">{t("transfer")}</option>
+            </>}
           </FilterSelect>
-          <FilterSelect value={module} onChange={setModule} ariaLabel={t("allModules")}>
+          <FilterSelect value={module} onChange={(value) => { setModule(value); setAction(""); }} ariaLabel={t("allModules")}>
             <option value="">{t("allModules")}</option>
             {modules.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}
           </FilterSelect>
@@ -294,7 +328,8 @@ function ActivityRow({ activity, label, detail, onView }: { activity: Activity; 
 function ActivityDetailsDialog({ activity, onOpenChange }: { activity: Activity | null; onOpenChange: (open: boolean) => void }) {
   if (!activity) return null;
 
-  const fields = Object.entries(activity.details ?? {});
+  const qrCodes = activityQrCodes(activity.module, activity.details);
+  const fields = Object.entries(activity.details ?? {}).filter(([field]) => field !== "qr_codes" && !(activity.module === "Transfer" && field === "item_detail_codes"));
   return (
     <Dialog open={Boolean(activity)} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[80vh] w-[calc(100vw-2rem)] max-w-lg overflow-y-auto rounded-2xl p-5">
@@ -311,9 +346,40 @@ function ActivityDetailsDialog({ activity, onOpenChange }: { activity: Activity 
               {fields.map(([field, value]) => <ChangeDetail key={field} field={field} value={value} />)}
             </div>
           ) : <p className="text-sm text-slate-500">No additional details recorded.</p>}
+          {qrCodes.length > 0 ? <ActivityQrCodes codes={qrCodes} activityId={activity.activity_log_id} title={activity.module === "Transfer" ? "Transferred item QR codes" : "QR codes"} /> : null}
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ActivityQrCodes({ codes, activityId, title }: { codes: string[]; activityId: number; title: string }) {
+  const qrCodeRefs = useRef(new Map<string, SVGSVGElement>());
+
+  const downloadQrSheet = () => {
+    const cards = codes.map((code) => {
+      const svg = qrCodeRefs.current.get(code);
+      return `<article><div class="qr">${svg?.outerHTML ?? ""}</div><p>${escapeHtml(code)}</p></article>`;
+    }).join("");
+    const documentHtml = `<!doctype html><html><head><meta charset="utf-8"><title>MIIT Store QR codes</title><style>body{font-family:Arial,sans-serif;color:#0f172a;margin:32px}h1{font-size:20px;margin:0 0 6px}small{color:#475569}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:24px}article{break-inside:avoid;border:1px solid #cbd5e1;border-radius:12px;padding:14px;text-align:center}.qr svg{width:150px;height:150px}p{font-family:monospace;font-weight:700;font-size:12px;word-break:break-all}@media print{body{margin:12mm}.grid{grid-template-columns:repeat(3,1fr);gap:10mm}}</style></head><body><h1>MIIT Store QR codes</h1><small>${codes.length} item code${codes.length === 1 ? "" : "s"}</small><div class="grid">${cards}</div></body></html>`;
+    const url = URL.createObjectURL(new Blob([documentHtml], { type: "text/html;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `miit-store-qr-codes-${activityId}.html`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <section className="space-y-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div><h3 className="font-medium text-slate-900 dark:text-slate-100">{title}</h3><p className="text-xs text-slate-500 dark:text-slate-400">{codes.length} item code{codes.length === 1 ? "" : "s"}</p></div>
+        <Button size="sm" variant="outline" onClick={downloadQrSheet}><Download className="h-4 w-4" />Download QR sheet</Button>
+      </div>
+      <div className="grid max-h-80 grid-cols-2 gap-3 overflow-y-auto p-1 sm:grid-cols-3">
+        {codes.map((code) => <div key={code} className="flex flex-col items-center rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-950"><QRCodeSVG ref={(node) => { if (node) qrCodeRefs.current.set(code, node); }} value={code} size={104} level="M" includeMargin /><span className="mt-1 break-all text-center font-mono text-[10px] font-semibold text-slate-700 dark:text-slate-200">{code}</span></div>)}
+      </div>
+    </section>
   );
 }
 

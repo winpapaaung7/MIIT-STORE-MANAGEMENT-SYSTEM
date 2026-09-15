@@ -28,6 +28,7 @@ export interface ProfileDetails {
   department: string;
   phone: string;
   status: string;
+  twoStepEnabled: boolean;
   image?: string;
 }
 

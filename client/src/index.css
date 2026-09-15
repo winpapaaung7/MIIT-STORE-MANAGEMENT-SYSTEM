@@ -521,8 +521,8 @@ html[lang="my"] body {
   --app-dark-surface: #0f1a2b;
   --app-dark-raised: #16243a;
   --app-dark-border: #2a3b55;
-  --app-dark-primary: #3b82f6;
-  --app-dark-primary-hover: #2563eb;
+  --app-dark-primary: #365778;
+  --app-dark-primary-hover: #2c4b6c;
   --app-dark-text: #f1f5f9;
   --app-dark-muted: #aebed3;
   --background: var(--app-dark-page);
@@ -777,6 +777,16 @@ html[lang="my"] body {
   border-color: #334155 !important;
   background-color: #0f172a !important;
   color: #f8fafc;
+}
+
+/* Login fields use explicit colors because browser autofill otherwise keeps
+   light-theme text and backgrounds in dark mode. */
+.dark .auth-page input:-webkit-autofill,
+.dark .auth-page input:-webkit-autofill:hover,
+.dark .auth-page input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px #16243a inset !important;
+  -webkit-text-fill-color: #f8fafc !important;
+  caret-color: #f8fafc;
 }
 
 /* Shared protected-app surface. New pages automatically inherit the same dark
