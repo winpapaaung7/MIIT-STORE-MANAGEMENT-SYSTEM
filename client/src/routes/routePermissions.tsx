@@ -7,6 +7,7 @@ export const routePermissions: RoutePermission[] = [
   { path: "/", label: "Dashboard", labelByRole: { DEPARTMENT_HEAD: "Department Dashboard" }, icon: LayoutDashboard, roles: ["ADMIN", "DEPARTMENT_HEAD"] },
   { path: "/inventory", label: "Inventory", labelByRole: { DEPARTMENT_HEAD: "Department Inventory" }, icon: Package, roles: ["ADMIN", "DEPARTMENT_HEAD"] },
   { path: "/accessories", label: "Accessories", icon: FileText, roles: ["ADMIN", "DEPARTMENT_HEAD"] },
+  { path: "/my-department", label: "My Department", icon: Building2, roles: ["DEPARTMENT_HEAD"] },
   { path: "/laptop-rental", label: "Laptop Rental", icon: Laptop, roles: ["ADMIN", "LAPTOP_RENTAL"] },
   { path: "/rental-dashboard", label: "Rental Dashboard", icon: LayoutDashboard, roles: ["LAPTOP_RENTAL"] },
   { path: "/departments", label: "Departments", icon: Building2, roles: ["ADMIN"] },

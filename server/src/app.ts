@@ -1381,6 +1381,9 @@ app.get("/api/laptop-rentals", async (req, res) => {
     const roleFilter = normalizeString(req.query.role).toLowerCase();
     const departmentFilter = normalizeString(req.query.department).toLowerCase();
     const academicYearFilter = normalizeString(req.query.academicYear).toLowerCase();
+    const queryFilter = normalizeString(req.query.query).toLowerCase();
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
 
     // Repair records created before pending rentals were separated from
     // physically issued laptops. Pending-only laptops must remain available;
@@ -1445,13 +1448,15 @@ app.get("/api/laptop-rentals", async (req, res) => {
       const matchesRole = !roleFilter || String(row.role).toLowerCase() === roleFilter;
       const matchesDepartment = !departmentFilter || String(row.department).toLowerCase() === departmentFilter;
       const matchesAcademicYear = !academicYearFilter || String(row.academicYear).toLowerCase() === academicYearFilter || String(row.academicYear).toLowerCase().startsWith(academicYearFilter + "-");
-      return matchesStatus && matchesRole && matchesDepartment && matchesAcademicYear;
+      const matchesQuery = !queryFilter || [row.rentalCode, row.studentName, row.rollNumber, row.laptopName, row.qrCode].some((value) => String(value).toLowerCase().includes(queryFilter));
+      return matchesStatus && matchesRole && matchesDepartment && matchesAcademicYear && matchesQuery;
     });
     const count = (statuses: string[]) => rows.filter((row: any) => statuses.includes(String(row.status).toLowerCase())).length;
     // Use the inventory status for both figures. Rental history can include
     // completed/rejected records, while item_detail is the source of truth for
     // whether a physical laptop is currently available or in use.
-    res.json({ ok: true, summary: { all: totalQuantity, pending: count(["pending"]), active: inUseQuantity, returned: count(["returned", "completed"]), available: availableQuantity }, rentals: filteredRows });
+    const pagedRows = filteredRows.slice((page - 1) * limit, page * limit);
+    res.json({ ok: true, summary: { all: totalQuantity, pending: count(["pending"]), active: inUseQuantity, returned: count(["returned", "completed"]), available: availableQuantity }, rentals: pagedRows, pagination: { page, limit, total: filteredRows.length, totalPages: Math.max(1, Math.ceil(filteredRows.length / limit)) } });
   } catch (error) {
     console.error(error);
     res.status(500).json({ ok: false, message: "Unable to load laptop rentals" });

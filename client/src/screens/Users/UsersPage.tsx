@@ -13,6 +13,7 @@ const API = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";
 type Role = {
   id: number;
   name: string;
+  code: "ADMIN" | "DEPARTMENT_HEAD" | "LAPTOP_RENTAL";
 };
 type Department = {
   id: number;
@@ -25,6 +26,7 @@ type User = {
   role: Role;
   department: Department | null;
   status: "Active" | "Inactive";
+  twoStepEnabled: boolean;
 };
 const empty = {
   name: "",
@@ -33,6 +35,7 @@ const empty = {
   roleId: "",
   departmentId: "",
   status: "Active" as "Active" | "Inactive",
+  twoStepEnabled: false,
 };
 export default function UsersPage() {
   const { accessToken } = useAuth();
@@ -42,6 +45,8 @@ export default function UsersPage() {
   const [draft, setDraft] = useState(empty),
     [editing, setEditing] = useState<User | null>(null),
     [query, setQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [error, setError] = useState(""),
     [message, setMessage] = useState(""),
     [loading, setLoading] = useState(true),
@@ -52,11 +57,13 @@ export default function UsersPage() {
   };
   const field = (key: keyof typeof empty, value: string) =>
     setDraft((old) => ({ ...old, [key]: value }) as typeof empty);
+  const selectedRole = roles.find((role) => String(role.id) === draft.roleId);
+  const departmentRequired = selectedRole?.code === "DEPARTMENT_HEAD";
   const load = async () => {
     setLoading(true);
     try {
       const [list, options] = await Promise.all([
-        fetch(`${API}/api/users?query=${encodeURIComponent(query)}`, {
+        fetch(`${API}/api/users?query=${encodeURIComponent(query)}&page=${page}&limit=25`, {
           headers,
         }),
         fetch(`${API}/api/users/options`, { headers }),
@@ -65,6 +72,7 @@ export default function UsersPage() {
         o = await options.json();
       if (!list.ok) throw new Error(l.message);
       setUsers(l.users);
+      setPagination(l.pagination ?? { page: 1, totalPages: 1, total: l.users.length });
       setRoles(o.roles ?? []);
       setDepartments(o.departments ?? []);
     } catch (e) {
@@ -75,14 +83,14 @@ export default function UsersPage() {
   };
   useEffect(() => {
     void load();
-  }, [accessToken]);
+  }, [accessToken, page]);
   const save = async () => {
     if (!editing && draft.password.length < 12) {
       setError("Temporary password must be at least 12 characters.");
       return;
     }
-    if (!draft.name.trim() || !draft.email.trim() || !draft.roleId) {
-      setError("Name, email, and role are required.");
+    if (!draft.name.trim() || !draft.email.trim() || !draft.roleId || (departmentRequired && !draft.departmentId)) {
+      setError(departmentRequired ? "Department Heads must be assigned to a department." : "Name, email, and role are required.");
       return;
     }
     setSaving(true);
@@ -123,6 +131,7 @@ export default function UsersPage() {
       roleId: String(user.role.id),
       departmentId: user.department ? String(user.department.id) : "",
       status: user.status,
+      twoStepEnabled: user.twoStepEnabled,
     });
   };
   const reset = async (user: User) => {
@@ -265,13 +274,17 @@ export default function UsersPage() {
               onChange={(e) => field("departmentId", e.target.value)}
               className="h-10 w-full rounded border px-3"
             >
-              <option value="">No department</option>
+              <option value="">{departmentRequired ? "Select assigned department" : "No department"}</option>
               {departments.map((department) => (
                 <option key={department.id} value={department.id}>
                   {department.name}
                 </option>
               ))}
             </select>
+            <label className="flex items-start gap-2 text-sm text-slate-600">
+              <input type="checkbox" checked={draft.twoStepEnabled} onChange={(e) => setDraft((old) => ({ ...old, twoStepEnabled: e.target.checked }))} />
+              <span>Require email OTP at login (leave unchecked when the user cannot access this email).</span>
+            </label>
             <select
               value={draft.status}
               onChange={(e) => field("status", e.target.value)}
@@ -306,7 +319,7 @@ export default function UsersPage() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") void load();
+                  if (e.key === "Enter") { setPage(1); void load(); }
                 }}
                 placeholder="Search name or email"
                 className="h-10 w-full rounded border pl-9 pr-3"
@@ -314,7 +327,7 @@ export default function UsersPage() {
             </label>
             <Button
               variant="outline"
-              onClick={() => void load()}
+              onClick={() => { setPage(1); void load(); }}
               className="sm:self-start"
             >
               Search
@@ -385,6 +398,15 @@ export default function UsersPage() {
               </tbody>
             </table>
           </div>
+          {!loading && pagination.totalPages > 1 && (
+            <div className="flex items-center justify-between border-t p-4 text-sm text-slate-600">
+              <span>Page {pagination.page} of {pagination.totalPages} ({pagination.total} users)</span>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>Previous</Button>
+                <Button variant="outline" size="sm" disabled={page >= pagination.totalPages} onClick={() => setPage((current) => current + 1)}>Next</Button>
+              </div>
+            </div>
+          )}
           {loading && (
             <p className="p-8 text-center text-slate-500">Loading users…</p>
           )}

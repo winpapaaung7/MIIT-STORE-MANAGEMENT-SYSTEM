@@ -16,6 +16,9 @@ import { useLanguage } from "@/context/LanguageContext"
 
 export interface AccessoriesTableProps {
   filteredAccessories: AccessoryItem[]
+  pagination: { page: number; totalPages: number; total: number }
+  onPreviousPage: () => void
+  onNextPage: () => void
   statusClasses: Record<AccessoryStatus, string>
   openActionId: string | null
   setOpenActionId: (id: string | null) => void
@@ -25,6 +28,9 @@ export interface AccessoriesTableProps {
 
 export default function AccessoriesTable({
   filteredAccessories,
+  pagination,
+  onPreviousPage,
+  onNextPage,
   statusClasses,
   openActionId,
   setOpenActionId,
@@ -70,6 +76,7 @@ export default function AccessoriesTable({
           </TableBody>
         </Table>
       </div>
+      {pagination.totalPages > 1 && <div className="flex items-center justify-between border-t p-3 text-sm text-slate-600"><span>Page {pagination.page} of {pagination.totalPages} ({pagination.total} records)</span><div className="flex gap-2"><button type="button" className="rounded border px-3 py-1 disabled:opacity-50" disabled={pagination.page <= 1} onClick={onPreviousPage}>Previous</button><button type="button" className="rounded border px-3 py-1 disabled:opacity-50" disabled={pagination.page >= pagination.totalPages} onClick={onNextPage}>Next</button></div></div>}
     </Card>
   )
 }

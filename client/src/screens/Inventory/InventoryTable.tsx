@@ -110,6 +110,8 @@ export default function InventoryTable({
                       <img
                         src={item.image}
                         alt={item.name}
+                        loading="lazy"
+                        decoding="async"
                         onClick={(event) => {
                           event.stopPropagation();
                           setPreviewImage(item.image);

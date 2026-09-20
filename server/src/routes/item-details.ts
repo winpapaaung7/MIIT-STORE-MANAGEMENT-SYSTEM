@@ -6,8 +6,19 @@ export function createItemDetailsRouter(prisma: any, recordActivity: any) {
   const router = Router();
 router.get("/", async (req, res) => {
   try {
-    const details = await prisma.item_detail.findMany({
-      where: req.auth?.role.code === "DEPARTMENT_HEAD" ? { current_department_id: req.auth.department!.id } : undefined,
+    const text = normalizeString(req.query.search), category = normalizeString(req.query.category), itemName = normalizeString(req.query.itemName), department = normalizeString(req.query.department), room = normalizeString(req.query.room), academicYear = normalizeString(req.query.academicYear), status = normalizeString(req.query.status);
+    const page = Math.max(1, Number(req.query.page) || 1), limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
+    const where = {
+      ...(text ? { OR: [{ detail_code: { contains: text } }, { notes: { contains: text } }, { item: { item_name: { contains: text } } }] } : {}),
+      ...(category ? { item: { category: { category_name: category } } } : {}),
+      ...(itemName ? { item: { item_name: itemName } } : {}),
+      ...(department ? { department: { department_name: department } } : {}),
+      ...(room ? { room: { building_name: room } } : {}),
+      ...(academicYear ? { budget_year: { year_name: academicYear } } : {}),
+      ...(status ? { status } : {}),
+    };
+    const [details, total] = await Promise.all([prisma.item_detail.findMany({
+      where,
       include: {
         item: {
           include: {
@@ -22,11 +33,12 @@ router.get("/", async (req, res) => {
         department: true,
         budget_year: true,
       },
-      orderBy: { item_detail_id: "asc" },
-    });
+      orderBy: { item_detail_id: "asc" }, skip: (page - 1) * limit, take: limit,
+    }), prisma.item_detail.count({ where })]);
 
     res.json({
       ok: true,
+      pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) },
       items: details.map((detail: any) => ({
         id: detail.detail_code,
         item_name: detail.item.item_name,

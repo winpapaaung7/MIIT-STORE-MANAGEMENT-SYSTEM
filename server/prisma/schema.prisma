@@ -77,6 +77,9 @@ model item_detail {
   @@index([current_department_id], map: "idx_item_detail_department")
   @@index([item_id], map: "idx_item_detail_item")
   @@index([current_room_id], map: "idx_item_detail_room")
+  @@index([current_department_id, status], map: "idx_item_detail_department_status")
+  @@index([budget_year_id, current_department_id, status], map: "idx_item_detail_budget_department_status")
+  @@index([item_id, current_department_id, status], map: "idx_item_detail_item_department_status")
 }
 
 model laptop_rental {
@@ -104,6 +107,7 @@ model laptop_rental {
   @@index([semester_id], map: "idx_rental_semester")
   @@index([student_id], map: "idx_rental_student")
   @@index([teacher_user_id], map: "idx_rental_teacher")
+  @@index([rental_status, item_detail_id], map: "idx_rental_status_item_detail")
 }
 
 model qr_code {

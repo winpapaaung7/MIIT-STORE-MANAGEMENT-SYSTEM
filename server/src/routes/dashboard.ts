@@ -25,7 +25,8 @@ export function createDashboardRouter(prisma: PrismaLike) {
 
   router.get("/overview", async (req: Request, res: Response) => {
     try {
-      const scopedDepartmentId = req.auth?.role.code === "DEPARTMENT_HEAD" ? req.auth.department?.id : undefined;
+      const mineRequested = req.query.scope === "mine";
+      const scopedDepartmentId = mineRequested && req.auth?.role.code === "DEPARTMENT_HEAD" ? req.auth.department?.id : undefined;
       const academicYearId = positiveInt(req.query.academicYearId, "academicYearId");
       const departmentId = scopedDepartmentId ?? positiveInt(req.query.departmentId, "departmentId");
       const activeDepartmentId = scopedDepartmentId ?? positiveInt(req.query.activeDepartmentId, "activeDepartmentId");
@@ -65,9 +66,9 @@ export function createDashboardRouter(prisma: PrismaLike) {
         prisma.item_detail.groupBy({ by: ["current_department_id", "status"], where, _count: { _all: true } }),
         departmentItemsWhere ? prisma.item_detail.groupBy({ by: ["item_id", "status"], where: departmentItemsWhere, _count: { _all: true } }) : [],
         prisma.budget_year.findMany({ select: { budget_year_id: true, year_name: true }, orderBy: { start_date: "desc" } }),
-        prisma.department.findMany({ select: { department_id: true, department_name: true, department_code: true }, orderBy: { department_name: "asc" } }),
+        prisma.department.findMany({ where: scopedDepartmentId ? { department_id: scopedDepartmentId } : undefined, select: { department_id: true, department_name: true, department_code: true }, orderBy: { department_name: "asc" } }),
         prisma.category.findMany({ select: { category_id: true, category_name: true }, orderBy: { category_name: "asc" } }),
-        prisma.item.findMany({ take: recentItemsLimit, orderBy: { created_at: "desc" }, include: { category: { select: { category_name: true } }, _count: { select: { item_detail: true } } } }),
+        prisma.item.findMany({ where: scopedDepartmentId ? { item_detail: { some: { current_department_id: scopedDepartmentId } } } : undefined, take: recentItemsLimit, orderBy: { created_at: "desc" }, include: { category: { select: { category_name: true } }, _count: { select: { item_detail: true } } } }),
       ]);
       const summary = { totalItems, available: 0, inUse: 0, damagedMaintenance: 0 };
       for (const entry of statusCounts) {

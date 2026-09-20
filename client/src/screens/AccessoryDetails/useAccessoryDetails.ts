@@ -92,6 +92,7 @@ interface ApiAccessoryDetail {
 interface AccessoryDetailsResponse {
   ok: boolean;
   items: ApiAccessoryDetail[];
+  pagination?: { page: number; totalPages: number; total: number };
   message?: string;
 }
 
@@ -126,6 +127,7 @@ interface TransferRequestPayload {
 
 export function useAccessoryDetails() {
   const { accessToken, loading: authLoading } = useAuth();
+  const authHeaders = { Authorization: `Bearer ${accessToken ?? ""}` };
   const [searchParams] = useSearchParams();
   const initialCategory = searchParams.get("category");
   const initialItemName = searchParams.get("item");
@@ -133,6 +135,8 @@ export function useAccessoryDetails() {
   const initialRoom = searchParams.get("room");
   const insertFileInputRef = useRef<HTMLInputElement | null>(null);
   const [accessoryItems, setAccessoryItems] = useState<AccessoryItem[]>([]);
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [departmentRoomMapState, setDepartmentRoomMapState] =
     useState<Record<Department, readonly string[]>>(departmentRoomMap);
   const [serverDepartments, setServerDepartments] = useState<Department[]>(
@@ -383,7 +387,14 @@ export function useAccessoryDetails() {
 
   const loadAccessoryDetails = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/item-details`);
+      const params = new URLSearchParams({ page: String(page), limit: "50" });
+      if (searchQuery.trim()) params.set("search", searchQuery.trim());
+      if (selectedCategory && !isNoneFilter(selectedCategory)) params.set("category", selectedCategory);
+      if (selectedItemName && !isNoneFilter(selectedItemName)) params.set("itemName", selectedItemName);
+      if (selectedDepartment && !isNoneFilter(selectedDepartment)) params.set("department", selectedDepartment);
+      if (selectedRoom && !isNoneFilter(selectedRoom)) params.set("room", selectedRoom);
+      if (selectedAcademicYear) params.set("academicYear", selectedAcademicYear);
+      const response = await fetch(`${API_BASE_URL}/api/item-details?${params}`, { headers: authHeaders });
       const data = (await response.json()) as AccessoryDetailsResponse;
 
       if (!response.ok || !data.ok) {
@@ -405,6 +416,7 @@ export function useAccessoryDetails() {
           remark: item.remark,
         })),
       );
+      setPagination(data.pagination ?? { page: 1, totalPages: 1, total: data.items.length });
 
       const uniqueCategories = Array.from(
         new Set(data.items.map((item) => item.category_name)),
@@ -465,14 +477,14 @@ export function useAccessoryDetails() {
     // not fail once and leave the modal with text-only fallback locations.
     if (authLoading || !accessToken) return;
     void loadAccessoryDetails();
-  }, [accessToken, authLoading]);
+  }, [accessToken, authLoading, page, searchQuery, selectedCategory, selectedItemName, selectedDepartment, selectedRoom, selectedAcademicYear]);
 
   useEffect(() => {
     if (authLoading || !accessToken) return;
 
     const loadDepartments = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/departments`);
+        const response = await fetch(`${API_BASE_URL}/api/departments`, { headers: authHeaders });
         const result = (await response.json()) as DepartmentApiResponse;
 
         if (!response.ok || !result.ok) {
@@ -537,6 +549,7 @@ export function useAccessoryDetails() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...authHeaders,
         },
         body: JSON.stringify(payload),
       });
@@ -700,6 +713,7 @@ export function useAccessoryDetails() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
+            ...authHeaders,
           },
           body: JSON.stringify({
             status: payload.status,
@@ -787,6 +801,9 @@ export function useAccessoryDetails() {
     },
     tableProps: {
       filteredAccessories,
+      pagination,
+      onPreviousPage: () => setPage((current) => Math.max(1, current - 1)),
+      onNextPage: () => setPage((current) => Math.min(pagination.totalPages, current + 1)),
       statusClasses,
       openActionId,
       setOpenActionId,

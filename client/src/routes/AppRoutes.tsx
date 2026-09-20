@@ -19,6 +19,7 @@ export default function AppRoutes() { return <Routes>
     <Route element={<ProtectedRoute roles={rolesFor("/")} />}><Route path="dashboard" element={<DashboardPage />} /></Route>
     <Route element={<ProtectedRoute roles={rolesFor("/inventory")} />}><Route path="inventory" element={<InventoryPage />} /></Route>
     <Route element={<ProtectedRoute roles={rolesFor("/accessories")} />}><Route path="accessories" element={<AccessoryDetailsPage />} /></Route>
+    <Route element={<ProtectedRoute roles={rolesFor("/my-department")} />}><Route path="my-department" element={<DashboardPage scope="mine" />} /></Route>
     <Route element={<ProtectedRoute roles={rolesFor("/laptop-rental")} />}><Route path="laptop-rental" element={<LaptopRentalPage />} /></Route>
     <Route element={<ProtectedRoute roles={rolesFor("/rental-dashboard")} />}><Route path="rental-dashboard" element={<Navigate to="/laptop-rental" replace />} /></Route>
     <Route element={<ProtectedRoute roles={rolesFor("/departments")} />}><Route path="departments" element={<DepartmentPage />} /></Route>

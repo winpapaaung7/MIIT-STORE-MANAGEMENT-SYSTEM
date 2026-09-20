@@ -13,6 +13,7 @@ import FilterCategories from "./FilterCategories";
 import InventoryTable from "./InventoryTable";
 import { Search } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/auth/AuthContext";
 
 import { type InventoryItem } from "./data/inventoryData";
 import {
@@ -61,6 +62,7 @@ interface ApiInventoryItem {
 interface ItemResponse {
   ok: boolean;
   items: ApiInventoryItem[];
+  pagination?: { page: number; totalPages: number; total: number };
   message?: string;
 }
 
@@ -99,7 +101,10 @@ interface DepartmentApiResponse {
 
 export default function InventoryPage() {
   const { t } = useLanguage();
+  const { accessToken, user } = useAuth();
   const navigate = useNavigate();
+  const authHeaders = { Authorization: `Bearer ${accessToken ?? ""}` };
+  const isDepartmentHead = user?.role.code === "DEPARTMENT_HEAD";
 
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
 
@@ -117,6 +122,7 @@ export default function InventoryPage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1), [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
 
   const [categoryError, setCategoryError] = useState("");
   const [inventoryError, setInventoryError] = useState("");
@@ -131,12 +137,16 @@ export default function InventoryPage() {
 
   const fetchInventory = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/items`);
+      const params = new URLSearchParams({ page: String(page), limit: "50" });
+      if (searchQuery.trim()) params.set("search", searchQuery.trim());
+      if (selectedCategory !== "All") params.set("category", selectedCategory);
+      const response = await fetch(`${API_BASE_URL}/api/items?${params}`, { headers: authHeaders });
       const data = (await response.json()) as ItemResponse;
       if (!response.ok || !data.ok) {
         throw new Error(data.message ?? "Failed to load inventory items");
       }
       setInventory(data.items.map(mapApiItem));
+      setPagination(data.pagination ?? { page: 1, totalPages: 1, total: data.items.length });
       setInventoryError("");
     } catch (error) {
       setInventoryError(
@@ -152,7 +162,7 @@ export default function InventoryPage() {
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/categories`);
+        const response = await fetch(`${API_BASE_URL}/api/categories`, { headers: authHeaders });
         const data = (await response.json()) as CategoryResponse;
 
         if (!response.ok || !data.ok) {
@@ -181,7 +191,7 @@ export default function InventoryPage() {
 
     const loadDepartments = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/departments`);
+        const response = await fetch(`${API_BASE_URL}/api/departments`, { headers: authHeaders });
         const data = (await response.json()) as DepartmentApiResponse;
 
         if (!response.ok || !data.ok) {
@@ -227,7 +237,7 @@ export default function InventoryPage() {
     void loadCategories();
     void loadDepartments();
     void loadInventory();
-  }, []);
+  }, [page, selectedCategory, searchQuery]);
 
   // =========================
   // Filter Items
@@ -564,16 +574,16 @@ export default function InventoryPage() {
             </h1>
 
             <p className="mt-1 text-sm text-slate-500">
-              {filteredInventory.length} {t("items")}
+              {pagination.total} {t("items")}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <ImportButton onClick={handleImport} label={t("import")} />
+            {!isDepartmentHead && <ImportButton onClick={handleImport} label={t("import")} />}
 
             <ExportButton onClick={handleExport} label={t("export")} />
 
-            <AddItemButton onClick={handleAddItem} label={t("addItem")} />
+            {!isDepartmentHead && <AddItemButton onClick={handleAddItem} label={t("addItem")} />}
           </div>
         </div>
       </header>
@@ -584,7 +594,7 @@ export default function InventoryPage() {
         categories={categories}
         inventory={inventory}
         selectedCategory={selectedCategory}
-        setSelectedCategory={setSelectedCategory}
+        setSelectedCategory={(value) => { setPage(1); setSelectedCategory(value); }}
         onAddCategory={handleAddCategory}
       />
 
@@ -603,7 +613,7 @@ export default function InventoryPage() {
 
         <Input
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => { setPage(1); setSearchQuery(e.target.value); }}
           placeholder={t("searchInventory")}
           className="h-11 rounded-xl pl-10"
         />
@@ -628,8 +638,9 @@ export default function InventoryPage() {
         onDeleteItem={handleDeleteItem}
         onEditItem={handleEditItem}
       />
+      {pagination.totalPages > 1 && <div className="flex items-center justify-between text-sm text-slate-600"><span>Page {pagination.page} of {pagination.totalPages}</span><div className="flex gap-2"><button className="rounded border px-3 py-1 disabled:opacity-50" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>Previous</button><button className="rounded border px-3 py-1 disabled:opacity-50" disabled={page >= pagination.totalPages} onClick={() => setPage((current) => current + 1)}>Next</button></div></div>}
 
-      <AddItemModal
+      {!isDepartmentHead && <AddItemModal
         isOpen={isAddItemOpen}
         onClose={() => setIsAddItemOpen(false)}
         newAccessory={newAccessory}
@@ -652,7 +663,7 @@ export default function InventoryPage() {
         roomIds={roomIds}
         existingInventory={inventory}
         onSubmit={handleAddInventoryItem}
-      />
+      />}
     </div>
   );
 }

@@ -31,8 +31,10 @@ export function createItemsRouter(prisma: any) {
 
   router.get("/", async (req, res) => {
     try {
-      const items = await prisma.item.findMany({ where: req.auth?.role.code === "DEPARTMENT_HEAD" ? { item_detail: { some: { current_department_id: req.auth.department!.id } } } : undefined, include: { category: true, _count: { select: { item_detail: true } } }, orderBy: { item_id: "asc" } });
-      return res.json({ ok: true, items: items.map((item: any) => ({ item_id: item.item_id, item_name: item.item_name, category_name: item.category.category_name, image_url: item.image_url, quantity: item._count.item_detail })) });
+      const search = normalizeString(req.query.search), category = normalizeString(req.query.category), page = Math.max(1, Number(req.query.page) || 1), limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
+      const where = { ...(search ? { OR: [{ item_id: { contains: search } }, { item_name: { contains: search } }] } : {}), ...(category ? { category: { category_name: category } } : {}) };
+      const [items, total] = await Promise.all([prisma.item.findMany({ where, include: { category: true, _count: { select: { item_detail: true } } }, orderBy: { item_id: "asc" }, skip: (page - 1) * limit, take: limit }), prisma.item.count({ where })]);
+      return res.json({ ok: true, items: items.map((item: any) => ({ item_id: item.item_id, item_name: item.item_name, category_name: item.category.category_name, image_url: item.image_url, quantity: item._count.item_detail })), pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) } });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ ok: false, message: "Failed to fetch items", error: error instanceof Error ? error.message : String(error) });
