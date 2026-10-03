@@ -9,6 +9,8 @@ import { type TranslationKey, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/auth/AuthContext";
 
 const API = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";
+const CURRENT_ACADEMIC_YEAR = "2026-2027";
+const academicYearKey = (name: string) => name.replaceAll("–", "-");
 const colors = { available: "#16a34a", inUse: "#f97316", damaged: "#dc2626" };
 const number = (value: any) => typeof value === "number" && Number.isFinite(value) ? value : 0;
 type T = (key: TranslationKey) => string;
@@ -52,12 +54,18 @@ export default function DashboardPage({ scope }: { scope?: "mine" }) {
     [t("damagedMaintenance"), number(summary?.damagedMaintenance), t("needsAttention"), AlertTriangle, "text-red-600", "bg-red-50", number(summary?.damagedMaintenancePercentage)],
   ] as [string, number, string, LucideIcon, string, string, number][];
   const filterLabels: [TranslationKey, string, string][] = [["academicYear", "academicYearId", "academicYears"], ["department", "departmentId", "departments"], ["category", "categoryId", "categories"], ["status", "status", "statuses"]];
+  const filterOptions = (source: string) => {
+    const options = data?.filterOptions?.[source] ?? [];
+    return source === "academicYears"
+      ? [...options].sort((a: any, b: any) => Number(academicYearKey(String(b.name)) === CURRENT_ACADEMIC_YEAR) - Number(academicYearKey(String(a.name)) === CURRENT_ACADEMIC_YEAR))
+      : options;
+  };
 
   return <div className="dashboard-page space-y-6 pb-4">
     <header className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
       <h1 className="text-3xl font-bold text-slate-950">{scope === "mine" ? `My Department${user?.department ? ` — ${user.department.name}` : ""}` : t("dashboard")}</h1>
       <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 xl:w-auto xl:grid-cols-4">
-        {filterLabels.filter(([, key]) => scope !== "mine" || key !== "departmentId").map(([labelKey, key, source]) => <select key={key} aria-label={t(labelKey)} value={(filters as any)[key]} onChange={(event) => change(key, event.target.value)} className="h-10 min-w-[160px] rounded-lg border border-slate-200 bg-white px-3 text-sm"><option value="">{t("all")} {t(labelKey)}</option>{(data?.filterOptions?.[source] ?? []).map((option: any) => <option key={option.id ?? option.name ?? option} value={String(option.id ?? option.name ?? option)}>{option.name ?? option}</option>)}</select>)}
+        {filterLabels.filter(([, key]) => scope !== "mine" || key !== "departmentId").map(([labelKey, key, source]) => <select key={key} aria-label={t(labelKey)} value={(filters as any)[key]} onChange={(event) => change(key, event.target.value)} className="h-10 min-w-[160px] rounded-lg border border-slate-200 bg-white px-3 text-sm"><option value="">{t("all")} {t(labelKey)}</option>{filterOptions(source).map((option: any) => <option key={option.id ?? option.name ?? option} value={String(option.id ?? option.name ?? option)}>{option.name ?? option}</option>)}</select>)}
       </div>
     </header>
 

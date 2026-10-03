@@ -1786,7 +1786,7 @@ app.delete("/api/items/:id", async (req, res) => {
 
     const existingItem = await prisma.item.findUnique({
       where: { item_id: itemId },
-      include: { item_detail: true },
+      include: { item_detail: { select: { item_detail_id: true } } },
     });
 
     if (!existingItem) {
@@ -1797,13 +1797,31 @@ app.delete("/api/items/:id", async (req, res) => {
       return;
     }
 
-    await prisma.item_detail.deleteMany({
-      where: { item_id: itemId },
-    });
+    const itemDetailIds = existingItem.item_detail.map(
+      (detail) => detail.item_detail_id,
+    );
+    const [rentalCount, transferCount] = await Promise.all([
+      prisma.laptop_rental.count({
+        where: { item_detail_id: { in: itemDetailIds } },
+      }),
+      prisma.transfer_item.count({
+        where: { item_detail_id: { in: itemDetailIds } },
+      }),
+    ]);
 
-    await prisma.item.delete({
-      where: { item_id: itemId },
-    });
+    if (rentalCount || transferCount) {
+      res.status(409).json({
+        ok: false,
+        message:
+          "This item cannot be deleted because it has rental or transfer records. Keep it for the history, or update its status instead.",
+      });
+      return;
+    }
+
+    await prisma.$transaction([
+      prisma.item_detail.deleteMany({ where: { item_id: itemId } }),
+      prisma.item.delete({ where: { item_id: itemId } }),
+    ]);
 
     await removeOwnedItemImage(existingItem.item_id, existingItem.image_url);
 
@@ -1941,6 +1959,166 @@ app.put("/api/items/:id/category", async (req, res) => {
   }
 });
 
+type BulkImportRow = {
+  row: number;
+  itemName: string;
+  categoryName: string;
+  quantity: number;
+  imageUrl: string;
+  departmentName: string;
+  roomName: string;
+  academicYearName: string;
+  status: string;
+  registeredDate: string;
+  remark: string;
+};
+
+type ResolvedBulkImportRow = BulkImportRow & {
+  category: any;
+  department: any;
+  room: any;
+  year: any;
+};
+
+app.post("/api/items/import", async (req, res) => {
+  try {
+    const inputRows = Array.isArray(req.body?.items) ? req.body.items : [];
+    if (!inputRows.length || inputRows.length > 500) {
+      return res.status(400).json({ ok: false, message: "Import between 1 and 500 item rows at a time." });
+    }
+
+    const rows: BulkImportRow[] = inputRows.map((raw: any, index: number) => ({
+      row: index + 2,
+      itemName: typeof raw.item_name === "string" ? raw.item_name.trim() : "",
+      categoryName: typeof raw.category_name === "string" ? raw.category_name.trim() : "",
+      quantity: Number(raw.quantity),
+      imageUrl: typeof raw.image_url === "string" ? raw.image_url.trim() : "",
+      departmentName: typeof raw.department === "string" ? raw.department.trim() : "",
+      roomName: typeof raw.room === "string" ? raw.room.trim() : "",
+      academicYearName: typeof raw.academic_year === "string" ? raw.academic_year.trim() : "",
+      status: typeof raw.status === "string" ? raw.status.trim() : "Available",
+      registeredDate: typeof raw.registered_date === "string" ? raw.registered_date.trim() : "",
+      remark: typeof raw.remark === "string" ? raw.remark.trim() : "",
+    }));
+
+    for (const row of rows) {
+      if (!row.itemName || !row.categoryName || !Number.isInteger(row.quantity) || row.quantity < 1 || row.remark.length > 255) {
+        return res.status(400).json({ ok: false, message: `Row ${row.row}: item name, category, and a whole-number quantity are required.` });
+      }
+      if (!row.departmentName || !row.roomName || !row.academicYearName || !["Available", "In Use", "Damaged"].includes(row.status)) {
+        return res.status(400).json({ ok: false, message: `Row ${row.row}: use an existing department, room, academic year, and valid status.` });
+      }
+      if (row.imageUrl && !/^https?:\/\/\S+$/i.test(row.imageUrl)) {
+        return res.status(400).json({ ok: false, message: `Row ${row.row}: image_url must be a valid http or https URL.` });
+      }
+      if (row.registeredDate && !/^\d{4}-\d{2}-\d{2}$/.test(row.registeredDate)) {
+        return res.status(400).json({ ok: false, message: `Row ${row.row}: registered_date must use YYYY-MM-DD format.` });
+      }
+    }
+
+    const [categories, departments, rooms, years] = await Promise.all([
+      prisma.category.findMany({ select: { category_id: true, category_name: true } }),
+      prisma.department.findMany({ select: { department_id: true, department_name: true } }),
+      prisma.room.findMany({ select: { room_id: true, department_id: true, building_name: true } }),
+      prisma.budget_year.findMany({ select: { budget_year_id: true, year_name: true } }),
+    ]);
+    const categoryByName = new Map(categories.map((category) => [category.category_name, category]));
+    const departmentByName = new Map(departments.map((department) => [department.department_name, department]));
+    const yearByName = new Map(years.map((year) => [year.year_name, year]));
+
+    const resolvedRows: ResolvedBulkImportRow[] = rows.map((row) => {
+      const category = categoryByName.get(row.categoryName);
+      const department = departmentByName.get(row.departmentName);
+      const year = yearByName.get(row.academicYearName);
+      const room = department
+        ? rooms.find((candidate) => candidate.department_id === department.department_id && candidate.building_name === row.roomName)
+        : undefined;
+      if (!category || !department || !room || !year) {
+        throw new Error(`Row ${row.row}: category, department, room, or academic year does not exist.`);
+      }
+      return { ...row, category, department, room, year };
+    });
+
+    const result = await prisma.$transaction(async (tx: any) => {
+      const names = [...new Set(resolvedRows.map((row) => row.itemName))];
+      const existingItems = await tx.item.findMany({
+        where: { item_name: { in: names } },
+        include: { _count: { select: { item_detail: true } } },
+      });
+      const itemsByKey = new Map<string, { item: any; detailCount: number }>(existingItems.map((item: any) => [`${item.item_name}\u0000${item.category_id}`, { item, detailCount: item._count.item_detail }]));
+      const latestItem = await tx.item.findFirst({ orderBy: { item_id: "desc" } });
+      let nextItemNumber = latestItem ? Math.max(Number(latestItem.item_id) || 0, 0) : 0;
+      const detailRows: any[] = [];
+      const qrCodes: string[] = [];
+      const qrItems: any[] = [];
+      const createdAt = new Date().toISOString();
+
+      for (const row of resolvedRows) {
+        const key = `${row.itemName}\u0000${row.category.category_id}`;
+        let entry = itemsByKey.get(key);
+
+        if (!entry) {
+          nextItemNumber += 1;
+          if (nextItemNumber > 9999) throw new Error("Cannot create more item IDs because the item_id field is limited to 4 digits.");
+          const itemId = String(nextItemNumber).padStart(4, "0");
+          const item = await tx.item.create({
+            data: { item_id: itemId, item_code: itemId, item_name: row.itemName, category_id: row.category.category_id, image_url: row.imageUrl || null },
+          });
+          entry = { item, detailCount: 0 };
+          itemsByKey.set(key, entry);
+        } else if (row.imageUrl && entry.item.image_url !== row.imageUrl) {
+          entry.item = await tx.item.update({ where: { item_id: entry.item.item_id }, data: { image_url: row.imageUrl } });
+        }
+
+        for (let offset = 1; offset <= row.quantity; offset += 1) {
+          const detailCode = `${entry.item.item_id}-${String(entry.detailCount + offset).padStart(6, "0")}`;
+          detailRows.push({
+            item_id: entry.item.item_id,
+            detail_code: detailCode,
+            budget_year_id: row.year.budget_year_id,
+            status: row.status,
+            notes: row.remark || null,
+            purchase_date: row.registeredDate ? new Date(`${row.registeredDate}T00:00:00.000Z`) : null,
+            current_department_id: row.department.department_id,
+            current_room_id: row.room.room_id,
+          });
+          qrCodes.push(detailCode);
+          qrItems.push({
+            id: detailCode,
+            item_name: row.itemName,
+            category_name: row.categoryName,
+            status: row.status,
+            department: row.departmentName,
+            room: row.roomName,
+            academic_year: row.academicYearName,
+            registered_date: row.registeredDate || createdAt.slice(0, 10),
+            created_at: createdAt,
+            remark: row.remark,
+          });
+        }
+        entry.detailCount += row.quantity;
+      }
+
+      await tx.item_detail.createMany({ data: detailRows });
+      const createdDetails = await tx.item_detail.findMany({
+        where: { detail_code: { in: qrCodes } },
+        select: { item_detail_id: true, detail_code: true },
+      });
+      await tx.qr_code.createMany({
+        data: createdDetails.map((detail: any) => ({ qr_code_id: detail.detail_code, item_detail_id: detail.item_detail_id })),
+        skipDuplicates: true,
+      });
+      return { importedRows: resolvedRows.length, importedUnits: detailRows.length, qrCodes, qrItems };
+    });
+
+    await recordActivity("created", "Inventory", { type: "Bulk import", name: "Excel inventory import" }, { imported_rows: result.importedRows, imported_units: result.importedUnits });
+    return res.status(201).json({ ok: true, imported_rows: result.importedRows, imported_units: result.importedUnits, qr_codes: result.qrCodes, qr_items: result.qrItems });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unable to import inventory items";
+    return res.status(400).json({ ok: false, message });
+  }
+});
+
 app.post("/api/items", async (req, res) => {
   try {
     const itemName =
@@ -1953,10 +2131,20 @@ app.post("/api/items", async (req, res) => {
     const quantity = Number(req.body.quantity) || 1;
     const imageData =
       typeof req.body.image_data === "string" ? req.body.image_data : "";
+    const imageUrl =
+      typeof req.body.image_url === "string" ? req.body.image_url.trim() : "";
     const remark =
       typeof req.body.remark === "string" ? req.body.remark.trim() : "";
     const status =
       typeof req.body.status === "string" ? req.body.status.trim() : "Available";
+    const academicYearName =
+      typeof req.body.academic_year === "string"
+        ? req.body.academic_year.trim()
+        : "";
+    const registeredDate =
+      typeof req.body.registered_date === "string"
+        ? req.body.registered_date.trim()
+        : "";
     let departmentId = Number(req.body.department_id);
     let roomId = Number(req.body.room_id);
 
@@ -1972,6 +2160,16 @@ app.post("/api/items", async (req, res) => {
         message:
           "item_name, category_name and quantity are required; status must be valid and remark must not exceed 255 characters",
       });
+      return;
+    }
+
+    if (imageUrl && !/^https?:\/\/\S+$/i.test(imageUrl)) {
+      res.status(400).json({ ok: false, message: "image_url must be a valid http or https URL" });
+      return;
+    }
+
+    if (registeredDate && !/^\d{4}-\d{2}-\d{2}$/.test(registeredDate)) {
+      res.status(400).json({ ok: false, message: "registered_date must use YYYY-MM-DD format" });
       return;
     }
 
@@ -2000,7 +2198,15 @@ app.post("/api/items", async (req, res) => {
       return;
     }
 
-    const budgetYear = await getDefaultBudgetYear();
+    const budgetYear = academicYearName
+      ? await prisma.budget_year.findFirst({ where: { year_name: academicYearName } })
+      : await getDefaultBudgetYear();
+
+    if (!budgetYear) {
+      res.status(404).json({ ok: false, message: "Academic year not found" });
+      return;
+    }
+
     const room = await prisma.room.findFirst({
       where: {
         room_id: roomId,
@@ -2040,7 +2246,7 @@ app.post("/api/items", async (req, res) => {
           item_code: itemId,
           item_name: itemName,
           category_id: category.category_id,
-          image_url: null,
+          image_url: imageUrl || null,
         },
         include: {
           _count: {
@@ -2092,6 +2298,7 @@ app.post("/api/items", async (req, res) => {
         budget_year_id: budgetYear.budget_year_id,
         status,
         notes: remark || null,
+        purchase_date: registeredDate ? new Date(`${registeredDate}T00:00:00.000Z`) : null,
         current_department_id: departmentId,
         current_room_id: room.room_id,
       };
@@ -2116,6 +2323,18 @@ app.post("/api/items", async (req, res) => {
 
     if (imageData) {
       const imageUrl = await saveItemImage(item.item_id, imageData);
+      item = await prisma.item.update({
+        where: { item_id: item.item_id },
+        data: { image_url: imageUrl },
+        include: {
+          _count: {
+            select: {
+              item_detail: true,
+            },
+          },
+        },
+      });
+    } else if (imageUrl && item.image_url !== imageUrl) {
       item = await prisma.item.update({
         where: { item_id: item.item_id },
         data: { image_url: imageUrl },
@@ -2152,6 +2371,16 @@ app.post("/api/items", async (req, res) => {
         image_url: item.image_url,
         quantity: totalQuantity,
         added_quantity: quantity,
+      },
+      qr_codes: createdDetailCodes,
+      item_detail: {
+        department: (await prisma.department.findUnique({ where: { department_id: departmentId }, select: { department_name: true } }))?.department_name ?? "Store",
+        room: room.building_name ?? "",
+        academic_year: budgetYear.year_name,
+        status,
+        registered_date: registeredDate || new Date().toISOString().slice(0, 10),
+        created_at: new Date().toISOString(),
+        remark,
       },
     });
   } catch (error) {

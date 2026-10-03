@@ -1,6 +1,8 @@
 import { Router, type Request, type Response } from "express";
 
 type PrismaLike = any;
+const CURRENT_ACADEMIC_YEAR = "2026-2027";
+const academicYearKey = (name: string) => name.replaceAll("–", "-");
 
 const positiveInt = (value: unknown, name: string, maximum = 1000) => {
   if (value === undefined) return undefined;
@@ -70,6 +72,12 @@ export function createDashboardRouter(prisma: PrismaLike) {
         prisma.category.findMany({ select: { category_id: true, category_name: true }, orderBy: { category_name: "asc" } }),
         prisma.item.findMany({ where: scopedDepartmentId ? { item_detail: { some: { current_department_id: scopedDepartmentId } } } : undefined, take: recentItemsLimit, orderBy: { created_at: "desc" }, include: { category: { select: { category_name: true } }, _count: { select: { item_detail: true } } } }),
       ]);
+      academicYears.sort((a: any, b: any) => {
+        const aCurrent = academicYearKey(a.year_name) === CURRENT_ACADEMIC_YEAR;
+        const bCurrent = academicYearKey(b.year_name) === CURRENT_ACADEMIC_YEAR;
+        if (aCurrent !== bCurrent) return aCurrent ? -1 : 1;
+        return String(b.year_name).localeCompare(String(a.year_name));
+      });
       const summary = { totalItems, available: 0, inUse: 0, damagedMaintenance: 0 };
       for (const entry of statusCounts) {
         summary[statusBucket(entry.status)] += entry._count._all;

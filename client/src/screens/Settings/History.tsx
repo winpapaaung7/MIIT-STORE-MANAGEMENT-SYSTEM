@@ -16,6 +16,8 @@ import { useAuth } from "@/auth/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { QRCodeSVG } from "qrcode.react";
+import miitLogo from "@/assets/MIIT_LOGO.jpg";
+import { accessoryScanUrl, downloadQrCodePdf } from "@/lib/qr";
 import {
   Dialog,
   DialogContent,
@@ -85,10 +87,6 @@ function activityQrCodes(module: string, details: Record<string, unknown> | null
   }
 
   return [];
-}
-
-function escapeHtml(value: string) {
-  return value.replace(/[&<>"]/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[character]!);
 }
 
 function detailText(details: Record<string, unknown> | null) {
@@ -346,38 +344,23 @@ function ActivityDetailsDialog({ activity, onOpenChange }: { activity: Activity 
               {fields.map(([field, value]) => <ChangeDetail key={field} field={field} value={value} />)}
             </div>
           ) : <p className="text-sm text-slate-500">No additional details recorded.</p>}
-          {qrCodes.length > 0 ? <ActivityQrCodes codes={qrCodes} activityId={activity.activity_log_id} title={activity.module === "Transfer" ? "Transferred item QR codes" : "QR codes"} /> : null}
+          {qrCodes.length > 0 ? <ActivityQrCodes codes={qrCodes} title={activity.module === "Transfer" ? "Transferred item QR codes" : "QR codes"} /> : null}
         </div>
       </DialogContent>
     </Dialog>
   );
 }
 
-function ActivityQrCodes({ codes, activityId, title }: { codes: string[]; activityId: number; title: string }) {
-  const qrCodeRefs = useRef(new Map<string, SVGSVGElement>());
-
-  const downloadQrSheet = () => {
-    const cards = codes.map((code) => {
-      const svg = qrCodeRefs.current.get(code);
-      return `<article><div class="qr">${svg?.outerHTML ?? ""}</div><p>${escapeHtml(code)}</p></article>`;
-    }).join("");
-    const documentHtml = `<!doctype html><html><head><meta charset="utf-8"><title>MIIT Store QR codes</title><style>body{font-family:Arial,sans-serif;color:#0f172a;margin:32px}h1{font-size:20px;margin:0 0 6px}small{color:#475569}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:24px}article{break-inside:avoid;border:1px solid #cbd5e1;border-radius:12px;padding:14px;text-align:center}.qr svg{width:150px;height:150px}p{font-family:monospace;font-weight:700;font-size:12px;word-break:break-all}@media print{body{margin:12mm}.grid{grid-template-columns:repeat(3,1fr);gap:10mm}}</style></head><body><h1>MIIT Store QR codes</h1><small>${codes.length} item code${codes.length === 1 ? "" : "s"}</small><div class="grid">${cards}</div></body></html>`;
-    const url = URL.createObjectURL(new Blob([documentHtml], { type: "text/html;charset=utf-8" }));
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `miit-store-qr-codes-${activityId}.html`;
-    link.click();
-    URL.revokeObjectURL(url);
-  };
+function ActivityQrCodes({ codes, title }: { codes: string[]; title: string }) {
 
   return (
     <section className="space-y-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div><h3 className="font-medium text-slate-900 dark:text-slate-100">{title}</h3><p className="text-xs text-slate-500 dark:text-slate-400">{codes.length} item code{codes.length === 1 ? "" : "s"}</p></div>
-        <Button size="sm" variant="outline" onClick={downloadQrSheet}><Download className="h-4 w-4" />Download QR sheet</Button>
+        <Button size="sm" variant="outline" onClick={() => void downloadQrCodePdf(codes)}><Download className="h-4 w-4" />Download QR PDF</Button>
       </div>
-      <div className="grid max-h-80 grid-cols-2 gap-3 overflow-y-auto p-1 sm:grid-cols-3">
-        {codes.map((code) => <div key={code} className="flex flex-col items-center rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-950"><QRCodeSVG ref={(node) => { if (node) qrCodeRefs.current.set(code, node); }} value={code} size={104} level="M" includeMargin /><span className="mt-1 break-all text-center font-mono text-[10px] font-semibold text-slate-700 dark:text-slate-200">{code}</span></div>)}
+      <div className="grid max-h-96 grid-cols-1 gap-3 overflow-y-auto p-1 sm:grid-cols-2">
+        {codes.map((code) => <div key={code} className="flex flex-col items-center rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-700 dark:bg-slate-950"><QRCodeSVG value={accessoryScanUrl(code)} size={160} level="H" includeMargin={false} bgColor="#f8fafc" fgColor="#020617" imageSettings={{ src: miitLogo, height: 33, width: 33, excavate: true }} /><span className="mt-1 break-all text-center font-mono text-[10px] font-semibold text-slate-700 dark:text-slate-200">{code}</span></div>)}
       </div>
     </section>
   );

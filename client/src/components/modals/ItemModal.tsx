@@ -60,7 +60,7 @@ export interface ItemModalProps {
 
 interface ItemModalState {
   values: Omit<ItemFormValues, "id">;
-  quantity: number;
+  quantity: number | "";
 }
 
 const idPattern = /^\d{4}-\d{6}$/;
@@ -283,9 +283,10 @@ function ItemModalContent({
         : "";
   const idRange = useMemo(() => {
     const startId = generatedId;
-    const endId = incrementAccessoryId(startId, formState.quantity - 1);
+    const quantity = typeof formState.quantity === "number" ? formState.quantity : 1;
+    const endId = incrementAccessoryId(startId, quantity - 1);
 
-    if (formState.quantity <= 1 || startId === endId) {
+    if (quantity <= 1 || startId === endId) {
       return startId;
     }
 
@@ -348,6 +349,11 @@ function ItemModalContent({
   };
 
   const updateQuantity = (value: string) => {
+    if (value === "") {
+      setFormState((current) => ({ ...current, quantity: "" }));
+      return;
+    }
+
     const quantity = Math.max(1, Number(value) || 1);
 
     setFormState((current) => ({
@@ -375,13 +381,15 @@ function ItemModalContent({
 
   const submitForm = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const quantity = typeof formState.quantity === "number" ? formState.quantity : 0;
 
     if (
       (mode === "add" &&
         (!idPattern.test(generatedId) ||
           !formState.values.itemName.trim() ||
           !formState.values.room.trim() ||
-          !hasSubmittableLocation)) ||
+          !hasSubmittableLocation ||
+          quantity < 1)) ||
       !formState.values.status
     ) {
       return;
@@ -394,7 +402,7 @@ function ItemModalContent({
       itemName: formState.values.itemName.trim(),
       room: formState.values.room.trim(),
       remark: formState.values.remark.trim(),
-      quantity: formState.quantity,
+      quantity,
       image,
       categoryId: categoryIds?.[formState.values.category],
       departmentId: departmentIds?.[formState.values.department],
@@ -408,7 +416,9 @@ function ItemModalContent({
       : idPattern.test(generatedId) &&
         formState.values.itemName.trim().length > 0 &&
         formState.values.room.trim().length > 0 &&
-        hasSubmittableLocation;
+        hasSubmittableLocation &&
+        typeof formState.quantity === "number" &&
+        formState.quantity >= 1;
   const formId = mode === "edit" ? "edit-accessory-form" : "add-accessory-form";
 
   return (

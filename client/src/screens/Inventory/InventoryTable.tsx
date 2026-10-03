@@ -20,7 +20,7 @@ interface InventoryTableProps {
   categories: readonly { id: number; name: string }[];
   onOpenItem: (item: InventoryItem) => void;
   onEditItem: (item: InventoryItem) => void;
-  onDeleteItem: (id: string) => void;
+  onDeleteItem: (id: string) => Promise<void>;
 }
 
 export default function InventoryTable({

@@ -3,5 +3,5 @@
  * VITE_; localhost keeps a new local checkout usable without a .env file.
  */
 export const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000"
+  import.meta.env.VITE_API_BASE_URL ?? `${window.location.protocol}//${window.location.hostname}:5000`
 ).replace(/\/$/, "");

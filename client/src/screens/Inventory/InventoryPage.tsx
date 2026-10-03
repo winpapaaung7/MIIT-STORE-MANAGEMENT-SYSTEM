@@ -6,14 +6,17 @@ import ExportButton from "@/components/buttons/ExportButton";
 import ImportButton from "@/components/buttons/ImportButton";
 import AddItemButton from "@/components/buttons/AddItemButton";
 import AddItemModal from "@/components/modals/AddItemModal";
+import ScanModal from "@/components/modals/ScanModal";
+import QrSheetModal from "@/components/modals/QrSheetModal";
 import { type ItemSubmitPayload } from "@/components/modals/ItemModal";
 import { Input } from "@/components/ui/input";
 
 import FilterCategories from "./FilterCategories";
 import InventoryTable from "./InventoryTable";
-import { Search } from "lucide-react";
+import { FileDown, Search } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/auth/AuthContext";
+import { Button } from "@/components/ui/button";
 
 import { type InventoryItem } from "./data/inventoryData";
 import {
@@ -22,6 +25,7 @@ import {
 } from "@/screens/AccessoryDetails/accessoryData";
 import {
   type AccessoryStatus,
+  type AccessoryItem,
   type Department,
   type NewAccessoryForm,
 } from "@/screens/AccessoryDetails/types";
@@ -71,6 +75,36 @@ interface CreateItemResponse {
   item: ApiInventoryItem & {
     added_quantity?: number;
   };
+  qr_codes?: string[];
+  item_detail?: {
+    department: string;
+    room: string;
+    academic_year: string;
+    status: AccessoryStatus;
+    registered_date: string;
+    created_at: string;
+    remark: string;
+  };
+  message?: string;
+}
+
+interface BulkImportResponse {
+  ok: boolean;
+  imported_rows: number;
+  imported_units: number;
+  qr_codes: string[];
+  qr_items?: {
+    id: string;
+    item_name: string;
+    category_name: string;
+    status: AccessoryStatus;
+    department: string;
+    room: string;
+    academic_year: string;
+    registered_date: string;
+    created_at: string;
+    remark: string;
+  }[];
   message?: string;
 }
 
@@ -126,8 +160,10 @@ export default function InventoryPage() {
 
   const [categoryError, setCategoryError] = useState("");
   const [inventoryError, setInventoryError] = useState("");
+  const [importSuccess, setImportSuccess] = useState("");
 
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+  const [qrQueue, setQrQueue] = useState<AccessoryItem[]>([]);
 
   const [newAccessory, setNewAccessory] = useState<NewAccessoryForm>(
     emptyNewAccessoryForm,
@@ -319,12 +355,194 @@ export default function InventoryPage() {
     XLSX.writeFile(workbook, "Inventory.xlsx");
   };
 
+  const queueGeneratedQrs = (
+    data: CreateItemResponse,
+    fallback: {
+      itemName: string;
+      category: string;
+      department: string;
+      room: string;
+      status: AccessoryStatus;
+      registeredDate: string;
+      remark: string;
+    },
+  ) => {
+    const detail = data.item_detail;
+    const generatedItems = (data.qr_codes ?? []).map((code) => ({
+      id: code,
+      itemName: data.item.item_name,
+      subCategory: data.item.category_name,
+      status: detail?.status ?? fallback.status,
+      department: detail?.department ?? fallback.department,
+      room: detail?.room ?? fallback.room,
+      academicYear: detail?.academic_year ?? "",
+      registeredDate: detail?.registered_date ?? fallback.registeredDate,
+      createdAt: detail?.created_at ?? new Date().toISOString(),
+      remark: detail?.remark ?? fallback.remark,
+      qrCode: code,
+    }));
+
+    if (generatedItems.length) {
+      setQrQueue((current) => [...current, ...generatedItems]);
+    }
+  };
+
+  const createInventoryItem = async (input: {
+    itemName: string;
+    category: string;
+    quantity: number;
+    department: string;
+    room: string;
+    status: AccessoryStatus;
+    remark: string;
+    imageData?: string;
+    imageUrl?: string;
+    academicYear?: string;
+    registeredDate?: string;
+  }) => {
+    const departmentId = departmentIds[input.department];
+    const roomId = roomIds[`${input.department}\u0000${input.room}`];
+    const response = await fetch(`${API_BASE_URL}/api/items`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...authHeaders,
+      },
+      body: JSON.stringify({
+        item_name: input.itemName,
+        category_name: input.category,
+        category_id: categoryIds[input.category],
+        quantity: input.quantity,
+        department_id: departmentId,
+        room_id: roomId,
+        status: input.status,
+        remark: input.remark,
+        image_data: input.imageData || null,
+        image_url: input.imageUrl || null,
+        academic_year: input.academicYear || null,
+        registered_date: input.registeredDate || null,
+      }),
+    });
+    const data = (await response.json()) as CreateItemResponse & { error?: string };
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.message ?? data.error ?? "Failed to create item");
+    }
+
+    return data;
+  };
+
   // =========================
   // Import Excel
   // =========================
 
   const handleImport = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleDownloadImportTemplate = () => {
+    const workbook = XLSX.utils.book_new();
+    const template = XLSX.utils.aoa_to_sheet([
+      [
+        "item_name",
+        "category_name",
+        "quantity",
+        "image_url",
+        "department",
+        "room",
+        "academic_year",
+        "status",
+        "registered_date",
+        "remark",
+      ],
+      [
+        "Example Laptop",
+        "Laptop",
+        1,
+        "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=640&auto=format&fit=crop&q=80",
+        "Store",
+        "Storage",
+        "2026-2027",
+        "Available",
+        "2026-10-03",
+        "Optional note",
+      ],
+    ]);
+    template["!cols"] = [
+      { wch: 28 },
+      { wch: 20 },
+      { wch: 12 },
+      { wch: 48 },
+      { wch: 22 },
+      { wch: 18 },
+      { wch: 18 },
+      { wch: 16 },
+      { wch: 18 },
+      { wch: 32 },
+    ];
+
+    const itemDetailsPreview = XLSX.utils.aoa_to_sheet([
+      [
+        "item_id",
+        "detail_code",
+        "qr_code",
+        "item_name",
+        "category_name",
+        "image_url",
+        "department",
+        "room",
+        "academic_year",
+        "status",
+        "registered_date",
+        "created_at",
+        "remark",
+      ],
+      [
+        "0001",
+        "0001-000001",
+        "0001-000001",
+        "Example Laptop",
+        "Laptop",
+        "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=640&auto=format&fit=crop&q=80",
+        "Store",
+        "Storage",
+        "2026-2027",
+        "Available",
+        "2026-10-03",
+        "2026-10-03T00:00:00.000Z",
+        "Optional note",
+      ],
+    ]);
+    itemDetailsPreview["!cols"] = [
+      { wch: 14 }, { wch: 16 }, { wch: 16 }, { wch: 28 }, { wch: 20 },
+      { wch: 48 }, { wch: 22 }, { wch: 18 }, { wch: 18 }, { wch: 16 },
+      { wch: 18 }, { wch: 26 }, { wch: 32 },
+    ];
+
+    const instructions = XLSX.utils.aoa_to_sheet([
+      ["Field", "Required?", "Exact data to enter"],
+      ["item_name", "Yes", "Item name, for example: Dell Latitude 5440"],
+      ["category_name", "Yes", "An existing category name, for example: Laptop"],
+      ["quantity", "Yes", "A whole number greater than 0, for example: 1"],
+      ["image_url", "Optional", "A public image link, for example: https://example.com/laptop.jpg"],
+      ["department", "Yes", "An existing department name, for example: Store"],
+      ["room", "Yes", "An existing room for that department, for example: Storage"],
+      ["academic_year", "Yes", "Academic year in YYYY-YYYY format, for example: 2026-2027"],
+      ["status", "Yes", "Use exactly one of: Available, In Use, Damaged"],
+      ["registered_date", "Optional", "Date in YYYY-MM-DD format, for example: 2026-10-03"],
+      ["remark", "Optional", "Any short note about the item"],
+      ["item_id", "System generated", "Do not add this to Import Items"],
+      ["detail_code", "System generated", "Do not add this to Import Items"],
+      ["qr_code", "System generated", "Do not add this to Import Items"],
+      ["created_at", "System generated", "Do not add this to Import Items"],
+      ["Important", "", "Delete the example row before importing your completed file."],
+    ]);
+    instructions["!cols"] = [{ wch: 22 }, { wch: 20 }, { wch: 82 }];
+
+    XLSX.utils.book_append_sheet(workbook, template, "Import Items");
+    XLSX.utils.book_append_sheet(workbook, itemDetailsPreview, "Item Details Preview");
+    XLSX.utils.book_append_sheet(workbook, instructions, "Instructions");
+    XLSX.writeFile(workbook, "Inventory-Import-Template.xlsx");
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -334,7 +552,7 @@ export default function InventoryPage() {
 
     const reader = new FileReader();
 
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       const data = event.target?.result;
 
       if (!data) return;
@@ -345,9 +563,84 @@ export default function InventoryPage() {
 
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
 
-      const json = XLSX.utils.sheet_to_json<InventoryItem>(sheet);
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet);
+      const importedItems = rows.flatMap((row) => {
+        const name = String(row.item_name ?? row.name ?? "").trim();
+        const category = String(row.category_name ?? row.category ?? "").trim();
+        const quantity = Number(row.quantity);
 
-      setInventory(json);
+        if (!name || !category || !Number.isFinite(quantity) || quantity < 1) {
+          return [];
+        }
+
+        return [{
+          name,
+          category,
+          quantity: Math.floor(quantity),
+          imageUrl: String(row.image_url ?? row.image ?? "").trim(),
+          department: String(row.department ?? "").trim(),
+          room: String(row.room ?? "").trim(),
+          academicYear: String(row.academic_year ?? "").trim(),
+          status: String(row.status ?? "Available").trim() as AccessoryStatus,
+          registeredDate: String(row.registered_date ?? "").trim(),
+          remark: String(row.remark ?? "").trim(),
+        }];
+      });
+
+      if (!importedItems.length) {
+        setInventoryError("No valid rows were found. Use the Sample File format.");
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/items/import`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...authHeaders },
+          body: JSON.stringify({
+            items: importedItems.map((item) => ({
+              item_name: item.name,
+              category_name: item.category,
+              quantity: item.quantity,
+              image_url: item.imageUrl,
+              department: item.department,
+              room: item.room,
+              academic_year: item.academicYear,
+              status: item.status,
+              registered_date: item.registeredDate,
+              remark: item.remark,
+            })),
+          }),
+        });
+        const result = (await response.json()) as BulkImportResponse;
+        if (!response.ok || !result.ok) {
+          throw new Error(result.message ?? "Unable to import items.");
+        }
+
+        await fetchInventory();
+        if (result.qr_items?.length) {
+          setQrQueue((current) => [
+            ...current,
+            ...result.qr_items!.map((item) => ({
+              id: item.id,
+              itemName: item.item_name,
+              subCategory: item.category_name,
+              status: item.status,
+              department: item.department,
+              room: item.room,
+              academicYear: item.academic_year,
+              registeredDate: item.registered_date,
+              createdAt: item.created_at,
+              remark: item.remark,
+              qrCode: item.id,
+            })),
+          ]);
+        }
+        setImportSuccess(`${result.imported_rows} item rows (${result.imported_units} physical items) were saved. QR codes were generated.`);
+        setInventoryError("");
+      } catch (error) {
+        setImportSuccess("");
+        setInventoryError(error instanceof Error ? error.message : "Unable to import items.");
+      }
     };
 
     reader.readAsArrayBuffer(file);
@@ -396,31 +689,17 @@ export default function InventoryPage() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/items`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          item_name: itemName,
-          category_name: categoryName,
-          category_id: payload.categoryId,
-          quantity,
-          department_id: payload.departmentId,
-          room_id: payload.roomId,
-          status: payload.status,
-          remark: payload.remark,
-          image_data: payload.image || null,
-        }),
+      const data = await createInventoryItem({
+        itemName,
+        category: categoryName,
+        quantity,
+        department: payload.department,
+        room: payload.room,
+        status: payload.status as AccessoryStatus,
+        remark: payload.remark,
+        imageData: payload.image,
+        registeredDate: payload.createdDate,
       });
-
-      const data = (await response.json()) as CreateItemResponse & {
-        error?: string;
-      };
-
-      if (!response.ok || !data.ok) {
-        throw new Error(data.message ?? data.error ?? "Failed to create item");
-      }
 
       const mappedItem = mapApiItem(data.item);
 
@@ -434,6 +713,16 @@ export default function InventoryPage() {
         }
 
         return [mappedItem, ...prev];
+      });
+
+      queueGeneratedQrs(data, {
+        itemName,
+        category: categoryName,
+        department: payload.department,
+        room: payload.room,
+        status: payload.status as AccessoryStatus,
+        registeredDate: payload.createdDate,
+        remark: payload.remark,
       });
 
       setNewAccessory({
@@ -462,6 +751,7 @@ export default function InventoryPage() {
   // =========================
 
   const handleDeleteItem = async (id: string) => {
+    setInventoryError("");
     try {
       const response = await fetch(
         `${API_BASE_URL}/api/items/${encodeURIComponent(id)}`,
@@ -478,11 +768,12 @@ export default function InventoryPage() {
 
       await fetchInventory();
     } catch (error) {
-      setInventoryError(
+      const message =
         error instanceof Error
           ? error.message
-          : "Failed to delete inventory item",
-      );
+          : "Failed to delete inventory item";
+      setInventoryError(message);
+      throw new Error(message);
     }
   };
 
@@ -573,12 +864,19 @@ export default function InventoryPage() {
               {t("inventory")}
             </h1>
 
-            <p className="mt-1 text-sm text-slate-500">
-              {pagination.total} {t("items")}
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
+            {!isDepartmentHead && <Button
+              type="button"
+              variant="outline"
+              onClick={handleDownloadImportTemplate}
+              className="h-10 gap-2 rounded-xl border-slate-200 bg-white px-4 font-medium text-slate-700 shadow-sm hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 hover:shadow-md sm:px-5"
+            >
+              <FileDown className="h-4 w-4" />
+              Sample File
+            </Button>}
+
             {!isDepartmentHead && <ImportButton onClick={handleImport} label={t("import")} />}
 
             <ExportButton onClick={handleExport} label={t("export")} />
@@ -604,6 +902,10 @@ export default function InventoryPage() {
 
       {inventoryError ? (
         <p className="text-sm font-medium text-red-600">{inventoryError}</p>
+      ) : null}
+
+      {importSuccess ? (
+        <p className="text-sm font-medium text-emerald-700">{importSuccess}</p>
       ) : null}
 
       {/* Search */}
@@ -647,23 +949,23 @@ export default function InventoryPage() {
         categories={categories.filter((category) => category !== "All")}
         categoryIds={categoryIds}
         statuses={Object.keys(statusClasses) as AccessoryStatus[]}
-        departments={
-          departments.filter(
-            (department) => department.toLowerCase() === "store",
-          ) as Department[]
-        }
-        departmentRoomMap={
-          Object.fromEntries(
-            Object.entries(departmentRoomMapState).filter(
-              ([department]) => department.toLowerCase() === "store",
-            ),
-          ) as Record<Department, readonly string[]>
-        }
+        departments={departments as Department[]}
+        departmentRoomMap={departmentRoomMapState as Record<Department, readonly string[]>}
         departmentIds={departmentIds}
         roomIds={roomIds}
         existingInventory={inventory}
         onSubmit={handleAddInventoryItem}
       />}
+      <ScanModal
+        selectedQrItem={qrQueue.length === 1 ? qrQueue[0] : null}
+        onClose={() => setQrQueue((current) => current.slice(1))}
+        statusClasses={statusClasses}
+      />
+      <QrSheetModal
+        open={qrQueue.length > 1}
+        items={qrQueue}
+        onClose={() => setQrQueue([])}
+      />
     </div>
   );
 }

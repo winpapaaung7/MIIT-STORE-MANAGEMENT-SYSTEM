@@ -218,14 +218,28 @@ export default function OtpVerificationPage() {
                     value={digit}
                     disabled={loading || !expiry}
                     maxLength={1}
-                    onChange={(event) => applyDigits(event.target.value, index)}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      if (value) applyDigits(value, index);
+                      else
+                        setDigits((current) => {
+                          const next = [...current];
+                          next[index] = "";
+                          return next;
+                        });
+                    }}
                     onKeyDown={(event) => {
-                      if (
-                        event.key === "Backspace" &&
-                        !digits[index] &&
-                        index > 0
-                      )
-                        inputs.current[index - 1]?.focus();
+                      if (event.key === "Backspace") {
+                        event.preventDefault();
+                        const targetIndex = digits[index] ? index : index - 1;
+                        if (targetIndex < 0) return;
+                        setDigits((current) => {
+                          const next = [...current];
+                          next[targetIndex] = "";
+                          return next;
+                        });
+                        inputs.current[targetIndex]?.focus();
+                      }
                       if (event.key === "Enter") void verify();
                     }}
                     className="size-11 rounded-lg border border-[#DCE3ED] text-center text-lg font-semibold text-[#172033] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-blue-100 disabled:bg-slate-50"

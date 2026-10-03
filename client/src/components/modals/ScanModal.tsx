@@ -1,7 +1,8 @@
-import { type ReactNode, type RefObject, useRef } from "react";
-import { Download, Printer } from "lucide-react";
+import { type ReactNode, type RefObject, useRef, useState } from "react";
+import { Archive, Download, Printer } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import miitLogo from "@/assets/MIIT_LOGO.jpg";
+import { accessoryScanUrl } from "@/lib/qr";
 
 import {
   type AccessoryItem,
@@ -24,6 +25,8 @@ export interface ScanModalProps {
   onClose: () => void;
   statusClasses: Record<AccessoryStatus, string>;
   onOpenChange?: (open: boolean) => void;
+  onDownloadAll?: () => Promise<void> | void;
+  downloadAllCount?: number;
 }
 
 export type QrScanModalProps = Omit<ScanModalProps, "onOpenChange">;
@@ -39,7 +42,7 @@ function LargeQrCode({
     <div className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-inner sm:p-4">
       <QRCodeSVG
         ref={qrCodeRef}
-        value={value}
+        value={accessoryScanUrl(value)}
         size={192}
         level="H"
         includeMargin={false}
@@ -96,8 +99,11 @@ export default function ScanModal({
   onOpenChange,
   onClose,
   statusClasses,
+  onDownloadAll,
+  downloadAllCount = 0,
 }: ScanModalProps) {
   const qrCodeRef = useRef<SVGSVGElement | null>(null);
+  const [isDownloadingAll, setIsDownloadingAll] = useState(false);
 
   const handleOpenChange = (open: boolean) => {
     onOpenChange?.(open);
@@ -161,6 +167,16 @@ export default function ScanModal({
 
     printWindow.document.write(`<!doctype html><html><head><title>${escapeXml(accessoryId)}</title><style>body{margin:0;display:grid;min-height:100vh;place-items:center;background:#fff}</style></head><body>${qrSvg}<script>window.onload=function(){window.focus();window.print();}</script></body></html>`);
     printWindow.document.close();
+  };
+
+  const handleDownloadAll = async () => {
+    if (!onDownloadAll) return;
+    setIsDownloadingAll(true);
+    try {
+      await onDownloadAll();
+    } finally {
+      setIsDownloadingAll(false);
+    }
   };
 
   return (
@@ -236,6 +252,18 @@ export default function ScanModal({
             <Download className="size-4" />
             Download QR
           </Button>
+          {onDownloadAll && downloadAllCount > 1 ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleDownloadAll}
+              disabled={isDownloadingAll}
+              className="w-full sm:w-auto"
+            >
+              <Archive className="size-4" />
+              {isDownloadingAll ? "Preparing PDF..." : `Download All PDF (${downloadAllCount})`}
+            </Button>
+          ) : null}
           <Button
             type="button"
             variant="outline"
