@@ -142,7 +142,7 @@ export default function FilterDropdowns({
       onChange: onDepartmentChange,
     },
     {
-      label: t("room"),
+      label: t("roomNumber"),
       value: selectedRoom,
       options: rooms,
       onChange: selectRoom,

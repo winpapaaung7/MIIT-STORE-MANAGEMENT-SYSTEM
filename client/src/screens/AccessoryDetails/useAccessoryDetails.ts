@@ -3,8 +3,6 @@ import { useSearchParams } from "react-router-dom";
 import { useAuth } from "@/auth/AuthContext";
 
 import {
-  academicYears,
-  categories as defaultCategories,
   departmentRoomMap,
   emptyNewAccessoryForm,
   monthNames,
@@ -92,13 +90,30 @@ interface ApiAccessoryDetail {
 interface AccessoryDetailsResponse {
   ok: boolean;
   items: ApiAccessoryDetail[];
-  pagination?: { page: number; totalPages: number; total: number };
   message?: string;
 }
 
 interface AccessoryLookupResponse {
   ok: boolean;
   accessory: ApiAccessoryDetail;
+  message?: string;
+}
+
+interface CategoryApiResponse {
+  ok: boolean;
+  categories: { category_id: number; category_name: string }[];
+  message?: string;
+}
+
+interface ItemFilterOptionsResponse {
+  ok: boolean;
+  items: { name: string; category: string }[];
+  message?: string;
+}
+
+interface AcademicYearsResponse {
+  ok: boolean;
+  years: { year_name: string }[];
   message?: string;
 }
 
@@ -135,8 +150,6 @@ export function useAccessoryDetails() {
   const initialRoom = searchParams.get("room");
   const insertFileInputRef = useRef<HTMLInputElement | null>(null);
   const [accessoryItems, setAccessoryItems] = useState<AccessoryItem[]>([]);
-  const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0 });
   const [departmentRoomMapState, setDepartmentRoomMapState] =
     useState<Record<Department, readonly string[]>>(departmentRoomMap);
   const [serverDepartments, setServerDepartments] = useState<Department[]>(
@@ -150,9 +163,11 @@ export function useAccessoryDetails() {
   const [serverRoomIds, setServerRoomIds] = useState<Record<string, number>>(
     {},
   );
-  const [categories, setCategories] = useState<string[]>([
-    ...defaultCategories,
-  ]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [serverItemOptions, setServerItemOptions] = useState<
+    { name: string; category: string }[]
+  >([]);
+  const [academicYears, setAcademicYears] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<SearchType>("general");
   const [selectedCategory, setSelectedCategory] =
@@ -185,6 +200,13 @@ export function useAccessoryDetails() {
   useEffect(() => {
     setDepartmentRoomMapState(buildDepartmentRoomMap(accessoryItems));
   }, [accessoryItems]);
+
+  // Keep the filters aligned with a location selected from the Departments
+  // page (for example, /accessories?department=Faculty...&room=101).
+  useEffect(() => {
+    setSelectedDepartment(initialDepartment);
+    setSelectedRoom(initialRoom);
+  }, [initialDepartment, initialRoom]);
 
   // The room API is the source of truth, while item locations provide a safe
   // fallback during loading or after a newly completed transfer.
@@ -264,15 +286,15 @@ export function useAccessoryDetails() {
   ]);
 
   const itemNames = useMemo(() => {
-    const categoryAccessories =
+    const categoryItems =
       selectedCategory && !isNoneFilter(selectedCategory)
-        ? accessoryItems.filter((item) => item.subCategory === selectedCategory)
-        : accessoryItems;
+        ? serverItemOptions.filter((item) => item.category === selectedCategory)
+        : serverItemOptions;
 
     return Array.from(
-      new Set(categoryAccessories.map((item) => item.itemName)),
+      new Set(categoryItems.map((item) => item.name)),
     );
-  }, [accessoryItems, selectedCategory]);
+  }, [selectedCategory, serverItemOptions]);
 
   const filteredAccessories = useMemo(() => {
     return accessoryItems.filter((item) => {
@@ -356,7 +378,12 @@ export function useAccessoryDetails() {
 
   const selectDepartment = (department: Department) => {
     setSelectedDepartment(department);
-    setSelectedRoom(serverDepartmentRoomMap[department]?.[0] ?? null);
+    const departmentRooms = serverDepartmentRoomMap[department] ?? [];
+
+    // A one-room department has an unambiguous location, so keep the room
+    // filter in sync automatically (Faculty of Computing -> 101). For
+    // departments with multiple rooms, retain the department-wide result.
+    setSelectedRoom(departmentRooms.length === 1 ? departmentRooms[0] : null);
   };
 
   const selectRoom = (room: FilterChoice) => {
@@ -387,13 +414,14 @@ export function useAccessoryDetails() {
 
   const loadAccessoryDetails = async () => {
     try {
-      const params = new URLSearchParams({ page: String(page), limit: "50" });
+      const params = new URLSearchParams({ page: "1", limit: "1000" });
       if (searchQuery.trim()) params.set("search", searchQuery.trim());
       if (selectedCategory && !isNoneFilter(selectedCategory)) params.set("category", selectedCategory);
       if (selectedItemName && !isNoneFilter(selectedItemName)) params.set("itemName", selectedItemName);
       if (selectedDepartment && !isNoneFilter(selectedDepartment)) params.set("department", selectedDepartment);
       if (selectedRoom && !isNoneFilter(selectedRoom)) params.set("room", selectedRoom);
       if (selectedAcademicYear) params.set("academicYear", selectedAcademicYear);
+      if (selectedDate) params.set("date", formatDate(selectedDate));
       const response = await fetch(`${API_BASE_URL}/api/item-details?${params}`, { headers: authHeaders });
       const data = (await response.json()) as AccessoryDetailsResponse;
 
@@ -416,16 +444,6 @@ export function useAccessoryDetails() {
           remark: item.remark,
         })),
       );
-      setPagination(data.pagination ?? { page: 1, totalPages: 1, total: data.items.length });
-
-      const uniqueCategories = Array.from(
-        new Set(data.items.map((item) => item.category_name)),
-      );
-
-      if (uniqueCategories.length > 0) {
-        setCategories(uniqueCategories);
-      }
-
       setAccessoryError("");
     } catch (error) {
       setAccessoryError(
@@ -434,6 +452,17 @@ export function useAccessoryDetails() {
           : "Failed to load accessory details",
       );
     }
+  };
+
+  const loadItemFilterOptions = async () => {
+    const response = await fetch(`${API_BASE_URL}/api/items/filter-options`, {
+      headers: authHeaders,
+    });
+    const result = (await response.json()) as ItemFilterOptionsResponse;
+    if (!response.ok || !result.ok) {
+      throw new Error(result.message ?? "Failed to load item filter options");
+    }
+    setServerItemOptions(result.items);
   };
 
   const openQrModal = async (accessory: AccessoryItem) => {
@@ -477,7 +506,52 @@ export function useAccessoryDetails() {
     // not fail once and leave the modal with text-only fallback locations.
     if (authLoading || !accessToken) return;
     void loadAccessoryDetails();
-  }, [accessToken, authLoading, page, searchQuery, selectedCategory, selectedItemName, selectedDepartment, selectedRoom, selectedAcademicYear]);
+  }, [accessToken, authLoading, searchQuery, selectedCategory, selectedItemName, selectedDepartment, selectedRoom, selectedAcademicYear]);
+
+  useEffect(() => {
+    if (authLoading || !accessToken) return;
+    void loadItemFilterOptions().catch(() => {
+      // Keep the filter empty until the server catalogue is available.
+    });
+  }, [accessToken, authLoading]);
+
+  // The academic-year search menu must reflect years managed in Settings,
+  // rather than the old static list bundled with the page.
+  useEffect(() => {
+    if (authLoading || !accessToken) return;
+    let cancelled = false;
+
+    void fetch(`${API_BASE_URL}/api/academic-years`, { headers: authHeaders })
+      .then(async (response) => {
+        const result = (await response.json()) as AcademicYearsResponse;
+        if (!response.ok || !result.ok) throw new Error(result.message ?? "Failed to load academic years");
+        if (!cancelled) setAcademicYears(result.years.map((year) => year.year_name));
+      })
+      .catch(() => {
+        // Keep the menu empty until the server academic years are available.
+      });
+
+    return () => { cancelled = true; };
+  }, [accessToken, authLoading]);
+
+  // Keep the category filter aligned with the categories created on the
+  // server, including categories that do not have an item yet.
+  useEffect(() => {
+    if (authLoading || !accessToken) return;
+    let cancelled = false;
+
+    void fetch(`${API_BASE_URL}/api/categories`, { headers: authHeaders })
+      .then(async (response) => {
+        const result = (await response.json()) as CategoryApiResponse;
+        if (!response.ok || !result.ok) throw new Error(result.message ?? "Failed to load categories");
+        if (!cancelled) setCategories(result.categories.map((category) => category.category_name));
+      })
+      .catch(() => {
+        // The filter remains empty while the server categories are unavailable.
+      });
+
+    return () => { cancelled = true; };
+  }, [accessToken, authLoading]);
 
   useEffect(() => {
     if (authLoading || !accessToken) return;
@@ -563,7 +637,7 @@ export function useAccessoryDetails() {
         };
       }
 
-      await loadAccessoryDetails();
+      await Promise.all([loadAccessoryDetails(), loadItemFilterOptions()]);
       return { ok: true };
     } catch (error) {
       return {
@@ -647,9 +721,7 @@ export function useAccessoryDetails() {
     if (
       !itemName ||
       !categoryName ||
-      ((!payload.departmentId || !payload.roomId) &&
-        !(payload.department.toLowerCase() === "store" &&
-          payload.room.toLowerCase() === "storage"))
+      (!payload.departmentId || !payload.roomId)
     ) {
       setAccessoryError(
         "Choose a registered department and room before adding an item.",
@@ -681,7 +753,7 @@ export function useAccessoryDetails() {
         throw new Error(data.message ?? "Failed to create accessory items");
       }
 
-      await loadAccessoryDetails();
+      await Promise.all([loadAccessoryDetails(), loadItemFilterOptions()]);
       setNewAccessory({
         ...emptyNewAccessoryForm,
         department: payload.department as Department,
@@ -739,11 +811,11 @@ export function useAccessoryDetails() {
   };
 
   const openAddItemModal = () => {
-    const defaultDepartment = "Store" as Department;
+    const defaultDepartment = "" as Department;
     const defaultRoom =
       serverDepartmentRoomMap[defaultDepartment]?.[0] ??
       departmentRoomMapState[defaultDepartment]?.[0] ??
-      "Storage";
+      "";
 
     setNewAccessory({
       ...emptyNewAccessoryForm,
@@ -801,9 +873,6 @@ export function useAccessoryDetails() {
     },
     tableProps: {
       filteredAccessories,
-      pagination,
-      onPreviousPage: () => setPage((current) => Math.max(1, current - 1)),
-      onNextPage: () => setPage((current) => Math.min(pagination.totalPages, current + 1)),
       statusClasses,
       openActionId,
       setOpenActionId,

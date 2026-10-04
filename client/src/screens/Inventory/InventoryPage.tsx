@@ -652,12 +652,9 @@ export default function InventoryPage() {
 
   const handleAddItem = () => {
     const firstCategory = categories.find((category) => category !== "All");
-    const defaultDepartment =
-      departments.find(
-        (department) => department.toLowerCase() === "store",
-      ) ?? "Store";
+    const defaultDepartment = departments[0] ?? "";
     const defaultRoom =
-      departmentRoomMapState[defaultDepartment]?.[0] ?? "Storage";
+      departmentRoomMapState[defaultDepartment]?.[0] ?? "";
 
     setNewAccessory({
       ...emptyNewAccessoryForm,
@@ -886,40 +883,31 @@ export default function InventoryPage() {
         </div>
       </header>
 
-      {/* Category Filter */}
+      {/* Filters mirror the Accessories Details toolbar: actions first, then a full-width search field. */}
+      <section className="shrink-0 rounded-lg border border-border bg-card p-3 shadow-sm dark:shadow-none sm:p-4">
+        <div className="flex flex-col gap-4">
+          <FilterCategories
+            categories={categories}
+            inventory={inventory}
+            selectedCategory={selectedCategory}
+            setSelectedCategory={(value) => { setPage(1); setSelectedCategory(value); }}
+            onAddCategory={handleAddCategory}
+          />
+          <div className="flex h-11 w-full min-w-0 items-center gap-3 rounded-lg border border-slate-300 bg-white px-4 text-left shadow-sm transition hover:bg-slate-50 focus-within:border-slate-900 focus-within:ring-3 focus-within:ring-slate-200">
+            <Search className="pointer-events-none size-5 shrink-0 text-slate-400" />
+            <Input
+              value={searchQuery}
+              onChange={(event) => { setPage(1); setSearchQuery(event.target.value); }}
+              placeholder={t("searchInventory")}
+              className="h-full min-w-0 flex-1 border-0 bg-transparent px-0 text-sm font-medium text-slate-950 shadow-none outline-none placeholder:text-slate-500 focus-visible:ring-0"
+            />
+          </div>
+        </div>
+      </section>
 
-      <FilterCategories
-        categories={categories}
-        inventory={inventory}
-        selectedCategory={selectedCategory}
-        setSelectedCategory={(value) => { setPage(1); setSelectedCategory(value); }}
-        onAddCategory={handleAddCategory}
-      />
-
-      {categoryError ? (
-        <p className="text-sm font-medium text-red-600">{categoryError}</p>
-      ) : null}
-
-      {inventoryError ? (
-        <p className="text-sm font-medium text-red-600">{inventoryError}</p>
-      ) : null}
-
-      {importSuccess ? (
-        <p className="text-sm font-medium text-emerald-700">{importSuccess}</p>
-      ) : null}
-
-      {/* Search */}
-
-      <div className="relative max-w-md">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-
-        <Input
-          value={searchQuery}
-          onChange={(e) => { setPage(1); setSearchQuery(e.target.value); }}
-          placeholder={t("searchInventory")}
-          className="h-11 rounded-xl pl-10"
-        />
-      </div>
+      {categoryError ? <p className="text-sm font-medium text-red-600">{categoryError}</p> : null}
+      {inventoryError ? <p className="text-sm font-medium text-red-600">{inventoryError}</p> : null}
+      {importSuccess ? <p className="text-sm font-medium text-emerald-700">{importSuccess}</p> : null}
 
       {/* Hidden Import */}
 

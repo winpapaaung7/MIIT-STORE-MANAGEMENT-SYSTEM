@@ -23,7 +23,7 @@ export default function AccessoryDetailsPage() {
   } = useAccessoryDetails()
 
   return (
-    <section className="accessories-page flex h-full max-h-full min-h-0 flex-col overflow-hidden bg-background text-foreground">
+    <section className="accessories-page flex h-full max-h-full min-h-0 flex-col overflow-hidden bg-transparent text-foreground">
       <div className="mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col gap-4 overflow-hidden sm:gap-5">
         <AccessoriesHeader {...headerProps} />
         <AccessoriesFilterBar {...filterBarProps} />

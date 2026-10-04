@@ -6,14 +6,9 @@ import {
 } from "@/screens/AccessoryDetails/types"
 import { formatDate } from "@/screens/AccessoryDetails/accessoryUtils"
 
-export const departmentRoomMap: Record<Department, readonly string[]> = {
-  ICT: ["Room 201", "Room 202", "Room 203"],
-  ECE: ["Room 301", "Room 302"],
-  Civil: ["Room 105", "Room 106"],
-  Architecture: ["Studio 204"],
-  Admin: ["Office 101", "Meeting Room"],
-  Store: ["Store Room", "Supply Room"],
-}
+// Locations are loaded from the Rooms API. Keep this empty when no room
+// records exist so filters never display stale fallback locations.
+export const departmentRoomMap: Record<Department, readonly string[]> = {}
 
 export const categories = [
   "Computer Accessory",
@@ -46,8 +41,8 @@ export const emptyNewAccessoryForm: NewAccessoryForm = {
   itemName: "",
   subCategory: "Computer Accessory",
   status: "Available",
-  department: "ICT",
-  room: "Room 201",
+  department: "",
+  room: "",
   academicYear: "2026-2027",
   registeredDate: formatDate(new Date()),
   remark: "",

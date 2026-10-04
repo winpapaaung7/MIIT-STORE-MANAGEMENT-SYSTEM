@@ -29,6 +29,31 @@ export function createItemsRouter(prisma: any) {
     }
   });
 
+  // A complete catalogue for item-name filters. Unlike the paginated items
+  // endpoint, this always includes newly created items and items with no
+  // detail rows on the current Accessories page.
+  router.get("/filter-options", async (_req, res) => {
+    try {
+      const items = await prisma.item.findMany({
+        select: {
+          item_name: true,
+          category: { select: { category_name: true } },
+        },
+        orderBy: [{ item_name: "asc" }, { item_id: "asc" }],
+      });
+      res.json({
+        ok: true,
+        items: items.map((item: any) => ({
+          name: item.item_name,
+          category: item.category.category_name,
+        })),
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ ok: false, message: "Failed to load item filter options" });
+    }
+  });
+
   router.get("/", async (req, res) => {
     try {
       const search = normalizeString(req.query.search), category = normalizeString(req.query.category), page = Math.max(1, Number(req.query.page) || 1), limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));

@@ -48,7 +48,7 @@ export default function DepartmentTable({
 
           <TableHeader className="workspace-table-head border-b bg-slate-50 text-left text-xs text-slate-500">
             <TableRow className="hover:bg-transparent">
-              <TableHead className="px-4 py-3 text-left text-xs font-medium text-slate-500">ID</TableHead>
+              <TableHead className="px-4 py-3 text-left text-xs font-medium text-slate-500">No.</TableHead>
               <TableHead className="px-4 py-3 text-left text-xs font-medium text-slate-500">{t("departmentClassroom")}</TableHead>
               <TableHead className="px-4 py-3 text-left text-xs font-medium text-slate-500">{t("room")}</TableHead>
               <TableHead className="px-4 py-3 text-left text-xs font-medium text-slate-500">{t("status")}</TableHead>
@@ -67,7 +67,7 @@ export default function DepartmentTable({
                 </TableCell>
               </TableRow>
             ) : (
-              data.map((department) => (
+              data.map((department, index) => (
                 <TableRow
                   key={department.id}
                   role="button"
@@ -82,7 +82,7 @@ export default function DepartmentTable({
                   className="workspace-table-row cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
                 >
                   <TableCell className="px-4 py-4 text-left font-mono text-xs text-slate-600">
-                    {department.id}
+                    {index + 1}
                   </TableCell>
 
               <TableCell className="max-w-0 overflow-hidden px-4 py-4 text-left font-medium text-slate-950">

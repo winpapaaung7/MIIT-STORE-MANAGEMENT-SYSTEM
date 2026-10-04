@@ -1,7 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { AsyncLocalStorage } from "node:async_hooks";
 import path from "node:path";
@@ -40,6 +40,19 @@ app.use("/api/items", createItemsRouter(prisma));
 app.use("/api/item-details", createItemDetailsRouter(prisma, recordActivity));
 
 const uploadsDirectory = path.resolve("uploads");
+const rentalPoliciesFile = path.resolve("data", "rental-policies.json");
+const defaultRentalPolicies = [
+  { title: "Eligible borrowers", text: "Only active students and teachers can receive a laptop rental." },
+  { title: "Laptop availability", text: "A rental can be issued only when a QR-tagged laptop is available." },
+  { title: "Active rentals", text: "A borrower cannot receive another laptop while they have an active rental." },
+  { title: "Return and condition", text: "Record the return date and laptop condition when the item is returned." },
+];
+async function loadRentalPolicies() {
+  try {
+    const policies = JSON.parse(await readFile(rentalPoliciesFile, "utf8"));
+    return Array.isArray(policies) && policies.length ? policies : defaultRentalPolicies;
+  } catch { return defaultRentalPolicies; }
+}
 app.use("/uploads", express.static(uploadsDirectory));
 
 const imageMimeTypes = {
@@ -667,43 +680,6 @@ async function getDefaultBudgetYear() {
   return budgetYear;
 }
 
-async function getDefaultStoreLocation() {
-  let storeDepartment = await prisma.department.findFirst({
-    where: { department_name: "Store" },
-  });
-
-  if (!storeDepartment) {
-    storeDepartment = await prisma.department.create({
-      data: {
-        department_code: buildDepartmentCode("Store"),
-        department_name: "Store",
-      },
-    });
-  }
-
-  let storeRoom = await prisma.room.findFirst({
-    where: {
-      department_id: storeDepartment.department_id,
-      building_name: "Storage",
-    },
-  });
-
-  if (!storeRoom) {
-    storeRoom = await prisma.room.create({
-      data: {
-        department_id: storeDepartment.department_id,
-        building_name: "Storage",
-        status: true,
-      },
-    });
-  }
-
-  return {
-    department: storeDepartment,
-    room: storeRoom,
-  };
-}
-
 async function generateNextItemId() {
   const latestItem = await prisma.item.findFirst({
     orderBy: { item_id: "desc" },
@@ -744,7 +720,9 @@ app.get("/api/departments", async (req, res) => {
         id: room.room_id,
         department_id: room.department_id,
         department: room.department.department_name,
-        classroom: room.building_name ?? "",
+        // A Library location has no recorded room number. Keep it visible in
+        // the UI and selectable in room filters instead of dropping it.
+        classroom: room.building_name ?? "Unknown",
         status: room.status ? "Available" : "Closed",
       })),
     });
@@ -1190,6 +1168,27 @@ app.get("/api/teachers", async (_req, res) => {
   res.json({ ok: true, teachers: teachers.map((teacher) => ({ id: teacher.user_id, name: teacher.full_name, email: teacher.email, phone: teacher.phone, departmentId: teacher.department_id, department: teacher.department?.department_name ?? "-", laptopStatus: teacher.laptop_rental_as_borrower[0]?.rental_status ?? "No Rental" })) });
 });
 
+app.post("/api/teachers/import", async (req, res) => {
+  const rows = Array.isArray(req.body.teachers) ? req.body.teachers : [];
+  const departments = await prisma.department.findMany({ select: { department_id: true, department_name: true } });
+  const departmentByName = new Map(departments.map((department) => [department.department_name.toLowerCase(), department.department_id]));
+  const valid = rows.map((row: any) => {
+    const name = normalizeString(row.name || row.teacher_name);
+    const email = normalizeString(row.email).toLowerCase();
+    const phone = normalizeString(row.phone || row.phone_number);
+    const departmentId = Number(row.department_id || row.departmentId) || departmentByName.get(normalizeString(row.department).toLowerCase());
+    return { name, email, phone, departmentId };
+  }).filter((row: any) => row.name && row.email && row.phone && Number.isInteger(row.departmentId));
+  if (!valid.length) return res.status(400).json({ ok: false, message: "Each teacher row requires name, email, phone, and a valid department." });
+  const uniqueRows = Array.from(new Map(valid.map((row: any) => [row.email, row])).values());
+  const existing = await prisma.users.findMany({ where: { email: { in: uniqueRows.map((row: any) => row.email) } }, select: { email: true } });
+  const existingEmails = new Set(existing.map((teacher) => teacher.email.toLowerCase()));
+  const newRows = uniqueRows.filter((row: any) => !existingEmails.has(row.email));
+  const teacherRole = await prisma.role.upsert({ where: { role_name: "Teacher" }, update: {}, create: { role_name: "Teacher" } });
+  if (newRows.length) await prisma.users.createMany({ data: newRows.map((row: any) => ({ full_name: row.name, username: `teacher-import-${randomUUID()}`, email: row.email, phone: row.phone, password_hash: "teacher-record", role_id: teacherRole.role_id, department_id: row.departmentId, status: "Active" })) });
+  res.status(201).json({ ok: true, imported: newRows.length, skipped: valid.length - newRows.length });
+});
+
 app.post("/api/teachers", async (req, res) => {
   const name = normalizeString(req.body.name); const email = normalizeString(req.body.email).toLowerCase(); const phone = normalizeString(req.body.phone); const departmentId = Number(req.body.departmentId);
   if (!name || !email || !phone || !Number.isInteger(departmentId)) return res.status(400).json({ ok: false, message: "Name, email, phone, and department are required." });
@@ -1214,6 +1213,21 @@ app.delete("/api/teachers/:id", async (req, res) => {
   const id = Number(req.params.id); if (!Number.isInteger(id)) return res.status(400).json({ ok: false });
   try { await prisma.users.delete({ where: { user_id: id } }); res.json({ ok: true }); }
   catch { res.status(409).json({ ok: false, message: "A teacher with rental records cannot be deleted." }); }
+});
+
+app.get("/api/laptop-rentals/policies", async (_req, res) => {
+  res.json({ ok: true, policies: await loadRentalPolicies() });
+});
+
+app.put("/api/laptop-rentals/policies", async (req, res) => {
+  if (!req.auth || !["ADMIN", "LAPTOP_RENTAL"].includes(req.auth.role.code)) return res.status(403).json({ ok: false, message: "Permission denied" });
+  const rawPolicies = Array.isArray(req.body.policies) ? req.body.policies : [];
+  const policies = rawPolicies.map((policy: any) => ({ title: normalizeString(policy.title), text: normalizeString(policy.text) })).filter((policy: { title: string; text: string }) => policy.title && policy.text);
+  if (!policies.length) return res.status(400).json({ ok: false, message: "Add at least one policy with a title and description." });
+  if (req.auth.role.code === "LAPTOP_RENTAL" && policies.length !== (await loadRentalPolicies()).length) return res.status(403).json({ ok: false, message: "Only administrators can add or delete policies." });
+  await mkdir(path.dirname(rentalPoliciesFile), { recursive: true });
+  await writeFile(rentalPoliciesFile, JSON.stringify(policies, null, 2), "utf8");
+  res.json({ ok: true, policies });
 });
 
 app.get("/api/laptop-rentals/bulk-options", async (_req, res) => {
@@ -2173,17 +2187,17 @@ app.post("/api/items", async (req, res) => {
       return;
     }
 
-    // Inventory items belong in Store by default.  This also makes a new
-    // installation usable before the location list has finished loading.
     if (
       !Number.isInteger(departmentId) ||
       departmentId <= 0 ||
       !Number.isInteger(roomId) ||
       roomId <= 0
     ) {
-      const defaultStore = await getDefaultStoreLocation();
-      departmentId = defaultStore.department.department_id;
-      roomId = defaultStore.room.room_id;
+      res.status(400).json({
+        ok: false,
+        message: "Select a valid department and room before adding inventory.",
+      });
+      return;
     }
 
     const category = Number.isInteger(categoryId) && categoryId > 0

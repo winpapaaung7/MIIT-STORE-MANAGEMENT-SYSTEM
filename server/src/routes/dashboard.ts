@@ -33,28 +33,33 @@ export function createDashboardRouter(prisma: PrismaLike) {
       const departmentId = scopedDepartmentId ?? positiveInt(req.query.departmentId, "departmentId");
       const activeDepartmentId = scopedDepartmentId ?? positiveInt(req.query.activeDepartmentId, "activeDepartmentId");
       const categoryId = positiveInt(req.query.categoryId, "categoryId");
+      const noRoom = req.query.roomId === "none";
+      const roomId = noRoom ? undefined : positiveInt(req.query.roomId, "roomId");
       const page = positiveInt(req.query.departmentItemsPage, "departmentItemsPage") ?? 1;
       const limit = positiveInt(req.query.departmentItemsLimit, "departmentItemsLimit", 100) ?? 10;
       const recentItemsLimit = positiveInt(req.query.recentItemsLimit, "recentItemsLimit", 50) ?? 5;
       const status = typeof req.query.status === "string" ? req.query.status.trim() : undefined;
       if (req.query.status !== undefined && !status) throw new Error("Invalid status");
 
-      const [year, department, activeDepartment, category, statuses] = await Promise.all([
+      const [year, department, activeDepartment, category, room, statuses] = await Promise.all([
         academicYearId ? prisma.budget_year.findUnique({ where: { budget_year_id: academicYearId } }) : null,
         departmentId ? prisma.department.findUnique({ where: { department_id: departmentId } }) : null,
         activeDepartmentId ? prisma.department.findUnique({ where: { department_id: activeDepartmentId } }) : null,
         categoryId ? prisma.category.findUnique({ where: { category_id: categoryId } }) : null,
+        roomId ? prisma.room.findUnique({ where: { room_id: roomId } }) : null,
         prisma.item_detail.findMany({ distinct: ["status"], select: { status: true }, orderBy: { status: "asc" } }),
       ]);
       if (academicYearId && !year) return res.status(400).json({ ok: false, message: "Unknown academic year" });
       if (departmentId && !department) return res.status(400).json({ ok: false, message: "Unknown department" });
       if (activeDepartmentId && !activeDepartment) return res.status(400).json({ ok: false, message: "Unknown active department" });
       if (categoryId && !category) return res.status(400).json({ ok: false, message: "Unknown category" });
+      if (roomId && !room) return res.status(400).json({ ok: false, message: "Unknown room" });
       if (status && !statuses.some((entry: { status: string }) => entry.status === status)) return res.status(400).json({ ok: false, message: "Unknown status" });
 
       const where = {
         ...(academicYearId ? { budget_year_id: academicYearId } : {}),
         ...(departmentId ? { current_department_id: departmentId } : {}),
+        ...(noRoom ? { current_room_id: null } : roomId ? { current_room_id: roomId } : {}),
         ...(status ? { status } : {}),
         ...(categoryId ? { item: { category_id: categoryId } } : {}),
       };
@@ -62,7 +67,7 @@ export function createDashboardRouter(prisma: PrismaLike) {
       // It changes only when a department is selected in the overview chart.
       const selectedDepartmentId = activeDepartmentId;
       const departmentItemsWhere = selectedDepartmentId ? { current_department_id: selectedDepartmentId } : undefined;
-      const [totalItems, statusCounts, departmentCounts, itemGroups, academicYears, departments, categories, recentItems] = await Promise.all([
+      const [totalItems, statusCounts, departmentCounts, itemGroups, academicYears, departments, categories, rooms, recentItems] = await Promise.all([
         prisma.item_detail.count({ where }),
         prisma.item_detail.groupBy({ by: ["status"], where, _count: { _all: true } }),
         prisma.item_detail.groupBy({ by: ["current_department_id", "status"], where, _count: { _all: true } }),
@@ -70,6 +75,7 @@ export function createDashboardRouter(prisma: PrismaLike) {
         prisma.budget_year.findMany({ select: { budget_year_id: true, year_name: true }, orderBy: { start_date: "desc" } }),
         prisma.department.findMany({ where: scopedDepartmentId ? { department_id: scopedDepartmentId } : undefined, select: { department_id: true, department_name: true, department_code: true }, orderBy: { department_name: "asc" } }),
         prisma.category.findMany({ select: { category_id: true, category_name: true }, orderBy: { category_name: "asc" } }),
+        prisma.room.findMany({ where: scopedDepartmentId ? { department_id: scopedDepartmentId } : undefined, select: { room_id: true, department_id: true, building_name: true }, orderBy: { building_name: "asc" } }),
         prisma.item.findMany({ where: scopedDepartmentId ? { item_detail: { some: { current_department_id: scopedDepartmentId } } } : undefined, take: recentItemsLimit, orderBy: { created_at: "desc" }, include: { category: { select: { category_name: true } }, _count: { select: { item_detail: true } } } }),
       ]);
       academicYears.sort((a: any, b: any) => {
@@ -134,7 +140,7 @@ export function createDashboardRouter(prisma: PrismaLike) {
 
       const selectedOverview = selectedDepartmentId ? overview.get(selectedDepartmentId) : null;
       const orderedOverview = [...overview.values()].sort((a, b) => { if (a.departmentName.toLowerCase() === "store") return -1; if (b.departmentName.toLowerCase() === "store") return 1; return a.departmentName.localeCompare(b.departmentName); });
-      res.json({ ok: true, summary: { ...summary, availablePercentage: pct(summary.available), inUsePercentage: pct(summary.inUse), damagedMaintenancePercentage: pct(summary.damagedMaintenance) }, inventoryHealth: { healthPercentage: pct(summary.available), available: summary.available, inUse: summary.inUse, damagedMaintenance: summary.damagedMaintenance, total: summary.totalItems }, departmentOverview: orderedOverview, departmentItems: { selectedDepartment: selectedDepartmentId ? { id: selectedDepartmentId, name: activeDepartment?.department_name } : null, totalPhysicalUnits: selectedOverview?.total ?? 0, items: pagedItems, pagination: { page, limit, totalItems: totalItemRecords, totalPages: Math.ceil(totalItemRecords / limit) } }, recentItems: recentItems.map((item: any) => ({ itemId: item.item_id, itemCode: item.item_code, itemName: item.item_name, category: item.category.category_name, imageUrl: item.image_url, quantity: item._count.item_detail, createdAt: item.created_at })), filterOptions: { academicYears: academicYears.map((y: any) => ({ id: y.budget_year_id, name: y.year_name })), departments: departments.map((d: any) => ({ id: d.department_id, name: d.department_name, code: d.department_code })), categories: categories.map((c: any) => ({ id: c.category_id, name: c.category_name })), statuses: statuses.map((s: any) => s.status) } });
+      res.json({ ok: true, summary: { ...summary, availablePercentage: pct(summary.available), inUsePercentage: pct(summary.inUse), damagedMaintenancePercentage: pct(summary.damagedMaintenance) }, inventoryHealth: { healthPercentage: pct(summary.available), available: summary.available, inUse: summary.inUse, damagedMaintenance: summary.damagedMaintenance, total: summary.totalItems }, departmentOverview: orderedOverview, departmentItems: { selectedDepartment: selectedDepartmentId ? { id: selectedDepartmentId, name: activeDepartment?.department_name } : null, totalPhysicalUnits: selectedOverview?.total ?? 0, items: pagedItems, pagination: { page, limit, totalItems: totalItemRecords, totalPages: Math.ceil(totalItemRecords / limit) } }, recentItems: recentItems.map((item: any) => ({ itemId: item.item_id, itemCode: item.item_code, itemName: item.item_name, category: item.category.category_name, imageUrl: item.image_url, quantity: item._count.item_detail, createdAt: item.created_at })), filterOptions: { academicYears: academicYears.map((y: any) => ({ id: y.budget_year_id, name: y.year_name })), departments: departments.map((d: any) => ({ id: d.department_id, name: d.department_name, code: d.department_code })), categories: categories.map((c: any) => ({ id: c.category_id, name: c.category_name })), rooms: rooms.map((r: any) => ({ id: r.room_id, departmentId: r.department_id, name: r.building_name ?? "Unknown" })), statuses: statuses.map((s: any) => s.status) } });
     } catch (error) {
       const message = error instanceof Error && error.message.startsWith("Invalid") ? error.message : "Unable to load dashboard overview";
       res.status(message.startsWith("Invalid") ? 400 : 500).json({ ok: false, message });
