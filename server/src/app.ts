@@ -23,8 +23,25 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL is not set");
 }
 
+const dbUrl = new URL(databaseUrl);
+const databaseCa = process.env.DATABASE_SSL_CA?.replace(/\\n/g, "\n");
+
+if (process.env.NODE_ENV === "production" && !databaseCa) {
+  throw new Error("DATABASE_SSL_CA is required in production");
+}
+
 const prisma = new PrismaClient({
-  adapter: new PrismaMariaDb(databaseUrl),
+  adapter: new PrismaMariaDb({
+    host: dbUrl.hostname,
+    port: Number(dbUrl.port || 3306),
+    user: decodeURIComponent(dbUrl.username),
+    password: decodeURIComponent(dbUrl.password),
+    database: decodeURIComponent(dbUrl.pathname.slice(1)),
+    connectionLimit: 5,
+    ...(databaseCa
+      ? { ssl: { ca: databaseCa, rejectUnauthorized: true } }
+      : {}),
+  }),
 });
 
 const app = express();
