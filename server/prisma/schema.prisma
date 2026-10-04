@@ -166,6 +166,7 @@ model student {
   status        String          @db.VarChar(20)
   roll_number   String?         @db.VarChar(20)
   major         String?         @db.VarChar(20)
+  personal_laptop_status String @default("None") @db.VarChar(20)
   laptop_rental laptop_rental[]
 }
 
@@ -225,6 +226,7 @@ model users {
   role_id                               Int
   department_id                         Int?
   status                                String          @db.VarChar(20)
+  personal_laptop_status                String          @default("None") @db.VarChar(20)
   language                              String          @default("eng") @db.VarChar(5)
   two_step_enabled                      Boolean         @default(true)
   created_at                            DateTime        @default(now()) @db.DateTime(0)

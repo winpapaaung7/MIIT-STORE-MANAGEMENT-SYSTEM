@@ -4,6 +4,10 @@
     "text": "Only active students and teachers can receive a laptop rental."
   },
   {
+    "title": "Personal laptop eligibility",
+    "text": "Borrowers with a working personal laptop cannot receive an MIIT laptop. A damaged personal laptop remains eligible."
+  },
+  {
     "title": "Laptop availability",
     "text": "A rental can be issued only when a QR-tagged laptop is available."
   },

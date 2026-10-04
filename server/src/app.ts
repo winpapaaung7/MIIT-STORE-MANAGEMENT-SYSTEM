@@ -43,6 +43,7 @@ const uploadsDirectory = path.resolve("uploads");
 const rentalPoliciesFile = path.resolve("data", "rental-policies.json");
 const defaultRentalPolicies = [
   { title: "Eligible borrowers", text: "Only active students and teachers can receive a laptop rental." },
+  { title: "Personal laptop eligibility", text: "Borrowers with a working personal laptop cannot receive an MIIT laptop. A damaged personal laptop remains eligible." },
   { title: "Laptop availability", text: "A rental can be issued only when a QR-tagged laptop is available." },
   { title: "Active rentals", text: "A borrower cannot receive another laptop while they have an active rental." },
   { title: "Return and condition", text: "Record the return date and laptop condition when the item is returned." },
@@ -320,9 +321,31 @@ app.get("/api/activity-log", async (req, res) => {
       offset,
     );
 
+    // Older rental audit entries did not store the assigned laptop QR code.
+    // Resolve it from the rental so the activity details can still show a QR
+    // label for those existing records.
+    const rentalIds = [...new Set(rows
+      .filter((row) => row.module === "Laptop Rental" && /^\d+$/.test(row.target_id ?? ""))
+      .map((row) => Number(row.target_id)))];
+    const rentalQrCodes = new Map<number, string>();
+    if (rentalIds.length) {
+      const rentals = await prisma.laptop_rental.findMany({
+        where: { rental_id: { in: rentalIds } },
+        include: { item_detail: { include: { qr_code: { where: { is_active: true }, orderBy: { generated_at: "asc" }, take: 1 } } } },
+      });
+      rentals.forEach((rental) => {
+        const qrCode = rental.item_detail.qr_code[0]?.qr_code_id;
+        if (qrCode) rentalQrCodes.set(rental.rental_id, qrCode);
+      });
+    }
+
     res.json({
       ok: true,
-      activities: rows.map((row) => ({ ...row, details: parseActivityDetails(row.details) })),
+      activities: rows.map((row) => {
+        const details = parseActivityDetails(row.details);
+        const qrCode = row.module === "Laptop Rental" && row.target_id ? rentalQrCodes.get(Number(row.target_id)) : undefined;
+        return { ...row, details: qrCode && !Array.isArray(details?.qr_codes) ? { ...(details ?? {}), qr_codes: [qrCode] } : details };
+      }),
       pagination: { page: currentPage, limit, total, totalPages },
     });
   } catch (error) {
@@ -706,25 +729,20 @@ function validateItemId(itemId: string) {
 
 app.get("/api/departments", async (req, res) => {
   try {
-    const rooms = await prisma.room.findMany({
+    // The dashboard is based on department records, whereas this endpoint
+    // previously returned only rooms. Query departments first so both pages
+    // include the same departments, even when no room has been assigned yet.
+    const departments = await prisma.department.findMany({
       where: req.auth?.role.code === "DEPARTMENT_HEAD" ? { department_id: req.auth.department!.id } : undefined,
-      include: {
-        department: true,
-      },
-      orderBy: { room_id: "asc" },
+      include: { room: { orderBy: { room_id: "asc" } } },
+      orderBy: { department_name: "asc" },
     });
 
     res.json({
       ok: true,
-      departments: rooms.map((room) => ({
-        id: room.room_id,
-        department_id: room.department_id,
-        department: room.department.department_name,
-        // A Library location has no recorded room number. Keep it visible in
-        // the UI and selectable in room filters instead of dropping it.
-        classroom: room.building_name ?? "Unknown",
-        status: room.status ? "Available" : "Closed",
-      })),
+      departments: departments.flatMap((department) => department.room.length
+        ? department.room.map((room) => ({ id: room.room_id, department_id: department.department_id, department: department.department_name, classroom: room.building_name ?? "Unknown", status: room.status ? "Available" : "Closed", has_room: true }))
+        : [{ id: -department.department_id, department_id: department.department_id, department: department.department_name, classroom: "No room assigned", status: "Unassigned", has_room: false }]),
     });
   } catch (error) {
     console.error(error);
@@ -788,9 +806,11 @@ app.post("/api/departments", async (req, res) => {
       ok: true,
       department: {
         id: room.room_id,
+        department_id: room.department_id,
         department: room.department.department_name,
         classroom: room.building_name ?? "",
         status: room.status ? "Available" : "Closed",
+        has_room: true,
       },
     });
   } catch (error) {
@@ -1094,6 +1114,17 @@ app.get("/api/accessories/by-code/:code", async (req, res) => {
 
 
 
+function normalizePersonalLaptopStatus(value: unknown) {
+  const status = normalizeString(value).toLowerCase();
+  if (status === "working") return "Working";
+  if (status === "damaged") return "Damaged";
+  return "None";
+}
+
+function hasWorkingPersonalLaptop(borrower: { personal_laptop_status?: string | null }) {
+  return normalizePersonalLaptopStatus(borrower.personal_laptop_status) === "Working";
+}
+
 app.get("/api/students", async (_req, res) => {
   const students = await prisma.student.findMany({
     orderBy: { roll_number: "asc" },
@@ -1117,7 +1148,7 @@ app.get("/api/students", async (_req, res) => {
 
 app.post("/api/students/import", async (req, res) => {
   const rows = Array.isArray(req.body.students) ? req.body.students : [];
-  const valid = rows.map((row: any) => ({ student_name: normalizeString(row.student_name), roll_number: normalizeString(row.roll_number), email: normalizeString(row.email) || null, phone: normalizeString(row.phone) || null, major: normalizeString(row.major) || null, batch: normalizeString(row.batch) || null, status: normalizeString(row.status) || "Active" })).filter((row: any) => row.student_name && row.roll_number);
+  const valid = rows.map((row: any) => ({ student_name: normalizeString(row.student_name), roll_number: normalizeString(row.roll_number), email: normalizeString(row.email) || null, phone: normalizeString(row.phone) || null, major: normalizeString(row.major) || null, batch: normalizeString(row.batch) || null, status: normalizeString(row.status) || "Active", personal_laptop_status: normalizePersonalLaptopStatus(row.personal_laptop_status) })).filter((row: any) => row.student_name && row.roll_number);
   if (!valid.length) return res.status(400).json({ ok: false, message: "No valid student rows were provided" });
   const uniqueRows: any[] = Array.from(new Map<string, any>(valid.map((row: any) => [row.roll_number.toLowerCase(), row])).values());
   const existing = await prisma.student.findMany({ where: { roll_number: { in: uniqueRows.map((row: any) => row.roll_number) } }, select: { roll_number: true } });
@@ -1130,7 +1161,7 @@ app.post("/api/students/import", async (req, res) => {
 app.post("/api/students", async (req, res) => {
   const student_name = normalizeString(req.body.student_name); const roll_number = normalizeString(req.body.roll_number);
   if (!student_name || !roll_number) return res.status(400).json({ ok: false, message: "Student name and roll number are required" });
-  try { const student = await prisma.student.create({ data: { student_name, roll_number, email: normalizeString(req.body.email) || null, phone: normalizeString(req.body.phone) || null, major: normalizeString(req.body.major) || null, batch: normalizeString(req.body.batch) || null, status: normalizeString(req.body.status) || "Active" } }); res.json({ ok: true, student }); }
+  try { const student = await prisma.student.create({ data: { student_name, roll_number, email: normalizeString(req.body.email) || null, phone: normalizeString(req.body.phone) || null, major: normalizeString(req.body.major) || null, batch: normalizeString(req.body.batch) || null, status: normalizeString(req.body.status) || "Active", personal_laptop_status: normalizePersonalLaptopStatus(req.body.personal_laptop_status) } }); res.json({ ok: true, student }); }
   catch { res.status(409).json({ ok: false, message: "Roll number or email already exists" }); }
 });
 
@@ -1140,7 +1171,7 @@ app.put("/api/students/:id", async (req, res) => {
   const roll_number = normalizeString(req.body.roll_number);
   if (!Number.isInteger(student_id) || !student_name || !roll_number) return res.status(400).json({ ok: false, message: "Student name and roll number are required" });
   try {
-    const student = await prisma.student.update({ where: { student_id }, data: { student_name, roll_number, email: normalizeString(req.body.email) || null, phone: normalizeString(req.body.phone) || null, major: normalizeString(req.body.major) || null, batch: normalizeString(req.body.batch) || null, status: normalizeString(req.body.status) || "Active" } });
+    const student = await prisma.student.update({ where: { student_id }, data: { student_name, roll_number, email: normalizeString(req.body.email) || null, phone: normalizeString(req.body.phone) || null, major: normalizeString(req.body.major) || null, batch: normalizeString(req.body.batch) || null, status: normalizeString(req.body.status) || "Active", personal_laptop_status: normalizePersonalLaptopStatus(req.body.personal_laptop_status) } });
     res.json({ ok: true, student });
   } catch {
     res.status(409).json({ ok: false, message: "Unable to update student. Check roll number and email." });
@@ -1165,7 +1196,7 @@ app.get("/api/teachers", async (_req, res) => {
     },
     orderBy: { full_name: "asc" },
   });
-  res.json({ ok: true, teachers: teachers.map((teacher) => ({ id: teacher.user_id, name: teacher.full_name, email: teacher.email, phone: teacher.phone, departmentId: teacher.department_id, department: teacher.department?.department_name ?? "-", laptopStatus: teacher.laptop_rental_as_borrower[0]?.rental_status ?? "No Rental" })) });
+  res.json({ ok: true, teachers: teachers.map((teacher) => ({ id: teacher.user_id, name: teacher.full_name, email: teacher.email, phone: teacher.phone, departmentId: teacher.department_id, department: teacher.department?.department_name ?? "-", laptopStatus: teacher.laptop_rental_as_borrower[0]?.rental_status ?? "No Rental", personalLaptopStatus: normalizePersonalLaptopStatus(teacher.personal_laptop_status) })) });
 });
 
 app.post("/api/teachers/import", async (req, res) => {
@@ -1177,7 +1208,7 @@ app.post("/api/teachers/import", async (req, res) => {
     const email = normalizeString(row.email).toLowerCase();
     const phone = normalizeString(row.phone || row.phone_number);
     const departmentId = Number(row.department_id || row.departmentId) || departmentByName.get(normalizeString(row.department).toLowerCase());
-    return { name, email, phone, departmentId };
+    return { name, email, phone, departmentId, personalLaptopStatus: normalizePersonalLaptopStatus(row.personal_laptop_status) };
   }).filter((row: any) => row.name && row.email && row.phone && Number.isInteger(row.departmentId));
   if (!valid.length) return res.status(400).json({ ok: false, message: "Each teacher row requires name, email, phone, and a valid department." });
   const uniqueRows = Array.from(new Map(valid.map((row: any) => [row.email, row])).values());
@@ -1185,7 +1216,7 @@ app.post("/api/teachers/import", async (req, res) => {
   const existingEmails = new Set(existing.map((teacher) => teacher.email.toLowerCase()));
   const newRows = uniqueRows.filter((row: any) => !existingEmails.has(row.email));
   const teacherRole = await prisma.role.upsert({ where: { role_name: "Teacher" }, update: {}, create: { role_name: "Teacher" } });
-  if (newRows.length) await prisma.users.createMany({ data: newRows.map((row: any) => ({ full_name: row.name, username: `teacher-import-${randomUUID()}`, email: row.email, phone: row.phone, password_hash: "teacher-record", role_id: teacherRole.role_id, department_id: row.departmentId, status: "Active" })) });
+  if (newRows.length) await prisma.users.createMany({ data: newRows.map((row: any) => ({ full_name: row.name, username: `teacher-import-${randomUUID()}`, email: row.email, phone: row.phone, password_hash: "teacher-record", role_id: teacherRole.role_id, department_id: row.departmentId, status: "Active", personal_laptop_status: row.personalLaptopStatus })) });
   res.status(201).json({ ok: true, imported: newRows.length, skipped: valid.length - newRows.length });
 });
 
@@ -1195,7 +1226,7 @@ app.post("/api/teachers", async (req, res) => {
   try {
     const teacherRole = await prisma.role.upsert({ where: { role_name: "Teacher" }, update: {}, create: { role_name: "Teacher" } });
     const username = "teacher-" + Date.now() + "-" + Math.floor(Math.random() * 1000);
-    const teacher = await prisma.users.create({ data: { full_name: name, username, email, phone, password_hash: "teacher-record", role_id: teacherRole.role_id, department_id: departmentId, status: "Active" } });
+    const teacher = await prisma.users.create({ data: { full_name: name, username, email, phone, password_hash: "teacher-record", role_id: teacherRole.role_id, department_id: departmentId, status: "Active", personal_laptop_status: normalizePersonalLaptopStatus(req.body.personalLaptopStatus) } });
     res.status(201).json({ ok: true, teacher });
   } catch {
     res.status(409).json({ ok: false, message: "This teacher email already exists." });
@@ -1205,7 +1236,7 @@ app.post("/api/teachers", async (req, res) => {
 app.put("/api/teachers/:id", async (req, res) => {
   const id = Number(req.params.id); const name = normalizeString(req.body.name); const email = normalizeString(req.body.email).toLowerCase(); const phone = normalizeString(req.body.phone); const departmentId = Number(req.body.departmentId);
   if (!Number.isInteger(id) || !name || !email || !phone || !Number.isInteger(departmentId)) return res.status(400).json({ ok: false, message: "Name, email, phone, and department are required." });
-  try { const teacher = await prisma.users.update({ where: { user_id: id }, data: { full_name: name, email, phone, department_id: departmentId } }); res.json({ ok: true, teacher }); }
+  try { const teacher = await prisma.users.update({ where: { user_id: id }, data: { full_name: name, email, phone, department_id: departmentId, personal_laptop_status: normalizePersonalLaptopStatus(req.body.personalLaptopStatus) } }); res.json({ ok: true, teacher }); }
   catch { res.status(409).json({ ok: false, message: "Unable to update teacher. Check the email." }); }
 });
 
@@ -1241,7 +1272,9 @@ app.get("/api/laptop-rentals/bulk-options", async (_req, res) => {
     ]);
     const unavailableStudentIds = [...new Set(activeRentals.map((rental) => rental.student_id).filter((id): id is number => id !== null))];
     const unavailableTeacherIds = [...new Set(activeRentals.map((rental) => rental.teacher_user_id).filter((id): id is number => id !== null))];
-    res.json({ ok: true, students, teachers: teachers.map((teacher) => ({ user_id: teacher.user_id, full_name: teacher.full_name, email: teacher.email, department: teacher.department?.department_name ?? "-" })), unavailableStudentIds, unavailableTeacherIds, availableLaptops: availableLaptops.map((laptop) => ({ id: laptop.item_detail_id, code: laptop.detail_code, qrCode: laptop.qr_code[0]?.qr_code_id, name: laptop.item.item_name })), semesters });
+    const personalLaptopStudentIds = students.filter(hasWorkingPersonalLaptop).map((student) => student.student_id);
+    const personalLaptopTeacherIds = teachers.filter(hasWorkingPersonalLaptop).map((teacher) => teacher.user_id);
+    res.json({ ok: true, students, teachers: teachers.map((teacher) => ({ user_id: teacher.user_id, full_name: teacher.full_name, email: teacher.email, department: teacher.department?.department_name ?? "-", personal_laptop_status: normalizePersonalLaptopStatus(teacher.personal_laptop_status) })), unavailableStudentIds, unavailableTeacherIds, personalLaptopStudentIds, personalLaptopTeacherIds, availableLaptops: availableLaptops.map((laptop) => ({ id: laptop.item_detail_id, code: laptop.detail_code, qrCode: laptop.qr_code[0]?.qr_code_id, name: laptop.item.item_name })), semesters });
   } catch (error) {
     console.error(error);
     res.status(500).json({ ok: false, message: "Unable to prepare bulk rental data" });
@@ -1271,6 +1304,7 @@ app.post("/api/laptop-rentals/bulk-issue", async (req, res) => {
         ? await tx.student.findMany({ where: { student_id: { in: borrowerIds }, status: "Active" }, orderBy: { roll_number: "asc" } })
         : await tx.users.findMany({ where: { user_id: { in: borrowerIds }, status: "Active", role: { role_name: "Teacher" } }, orderBy: { full_name: "asc" } });
       if (borrowers.length !== borrowerIds.length) throw new Error("Some selected borrowers are not active or do not exist.");
+      if (borrowers.some(hasWorkingPersonalLaptop)) throw new Error("Borrowers with a working personal laptop cannot rent an MIIT laptop.");
       const existing = await tx.laptop_rental.findMany({ where: { ...(borrowerRole === "student" ? { student_id: { in: borrowerIds } } : { teacher_user_id: { in: borrowerIds } }), rental_status: { in: ["pending", "approved", "active", "issued"] } }, select: { rental_id: true } });
       if (existing.length) throw new Error("One or more selected borrowers already have an active laptop rental.");
       const laptops = await tx.item_detail.findMany({ where: { status: "Available", item: { category: { rental_allowed: true } }, qr_code: { some: { is_active: true } }, laptop_rental: { none: { rental_status: { in: ["pending", "approved", "active", "issued"] } } } }, orderBy: { detail_code: "asc" }, take: borrowers.length });
@@ -1306,6 +1340,7 @@ app.post("/api/laptop-rentals/import", async (req, res) => {
         if (!borrowerKey || !qrCode || Number.isNaN(dueDate.getTime()) || !["pending", "approved", "returned", "rejected"].includes(status)) throw new Error("Each import row requires valid role, borrower_id, inventory_qr, expected_return_date, and status.");
         const borrower = role === "student" ? await tx.student.findFirst({ where: { roll_number: borrowerKey, status: "Active" } }) : await tx.users.findFirst({ where: { email: borrowerKey, status: "Active", role: { role_name: "Teacher" } } });
         if (!borrower) throw new Error("Borrower not found: " + borrowerKey);
+        if (hasWorkingPersonalLaptop(borrower)) throw new Error("Borrower has a working personal laptop and cannot rent an MIIT laptop: " + borrowerKey);
         const qr = await tx.qr_code.findFirst({ where: { qr_code_id: qrCode, is_active: true }, include: { item_detail: true } });
         if (!qr || !qr.item_detail || !["Available"].includes(qr.item_detail.status)) throw new Error("QR laptop is unavailable: " + qrCode);
         const existingRental = await tx.laptop_rental.findFirst({ where: { item_detail_id: qr.item_detail.item_detail_id, rental_status: { in: ["pending", "approved", "active", "issued"] } }, select: { rental_id: true } });
@@ -1358,6 +1393,9 @@ app.patch("/api/laptop-rentals/:id/status", async (req, res) => {
       const rental = await tx.laptop_rental.findUnique({ where: { rental_id: rentalId }, include: { student: true, teacher: true, item_detail: true } });
       if (!rental) throw new Error("Rental record not found.");
       const releasing = ["returned", "rejected"].includes(rentalStatus);
+      if (!releasing && hasWorkingPersonalLaptop(rental.student ?? rental.teacher ?? {})) {
+        throw new Error("A borrower with a working personal laptop cannot rent an MIIT laptop.");
+      }
       const terminalRental = ["returned", "rejected", "completed"].includes(rental.rental_status.toLowerCase());
       const item = await tx.item_detail.findUnique({ where: { item_detail_id: rental.item_detail_id } });
       if (!item) throw new Error("Assigned laptop no longer exists.");
@@ -1416,7 +1454,7 @@ app.get("/api/laptop-rentals", async (req, res) => {
       item: { category: { rental_allowed: true } },
       qr_code: { some: { is_active: true } },
     };
-    const [rentals, availableQuantity, inUseQuantity, totalQuantity] = await Promise.all([
+    const [rentals, availableQuantity, inUseQuantity, damagedQuantity, totalQuantity] = await Promise.all([
       prisma.laptop_rental.findMany({
         include: {
           student: true,
@@ -1431,6 +1469,7 @@ app.get("/api/laptop-rentals", async (req, res) => {
       }),
       prisma.item_detail.count({ where: { ...rentalLaptopWhere, status: "Available" } }),
       prisma.item_detail.count({ where: { ...rentalLaptopWhere, status: "In Use" } }),
+      prisma.item_detail.count({ where: { ...rentalLaptopWhere, status: "Damaged" } }),
       prisma.item_detail.count({ where: rentalLaptopWhere }),
     ]);
     const rows = rentals.map((rental: any, index: number) => ({
@@ -1470,7 +1509,7 @@ app.get("/api/laptop-rentals", async (req, res) => {
     // completed/rejected records, while item_detail is the source of truth for
     // whether a physical laptop is currently available or in use.
     const pagedRows = filteredRows.slice((page - 1) * limit, page * limit);
-    res.json({ ok: true, summary: { all: totalQuantity, pending: count(["pending"]), active: inUseQuantity, returned: count(["returned", "completed"]), available: availableQuantity }, rentals: pagedRows, pagination: { page, limit, total: filteredRows.length, totalPages: Math.max(1, Math.ceil(filteredRows.length / limit)) } });
+    res.json({ ok: true, summary: { all: totalQuantity, pending: count(["pending"]), active: inUseQuantity, returned: count(["returned", "completed"]), available: availableQuantity, damaged: damagedQuantity }, rentals: pagedRows, pagination: { page, limit, total: filteredRows.length, totalPages: Math.max(1, Math.ceil(filteredRows.length / limit)) } });
   } catch (error) {
     console.error(error);
     res.status(500).json({ ok: false, message: "Unable to load laptop rentals" });
@@ -2019,8 +2058,8 @@ app.post("/api/items/import", async (req, res) => {
       if (!row.itemName || !row.categoryName || !Number.isInteger(row.quantity) || row.quantity < 1 || row.remark.length > 255) {
         return res.status(400).json({ ok: false, message: `Row ${row.row}: item name, category, and a whole-number quantity are required.` });
       }
-      if (!row.departmentName || !row.roomName || !row.academicYearName || !["Available", "In Use", "Damaged"].includes(row.status)) {
-        return res.status(400).json({ ok: false, message: `Row ${row.row}: use an existing department, room, academic year, and valid status.` });
+      if (!row.academicYearName || !["Available", "In Use", "Damaged"].includes(row.status)) {
+        return res.status(400).json({ ok: false, message: `Row ${row.row}: use an existing academic year and valid status.` });
       }
       if (row.imageUrl && !/^https?:\/\/\S+$/i.test(row.imageUrl)) {
         return res.status(400).json({ ok: false, message: `Row ${row.row}: image_url must be a valid http or https URL.` });
@@ -2037,20 +2076,23 @@ app.post("/api/items/import", async (req, res) => {
       prisma.budget_year.findMany({ select: { budget_year_id: true, year_name: true } }),
     ]);
     const categoryByName = new Map(categories.map((category) => [category.category_name, category]));
-    const departmentByName = new Map(departments.map((department) => [department.department_name, department]));
     const yearByName = new Map(years.map((year) => [year.year_name, year]));
+    const storageDepartment = departments.find((department) => ["store", "storage"].includes(department.department_name.trim().toLowerCase()));
+    const storageRoom = storageDepartment
+      ? rooms.find((room) => room.department_id === storageDepartment.department_id && room.building_name)
+      : undefined;
+
+    if (!storageDepartment || !storageRoom?.building_name) {
+      return res.status(400).json({ ok: false, message: "Configure a Storage department and room before importing inventory." });
+    }
 
     const resolvedRows: ResolvedBulkImportRow[] = rows.map((row) => {
       const category = categoryByName.get(row.categoryName);
-      const department = departmentByName.get(row.departmentName);
       const year = yearByName.get(row.academicYearName);
-      const room = department
-        ? rooms.find((candidate) => candidate.department_id === department.department_id && candidate.building_name === row.roomName)
-        : undefined;
-      if (!category || !department || !room || !year) {
-        throw new Error(`Row ${row.row}: category, department, room, or academic year does not exist.`);
+      if (!category || !year) {
+        throw new Error(`Row ${row.row}: category or academic year does not exist.`);
       }
-      return { ...row, category, department, room, year };
+      return { ...row, departmentName: storageDepartment.department_name, roomName: storageRoom.building_name!, category, department: storageDepartment, room: storageRoom, year };
     });
 
     const result = await prisma.$transaction(async (tx: any) => {
@@ -2173,6 +2215,18 @@ app.post("/api/items", async (req, res) => {
         ok: false,
         message:
           "item_name, category_name and quantity are required; status must be valid and remark must not exceed 255 characters",
+      });
+      return;
+    }
+
+    const storageDepartment = (await prisma.department.findMany({
+      select: { department_id: true, department_name: true },
+    })).find((department) => ["store", "storage"].includes(department.department_name.trim().toLowerCase()));
+
+    if (!storageDepartment || departmentId !== storageDepartment.department_id) {
+      res.status(400).json({
+        ok: false,
+        message: "New inventory can only be added to Storage. Transfer items to departments after they are added.",
       });
       return;
     }
@@ -2485,9 +2539,11 @@ app.put("/api/departments/:id", async (req, res) => {
       ok: true,
       department: {
         id: room.room_id,
+        department_id: room.department_id,
         department: room.department.department_name,
         classroom: room.building_name ?? "",
         status: room.status ? "Available" : "Closed",
+        has_room: true,
       },
     });
   } catch (error) {
@@ -2504,11 +2560,41 @@ app.delete("/api/departments/:id", async (req, res) => {
   try {
     const roomId = Number(req.params.id);
 
-    if (!Number.isInteger(roomId) || roomId <= 0) {
+    if (!Number.isInteger(roomId) || roomId === 0) {
       res.status(400).json({
         ok: false,
         message: "Invalid department id",
       });
+      return;
+    }
+
+    // A negative ID represents the virtual row used for a department that
+    // has no room yet. It may be deleted only when it has no linked records.
+    if (roomId < 0) {
+      const departmentId = -roomId;
+      const [department, rooms, items, users, heads, transfersFrom, transfersTo] = await Promise.all([
+        prisma.department.findUnique({ where: { department_id: departmentId }, select: { department_id: true, department_name: true } }),
+        prisma.room.count({ where: { department_id: departmentId } }),
+        prisma.item_detail.count({ where: { current_department_id: departmentId } }),
+        prisma.users.count({ where: { department_id: departmentId } }),
+        prisma.users.count({ where: { department_head_of_id: departmentId } }),
+        prisma.transfer.count({ where: { from_department_id: departmentId } }),
+        prisma.transfer.count({ where: { to_department_id: departmentId } }),
+      ]);
+
+      if (!department) {
+        res.status(404).json({ ok: false, message: "Department not found" });
+        return;
+      }
+
+      if (rooms || items || users || heads || transfersFrom || transfersTo) {
+        res.status(409).json({ ok: false, message: "This department cannot be deleted because it has linked records." });
+        return;
+      }
+
+      await prisma.department.delete({ where: { department_id: departmentId } });
+      await recordActivity("deleted", "Department", { type: "Department", id: departmentId, name: department.department_name });
+      res.json({ ok: true });
       return;
     }
 
