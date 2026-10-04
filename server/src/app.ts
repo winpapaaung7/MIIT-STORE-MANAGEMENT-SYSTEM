@@ -15,6 +15,7 @@ import { createItemsRouter } from "./routes/items.js";
 import { createItemDetailsRouter } from "./routes/item-details.js";
 import { apiAuthorization, requireDepartmentScope } from "./auth/middleware.js";
 import { hashPassword, verifyPassword } from "./auth/service.js";
+import { SlidingWindowRateLimiter } from "./security/public-rate-limit.js";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -27,10 +28,22 @@ const prisma = new PrismaClient({
 });
 
 const app = express();
+// Set TRUST_PROXY=1 only when the API is behind one trusted reverse proxy.
+// This lets req.ip represent the scanner's real IP for rate limiting.
+if (process.env.TRUST_PROXY === "1") app.set("trust proxy", 1);
 const auditActorContext = new AsyncLocalStorage<string>();
+const scannerRateLimitWindowMinutes = Number(process.env.SCANNER_RATE_LIMIT_WINDOW_MINUTES ?? 1);
+const scannerRateLimit = Number(process.env.SCANNER_RATE_LIMIT ?? 30);
+const scannerRateLimiter = new SlidingWindowRateLimiter(
+  Number.isFinite(scannerRateLimit) && scannerRateLimit > 0 ? scannerRateLimit : 30,
+  (Number.isFinite(scannerRateLimitWindowMinutes) && scannerRateLimitWindowMinutes > 0
+    ? scannerRateLimitWindowMinutes
+    : 1) * 60_000,
+);
 const allowedOrigins = (process.env.CLIENT_ORIGIN ?? "http://localhost:5173,http://localhost:4173").split(",").map((origin) => origin.trim());
 app.use(cors({ origin: (origin, callback) => callback(null, !origin || allowedOrigins.includes(origin)), credentials: true }));
 app.use(express.json({ limit: "6mb" }));
+app.get("/health", (_req, res) => res.status(200).json({ ok: true }));
 app.use("/api/auth", createAuthRouter(prisma));
 app.use("/api", apiAuthorization(prisma));
 app.use((req, _res, next) => auditActorContext.run(req.auth?.name ?? "System", next));
@@ -1052,6 +1065,18 @@ app.get("/api/qr-codes/:id", async (req, res) => {
 
 
 app.get("/api/accessories/by-code/:code", async (req, res) => {
+  const clientIp = req.ip || req.socket.remoteAddress || "unknown";
+  const rateLimitResult = scannerRateLimiter.check(clientIp);
+  if (!rateLimitResult.allowed) {
+    res.set("Retry-After", String(rateLimitResult.retryAfterSeconds));
+    res.status(429).json({
+      ok: false,
+      message: "Too many scanner lookup requests. Please try again later.",
+      retryAfter: rateLimitResult.retryAfterSeconds,
+    });
+    return;
+  }
+
   try {
     const detailCode = normalizeString(req.params.code);
 
@@ -1096,12 +1121,6 @@ app.get("/api/accessories/by-code/:code", async (req, res) => {
           detail.room?.department.department_name ??
           "Store",
         room: detail.room?.building_name ?? "",
-        academic_year: detail.budget_year.year_name,
-        registered_date:
-          detail.purchase_date?.toISOString().split("T")[0] ??
-          detail.created_at.toISOString().split("T")[0],
-        created_at: detail.created_at.toISOString(),
-        remark: detail.notes ?? "",
       },
     });
   } catch (error) {

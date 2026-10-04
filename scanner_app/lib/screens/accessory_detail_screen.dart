@@ -64,7 +64,6 @@ class AccessoryDetailScreen extends StatelessWidget {
                     label: 'Current Room',
                     value: accessory.currentRoom,
                   ),
-                  _DetailRow(label: 'Remark', value: accessory.remark),
                 ],
               ),
             ),
