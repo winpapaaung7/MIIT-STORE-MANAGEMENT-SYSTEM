@@ -38,19 +38,24 @@ const prisma = new PrismaClient({
     password: decodeURIComponent(dbUrl.password),
     database: decodeURIComponent(dbUrl.pathname.slice(1)),
     connectionLimit: 5,
-    ...(databaseCa ? { ssl: { ca: databaseCa, rejectUnauthorized: true } } : {}),
+    ...(databaseCa
+      ? { ssl: { ca: databaseCa, rejectUnauthorized: true } }
+      : {}),
   }),
 });
 
 const app = express();
 // Set TRUST_PROXY=1 only when the API is behind one trusted reverse proxy.
+// This lets req.ip represent the scanner's real IP for rate limiting.
 if (process.env.TRUST_PROXY === "1") app.set("trust proxy", 1);
 const auditActorContext = new AsyncLocalStorage<string>();
 const scannerRateLimitWindowMinutes = Number(process.env.SCANNER_RATE_LIMIT_WINDOW_MINUTES ?? 1);
 const scannerRateLimit = Number(process.env.SCANNER_RATE_LIMIT ?? 30);
 const scannerRateLimiter = new SlidingWindowRateLimiter(
   Number.isFinite(scannerRateLimit) && scannerRateLimit > 0 ? scannerRateLimit : 30,
-  (Number.isFinite(scannerRateLimitWindowMinutes) && scannerRateLimitWindowMinutes > 0 ? scannerRateLimitWindowMinutes : 1) * 60_000,
+  (Number.isFinite(scannerRateLimitWindowMinutes) && scannerRateLimitWindowMinutes > 0
+    ? scannerRateLimitWindowMinutes
+    : 1) * 60_000,
 );
 const allowedOrigins = (process.env.CLIENT_ORIGIN ?? "http://localhost:5173,http://localhost:4173").split(",").map((origin) => origin.trim());
 app.use(cors({ origin: (origin, callback) => callback(null, !origin || allowedOrigins.includes(origin)), credentials: true }));
@@ -1138,12 +1143,6 @@ app.get("/api/accessories/by-code/:code", async (req, res) => {
           detail.room?.department.department_name ??
           "Store",
         room: detail.room?.building_name ?? "",
-        academic_year: detail.budget_year.year_name,
-        registered_date:
-          detail.purchase_date?.toISOString().split("T")[0] ??
-          detail.created_at.toISOString().split("T")[0],
-        created_at: detail.created_at.toISOString(),
-        remark: detail.notes ?? "",
       },
     });
   } catch (error) {
