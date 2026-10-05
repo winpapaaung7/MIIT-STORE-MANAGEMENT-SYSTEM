@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../config/api_config.dart';
 import '../services/accessory_service.dart';
 import 'accessory_detail_screen.dart';
 
@@ -88,6 +89,19 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final configurationError = ApiConfig.configurationError;
+    if (configurationError != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('MIIT Store Scanner')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(configurationError, textAlign: TextAlign.center),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('MIIT Store Scanner'),
