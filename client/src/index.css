@@ -871,6 +871,17 @@ html[lang="my"] body {
   background-color: var(--app-dark-raised) !important;
 }
 
+/* Opacity utility classes (for example, `bg-slate-50/80`) are not matched by
+   the exact selectors above. Keep these portal cards dark and legible too. */
+.dark :is(
+  [data-slot="dialog-content"],
+  [data-slot="alert-dialog-content"],
+  [data-slot="popover-content"],
+  [data-slot="dropdown-menu-content"]
+) :is([class*="bg-slate-50/"], [class*="bg-white/"]) {
+  background-color: var(--app-dark-raised) !important;
+}
+
 .dark :is(
   [data-slot="dialog-content"],
   [data-slot="alert-dialog-content"],

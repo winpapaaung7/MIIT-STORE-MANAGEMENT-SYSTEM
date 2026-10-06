@@ -21,6 +21,8 @@ interface InventoryTableProps {
   onOpenItem: (item: InventoryItem) => void;
   onEditItem: (item: InventoryItem) => void;
   onDeleteItem: (id: string) => Promise<void>;
+  readOnly?: boolean;
+  onViewDetails?: (item: InventoryItem) => void;
 }
 
 export default function InventoryTable({
@@ -29,6 +31,8 @@ export default function InventoryTable({
   onOpenItem,
   onEditItem,
   onDeleteItem,
+  readOnly = false,
+  onViewDetails,
 }: InventoryTableProps) {
   const { t } = useLanguage();
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -42,7 +46,7 @@ export default function InventoryTable({
             <col className="w-65" />
             <col className="w-35" />
             <col className="w-35" />
-            <col className="w-30" />
+            {!readOnly && <col className="w-30" />}
           </colgroup>
 
           <TableHeader className="workspace-table-head border-b bg-slate-50 text-left text-xs text-slate-500">
@@ -59,9 +63,7 @@ export default function InventoryTable({
               <TableHead className="px-4 py-3 text-left text-xs font-medium text-slate-500">
                 {t("quantity")}
               </TableHead>
-              <TableHead className="px-4 py-3 text-center text-xs font-medium text-slate-500">
-                {t("actions")}
-              </TableHead>
+              {!readOnly && <TableHead className="px-4 py-3 text-center text-xs font-medium text-slate-500">{t("actions")}</TableHead>}
             </TableRow>
           </TableHeader>
 
@@ -69,7 +71,7 @@ export default function InventoryTable({
             {items.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={readOnly ? 4 : 5}
                   className="h-80 px-4 py-6 text-center text-sm text-muted-foreground"
                 >
                   {t("noInventoryItems")}
@@ -79,16 +81,17 @@ export default function InventoryTable({
               items.map((item) => (
                 <TableRow
                   key={item.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => onOpenItem(item)}
+                  role={!readOnly || onViewDetails ? "button" : undefined}
+                  tabIndex={!readOnly || onViewDetails ? 0 : undefined}
+                  onClick={() => readOnly ? onViewDetails?.(item) : onOpenItem(item)}
                   onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
+                    if ((!readOnly || onViewDetails) && (event.key === "Enter" || event.key === " ")) {
                       event.preventDefault();
-                      onOpenItem(item);
+                      if (readOnly) onViewDetails?.(item);
+                      else onOpenItem(item);
                     }
                   }}
-                  className="workspace-table-row cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+                  className={`workspace-table-row border-b border-slate-100 last:border-0 ${!readOnly || onViewDetails ? "cursor-pointer hover:bg-slate-50/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300" : ""}`}
                 >
                   <TableCell className="px-4 py-4 text-left font-mono text-xs text-slate-600">
                     {item.id}
@@ -139,7 +142,7 @@ export default function InventoryTable({
                     </span>
                   </TableCell>
 
-                  <TableCell
+                  {!readOnly && <TableCell
                     className="px-4 py-4 text-center"
                     onClick={(event) => event.stopPropagation()}
                   >
@@ -151,7 +154,7 @@ export default function InventoryTable({
                         onEdit={onEditItem}
                       />
                     </div>
-                  </TableCell>
+                  </TableCell>}
                 </TableRow>
               ))
             )}

@@ -56,9 +56,10 @@ export function createItemsRouter(prisma: any) {
 
   router.get("/", async (req, res) => {
     try {
-      const search = normalizeString(req.query.search), category = normalizeString(req.query.category), page = Math.max(1, Number(req.query.page) || 1), limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
-      const where = { ...(search ? { OR: [{ item_id: { contains: search } }, { item_name: { contains: search } }] } : {}), ...(category ? { category: { category_name: category } } : {}) };
-      const [items, total] = await Promise.all([prisma.item.findMany({ where, include: { category: true, _count: { select: { item_detail: true } } }, orderBy: { item_id: "asc" }, skip: (page - 1) * limit, take: limit }), prisma.item.count({ where })]);
+      const search = normalizeString(req.query.search), category = normalizeString(req.query.category), department = normalizeString(req.query.department), room = normalizeString(req.query.room), page = Math.max(1, Number(req.query.page) || 1), limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
+      const detailWhere = department || room ? { ...(department ? { department: { department_name: department } } : {}), ...(room ? { room: { building_name: room === "Room number not assigned" ? null : room } } : {}) } : undefined;
+      const where = { ...(search ? { OR: [{ item_id: { contains: search } }, { item_name: { contains: search } }] } : {}), ...(category ? { category: { category_name: category } } : {}), ...(detailWhere ? { item_detail: { some: detailWhere } } : {}) };
+      const [items, total] = await Promise.all([prisma.item.findMany({ where, include: { category: true, _count: { select: { item_detail: detailWhere ? { where: detailWhere } : true } } }, orderBy: { item_id: "asc" }, skip: (page - 1) * limit, take: limit }), prisma.item.count({ where })]);
       return res.json({ ok: true, items: items.map((item: any) => ({ item_id: item.item_id, item_name: item.item_name, category_name: item.category.category_name, image_url: item.image_url, quantity: item._count.item_detail })), pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) } });
     } catch (error) {
       console.error(error);

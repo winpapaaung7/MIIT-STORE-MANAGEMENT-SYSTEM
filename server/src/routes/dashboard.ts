@@ -67,7 +67,7 @@ export function createDashboardRouter(prisma: PrismaLike) {
       // It changes only when a department is selected in the overview chart.
       const selectedDepartmentId = activeDepartmentId;
       const departmentItemsWhere = selectedDepartmentId ? { current_department_id: selectedDepartmentId } : undefined;
-      const [totalItems, statusCounts, departmentCounts, itemGroups, academicYears, departments, categories, rooms, recentItems] = await Promise.all([
+      const [totalItems, statusCounts, departmentCounts, itemGroups, academicYears, departments, categories, rooms, recentItems, departmentHistoryData] = await Promise.all([
         prisma.item_detail.count({ where }),
         prisma.item_detail.groupBy({ by: ["status"], where, _count: { _all: true } }),
         prisma.item_detail.groupBy({ by: ["current_department_id", "status"], where, _count: { _all: true } }),
@@ -77,6 +77,25 @@ export function createDashboardRouter(prisma: PrismaLike) {
         prisma.category.findMany({ select: { category_id: true, category_name: true }, orderBy: { category_name: "asc" } }),
         prisma.room.findMany({ where: scopedDepartmentId ? { department_id: scopedDepartmentId } : undefined, select: { room_id: true, department_id: true, building_name: true }, orderBy: { building_name: "asc" } }),
         prisma.item.findMany({ where: scopedDepartmentId ? { item_detail: { some: { current_department_id: scopedDepartmentId } } } : undefined, take: recentItemsLimit, orderBy: { created_at: "desc" }, include: { category: { select: { category_name: true } }, _count: { select: { item_detail: true } } } }),
+        departmentId ? Promise.all([
+          prisma.item_detail.findMany({ where: { current_department_id: departmentId }, take: recentItemsLimit, orderBy: { created_at: "desc" }, include: { item: { select: { item_name: true } } } }),
+          prisma.transfer.findMany({
+            where: { OR: [{ from_department_id: departmentId }, { to_department_id: departmentId }] },
+            take: recentItemsLimit,
+            orderBy: { transfer_date: "desc" },
+            include: {
+              department_transfer_from_department_idTodepartment: { select: { department_name: true } },
+              department_transfer_to_department_idTodepartment: { select: { department_name: true } },
+              room_transfer_from_room_idToroom: { select: { building_name: true } },
+              room_transfer_to_room_idToroom: { select: { building_name: true } },
+              transfer_item: {
+                include: {
+                  item_detail: { include: { item: { select: { item_name: true } } } },
+                },
+              },
+            },
+          }),
+        ]) : Promise.resolve([[], []]),
       ]);
       academicYears.sort((a: any, b: any) => {
         const aCurrent = academicYearKey(a.year_name) === CURRENT_ACADEMIC_YEAR;
@@ -140,7 +159,18 @@ export function createDashboardRouter(prisma: PrismaLike) {
 
       const selectedOverview = selectedDepartmentId ? overview.get(selectedDepartmentId) : null;
       const orderedOverview = [...overview.values()].sort((a, b) => { if (a.departmentName.toLowerCase() === "store") return -1; if (b.departmentName.toLowerCase() === "store") return 1; return a.departmentName.localeCompare(b.departmentName); });
-      res.json({ ok: true, summary: { ...summary, availablePercentage: pct(summary.available), inUsePercentage: pct(summary.inUse), damagedMaintenancePercentage: pct(summary.damagedMaintenance) }, inventoryHealth: { healthPercentage: pct(summary.available), available: summary.available, inUse: summary.inUse, damagedMaintenance: summary.damagedMaintenance, total: summary.totalItems }, departmentOverview: orderedOverview, departmentItems: { selectedDepartment: selectedDepartmentId ? { id: selectedDepartmentId, name: activeDepartment?.department_name } : null, totalPhysicalUnits: selectedOverview?.total ?? 0, items: pagedItems, pagination: { page, limit, totalItems: totalItemRecords, totalPages: Math.ceil(totalItemRecords / limit) } }, recentItems: recentItems.map((item: any) => ({ itemId: item.item_id, itemCode: item.item_code, itemName: item.item_name, category: item.category.category_name, imageUrl: item.image_url, quantity: item._count.item_detail, createdAt: item.created_at })), filterOptions: { academicYears: academicYears.map((y: any) => ({ id: y.budget_year_id, name: y.year_name })), departments: departments.map((d: any) => ({ id: d.department_id, name: d.department_name, code: d.department_code })), categories: categories.map((c: any) => ({ id: c.category_id, name: c.category_name })), rooms: rooms.map((r: any) => ({ id: r.room_id, departmentId: r.department_id, name: r.building_name ?? "Unknown" })), statuses: statuses.map((s: any) => s.status) } });
+      const [addedItems, transfers] = departmentHistoryData as [any[], any[]];
+      const departmentHistory = [
+        ...addedItems.map((item: any) => ({ type: "Item added", name: item.item.item_name, detail: item.detail_code, quantity: 1, date: item.created_at })),
+        ...transfers.map((transfer: any) => {
+          const received = transfer.to_department_id === departmentId;
+          const itemNames = [...new Set(transfer.transfer_item.map((entry: any) => entry.item_detail.item.item_name))];
+          const fromLocation = `${transfer.department_transfer_from_department_idTodepartment.department_name}${transfer.room_transfer_from_room_idToroom?.building_name ? ` · Room ${transfer.room_transfer_from_room_idToroom.building_name}` : ""}`;
+          const toLocation = `${transfer.department_transfer_to_department_idTodepartment.department_name}${transfer.room_transfer_to_room_idToroom?.building_name ? ` · Room ${transfer.room_transfer_to_room_idToroom.building_name}` : ""}`;
+          return { type: received ? "Transfer received" : "Transfer sent", name: itemNames.join(", ") || transfer.transfer_code, detail: `${fromLocation} → ${toLocation}`, quantity: transfer.transfer_item.length, date: transfer.transfer_date };
+        }),
+      ].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, recentItemsLimit);
+      res.json({ ok: true, summary: { ...summary, availablePercentage: pct(summary.available), inUsePercentage: pct(summary.inUse), damagedMaintenancePercentage: pct(summary.damagedMaintenance) }, inventoryHealth: { healthPercentage: pct(summary.available), available: summary.available, inUse: summary.inUse, damagedMaintenance: summary.damagedMaintenance, total: summary.totalItems }, departmentOverview: orderedOverview, departmentItems: { selectedDepartment: selectedDepartmentId ? { id: selectedDepartmentId, name: activeDepartment?.department_name } : null, totalPhysicalUnits: selectedOverview?.total ?? 0, items: pagedItems, pagination: { page, limit, totalItems: totalItemRecords, totalPages: Math.ceil(totalItemRecords / limit) } }, recentItems: recentItems.map((item: any) => ({ itemId: item.item_id, itemCode: item.item_code, itemName: item.item_name, category: item.category.category_name, imageUrl: item.image_url, quantity: item._count.item_detail, createdAt: item.created_at })), departmentHistory, filterOptions: { academicYears: academicYears.map((y: any) => ({ id: y.budget_year_id, name: y.year_name })), departments: departments.map((d: any) => ({ id: d.department_id, name: d.department_name, code: d.department_code })), categories: categories.map((c: any) => ({ id: c.category_id, name: c.category_name })), rooms: rooms.map((r: any) => ({ id: r.room_id, departmentId: r.department_id, name: r.building_name ?? "Room number not assigned" })), statuses: statuses.map((s: any) => s.status) } });
     } catch (error) {
       const message = error instanceof Error && error.message.startsWith("Invalid") ? error.message : "Unable to load dashboard overview";
       res.status(message.startsWith("Invalid") ? 400 : 500).json({ ok: false, message });

@@ -1,4 +1,4 @@
-import { HousePlus } from "lucide-react";
+import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/context/LanguageContext";
@@ -12,10 +12,10 @@ const AddNewDeptButton = ({ onClick }: AddNewDeptButtonProps) => {
   return (
     <Button
       onClick={onClick}
-      className="h-11 rounded-xl gap-2 bg-slate-900 px-6 hover:bg-slate-800"
+      className="h-10 gap-2"
     >
-      <HousePlus className="h-4 w-4" />
-      {t("add")}
+      <Plus className="h-4 w-4" />
+      {t("add")} {t("department")}
     </Button>
   );
 };
