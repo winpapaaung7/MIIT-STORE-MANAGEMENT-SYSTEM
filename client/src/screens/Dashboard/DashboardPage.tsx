@@ -1,14 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { AlertTriangle, Boxes, CheckCircle2, ChevronLeft, ChevronRight, ClipboardCheck, type LucideIcon } from "lucide-react";
+import { AlertTriangle, Boxes, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, ClipboardCheck, type LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { type TranslationKey, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/auth/AuthContext";
 
 const API = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";
+const CURRENT_ACADEMIC_YEAR = "2026-2027";
+const academicYearKey = (name: string) => name.replaceAll("–", "-");
 const colors = { available: "#16a34a", inUse: "#f97316", damaged: "#dc2626" };
 const number = (value: any) => typeof value === "number" && Number.isFinite(value) ? value : 0;
 type T = (key: TranslationKey) => string;
@@ -18,14 +21,14 @@ export default function DashboardPage({ scope }: { scope?: "mine" }) {
   const { accessToken, user } = useAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ academicYearId: "", departmentId: "", categoryId: "", status: "", departmentItemsPage: 1 });
+  const [filters, setFilters] = useState({ academicYearId: "", departmentId: "", categoryId: "", roomId: "", status: "", departmentItemsPage: 1 });
   const [hover, setHover] = useState<string | null>(null);
   const request = useRef(0);
 
   const load = useCallback(async () => {
     const query = new URLSearchParams({ departmentItemsPage: String(filters.departmentItemsPage), departmentItemsLimit: "8", recentItemsLimit: "5" });
     if (scope === "mine") query.set("scope", "mine");
-    Object.entries(filters).forEach(([key, value]) => { if (value && key !== "departmentItemsPage") query.set(key, String(value)); });
+    Object.entries(filters).forEach(([key, value]) => { if (value && key !== "departmentItemsPage" && !(key === "roomId" && value === "storage")) query.set(key, String(value)); });
     if (hover) query.set("activeDepartmentId", hover);
     const id = ++request.current;
     setLoading(true);
@@ -37,7 +40,7 @@ export default function DashboardPage({ scope }: { scope?: "mine" }) {
   }, [accessToken, filters, hover, scope]);
 
   useEffect(() => { void load(); }, [load]);
-  const change = (key: string, value: string) => setFilters((current) => ({ ...current, [key]: value }));
+  const change = (key: string, value: string) => setFilters((current) => ({ ...current, [key]: value, departmentItemsPage: 1 }));
   const chooseDepartment = (id: any) => {
     const value = String(id ?? "");
     if (value && value !== hover) { setHover(value); setFilters((current) => ({ ...current, departmentItemsPage: 1 })); }
@@ -51,15 +54,63 @@ export default function DashboardPage({ scope }: { scope?: "mine" }) {
     [t("inUse"), number(summary?.inUse), t("issuedUnits"), ClipboardCheck, "text-orange-600", "bg-orange-50", number(summary?.inUsePercentage)],
     [t("damagedMaintenance"), number(summary?.damagedMaintenance), t("needsAttention"), AlertTriangle, "text-red-600", "bg-red-50", number(summary?.damagedMaintenancePercentage)],
   ] as [string, number, string, LucideIcon, string, string, number][];
-  const filterLabels: [TranslationKey, string, string][] = [["academicYear", "academicYearId", "academicYears"], ["department", "departmentId", "departments"], ["category", "categoryId", "categories"], ["status", "status", "statuses"]];
+  const filterOptions = (source: string) => {
+    const options = data?.filterOptions?.[source] ?? [];
+    return source === "academicYears"
+      ? [...options].sort((a: any, b: any) => Number(academicYearKey(String(b.name)) === CURRENT_ACADEMIC_YEAR) - Number(academicYearKey(String(a.name)) === CURRENT_ACADEMIC_YEAR))
+      : options;
+  };
+  const allRooms = data?.filterOptions?.rooms ?? [];
+  const storageDepartment = (data?.filterOptions?.departments ?? []).find((department: any) => String(department.name).trim().toLowerCase() === "storage");
+  const isStorageSelected = Boolean(storageDepartment && String(storageDepartment.id) === filters.departmentId);
+  // Storage is one logical inventory location. Its historical room numbers
+  // stay in the database, but the dashboard exposes a single Storage option.
+  const rooms = isStorageSelected
+    ? [{ id: "storage", departmentId: storageDepartment.id, name: "Storage" }]
+    : allRooms.filter((room: any) => !filters.departmentId || String(room.departmentId) === filters.departmentId);
+  const selectDepartment = (value: string) => {
+    const departmentRooms = allRooms.filter((room: any) => String(room.departmentId) === value);
+    const isStorage = Boolean(storageDepartment && String(storageDepartment.id) === value);
+    setFilters((current) => ({
+      ...current,
+      departmentId: value,
+      // Keep the location in sync with the Accessories Details filter. A
+      // department with one room (such as Faculty of Computing -> 101) has
+      // an unambiguous location, so select it automatically.
+      roomId: isStorage ? "storage" : departmentRooms.length === 1 ? String(departmentRooms[0].id) : "",
+      departmentItemsPage: 1,
+    }));
+  };
+  const selectRoom = (value: string) => {
+    const room = rooms.find((candidate: any) => String(candidate.id) === value);
+    setFilters((current) => ({
+      ...current,
+      roomId: value,
+      // A named room has one owning department, just as on Accessory Details.
+      departmentId: room ? String(room.departmentId) : "",
+      departmentItemsPage: 1,
+    }));
+  };
+  const resetFilters = () => {
+    setFilters({ academicYearId: "", departmentId: "", categoryId: "", roomId: "", status: "", departmentItemsPage: 1 });
+    setHover(null);
+  };
+  const hasActiveFilters = Boolean(filters.academicYearId || filters.departmentId || filters.categoryId || filters.roomId || filters.status);
 
   return <div className="dashboard-page space-y-6 pb-4">
-    <header className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+    <header>
       <h1 className="text-3xl font-bold text-slate-950">{scope === "mine" ? `My Department${user?.department ? ` — ${user.department.name}` : ""}` : t("dashboard")}</h1>
-      <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 xl:w-auto xl:grid-cols-4">
-        {filterLabels.filter(([, key]) => scope !== "mine" || key !== "departmentId").map(([labelKey, key, source]) => <select key={key} aria-label={t(labelKey)} value={(filters as any)[key]} onChange={(event) => change(key, event.target.value)} className="h-10 min-w-[160px] rounded-lg border border-slate-200 bg-white px-3 text-sm"><option value="">{t("all")} {t(labelKey)}</option>{(data?.filterOptions?.[source] ?? []).map((option: any) => <option key={option.id ?? option.name ?? option} value={String(option.id ?? option.name ?? option)}>{option.name ?? option}</option>)}</select>)}
-      </div>
     </header>
+    <section className="shrink-0 rounded-lg border border-border bg-card p-3 shadow-sm dark:shadow-none sm:p-4">
+      <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:items-center">
+        <Button type="button" variant={!hasActiveFilters ? "default" : "outline"} onClick={resetFilters} className={`h-10 w-full rounded-lg px-5 shadow-sm sm:w-auto sm:min-w-24 ${!hasActiveFilters ? "bg-slate-950 text-white hover:bg-slate-800" : "border-slate-200 bg-white text-slate-900 hover:bg-slate-50"}`}>{t("all")}</Button>
+        <DashboardFilterDropdown value={filters.academicYearId} options={filterOptions("academicYears")} label={t("academicYear")} allLabel={t("all")} onChange={(value) => change("academicYearId", value)} />
+        {scope !== "mine" && <DashboardFilterDropdown value={filters.departmentId} options={filterOptions("departments")} label={t("department")} allLabel={t("all")} onChange={selectDepartment} />}
+        <RoomFilter value={filters.roomId} rooms={rooms} label={t("roomNumber")} allLabel={t("all")} noneLabel={t("none")} onChange={selectRoom} />
+        <DashboardFilterDropdown value={filters.categoryId} options={filterOptions("categories")} label={t("category")} allLabel={t("all")} onChange={(value) => change("categoryId", value)} />
+        <DashboardFilterDropdown value={filters.status} options={filterOptions("statuses")} label={t("status")} allLabel={t("all")} onChange={(value) => change("status", value)} />
+      </div>
+    </section>
 
     <section className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
       {loading && !data ? Array.from({ length: 5 }, (_, index) => <Card key={index} className="h-44 animate-pulse" />) : <>
@@ -74,6 +125,44 @@ export default function DashboardPage({ scope }: { scope?: "mine" }) {
     </section>
     <RecentItems t={t} items={data?.recentItems ?? []} />
   </div>;
+}
+
+function DashboardFilterDropdown({ value, options, label, allLabel, onChange }: { value: string; options: any[]; label: string; allLabel: string; onChange: (value: string) => void }) {
+  const selectedOption = options.find((option) => String(option.id ?? option.name ?? option) === value);
+  const selected = Boolean(value);
+  return <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button type="button" variant="outline" aria-label={label} className={`h-10 w-full justify-between gap-3 rounded-lg border-slate-200 bg-white px-4 text-slate-900 shadow-sm hover:bg-slate-50 sm:w-auto sm:min-w-36 ${selected ? "border-slate-950 bg-slate-950 text-white hover:bg-slate-800 hover:text-white" : ""}`}>
+        <span className="truncate text-left">{selectedOption?.name ?? selectedOption ?? label}</span>
+        <ChevronDown className="ml-auto size-4 shrink-0 opacity-70" />
+      </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="start" className="w-56">
+      <DropdownMenuItem onClick={() => onChange("")}>{!value && <Check className="size-4" />}{allLabel}</DropdownMenuItem>
+      {options.map((option) => {
+        const optionValue = String(option.id ?? option.name ?? option);
+        return <DropdownMenuItem key={optionValue} onClick={() => onChange(optionValue)}>{value === optionValue && <Check className="size-4" />}{option.name ?? option}</DropdownMenuItem>;
+      })}
+    </DropdownMenuContent>
+  </DropdownMenu>;
+}
+
+function RoomFilter({ value, rooms, label, allLabel, noneLabel, onChange }: { value: string; rooms: any[]; label: string; allLabel: string; noneLabel: string; onChange: (value: string) => void }) {
+  const selectedRoom = rooms.find((room) => String(room.id) === value);
+  const selected = Boolean(value);
+  return <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button type="button" variant="outline" aria-label={label} className={`h-10 w-full justify-between gap-3 rounded-lg border-slate-200 bg-white px-4 text-slate-900 shadow-sm hover:bg-slate-50 sm:w-auto sm:min-w-36 ${selected ? "border-slate-950 bg-slate-950 text-white hover:bg-slate-800 hover:text-white" : ""}`}>
+        <span className="truncate text-left">{value === "none" ? noneLabel : selectedRoom?.name ?? label}</span>
+        <ChevronDown className="ml-auto size-4 shrink-0 opacity-70" />
+      </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="start" className="w-56">
+      <DropdownMenuItem onClick={() => onChange("")}>{!value && <Check className="size-4" />}{allLabel}</DropdownMenuItem>
+      <DropdownMenuItem onClick={() => onChange("none")}>{value === "none" && <Check className="size-4" />}{noneLabel}</DropdownMenuItem>
+      {rooms.map((room) => <DropdownMenuItem key={room.id} onClick={() => onChange(String(room.id))}>{value === String(room.id) && <Check className="size-4" />}{room.name}</DropdownMenuItem>)}
+    </DropdownMenuContent>
+  </DropdownMenu>;
 }
 
 function Health({ data, total, t }: { data: any[]; total: number; t: T }) { return <Card className="flex h-44 min-w-0 flex-col overflow-hidden border-slate-200/90 bg-white shadow-sm"><CardHeader className="px-5 pb-0 pt-3.5"><CardTitle className="text-sm font-semibold tracking-tight text-slate-600">{t("inventoryHealth")}</CardTitle></CardHeader><CardContent className="flex h-[132px] items-center justify-center px-4 pb-3 pt-0">{total ? <div className="flex h-28 w-28 items-center justify-center rounded-full bg-slate-50 p-1.5 shadow-inner"><div className="h-[104px] w-[104px]"><ResponsiveContainer><PieChart><Pie data={data} dataKey="value" nameKey="name" innerRadius="62%" outerRadius="90%" paddingAngle={2} stroke="none">{data.map((row) => <Cell key={row.name} fill={row.color} />)}</Pie><Tooltip formatter={(value: any, name: any) => [`${value} ${t("items")}`, name]} /></PieChart></ResponsiveContainer></div></div> : <div className="h-24 w-24 rounded-full border-[10px] border-slate-100" />}</CardContent></Card>; }

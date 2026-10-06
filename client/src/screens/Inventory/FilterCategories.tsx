@@ -62,12 +62,12 @@ export default function FilterCategories({
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:flex sm:flex-wrap sm:items-center">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className="h-11 min-w-52 justify-between rounded-xl border-slate-200 bg-white px-4 text-sm font-semibold text-slate-900 shadow-sm hover:bg-slate-50"
+              className="h-10 w-full justify-between rounded-lg border-slate-200 bg-white px-4 text-sm font-medium text-slate-900 shadow-sm hover:bg-slate-50 sm:w-auto sm:min-w-36"
             >
               <span className="flex min-w-0 items-center gap-2">
                 <Folder className="h-4 w-4 shrink-0 text-slate-600" />
@@ -108,7 +108,7 @@ export default function FilterCategories({
 
         <Button
           variant="outline"
-          className="h-11 rounded-xl border-dashed border-slate-300 bg-white px-5 text-slate-700 shadow-sm hover:bg-slate-50"
+          className="h-10 w-full rounded-lg border-dashed border-slate-300 bg-white px-5 text-slate-700 shadow-sm hover:bg-slate-50 sm:w-auto"
           onClick={() => setOpen(true)}
         >
           <Plus className="mr-2 h-4 w-4" />

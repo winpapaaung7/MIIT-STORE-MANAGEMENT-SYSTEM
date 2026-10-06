@@ -23,7 +23,7 @@ import { type InventoryItem } from "./data/inventoryData";
 interface EditItemModalProps {
   item: InventoryItem & { category?: string }; // Extended slightly to support category if present
   categories: readonly { id: number; name: string }[];
-  onDelete: (id: string) => void;
+  onDelete: (id: string) => Promise<void>;
   onEdit: (updatedItem: any) => void;
 }
 
@@ -41,6 +41,8 @@ export const EditItemModal: React.FC<EditItemModalProps> = ({
   );
   const [quantity] = useState(item.quantity); // Kept read-only since it's disabled
   const [image, setImage] = useState(item.image);
+  const [deleteError, setDeleteError] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const shortItemId = item.id.includes("-") ? item.id.split("-")[0] : item.id;
 
@@ -72,13 +74,22 @@ export const EditItemModal: React.FC<EditItemModalProps> = ({
     setIsEditDialogOpen(false);
   };
 
-  const canDelete = item.quantity === 0;
+  const handleConfirmDelete = async () => {
+    setDeleteError("");
+    setIsDeleting(true);
 
-  const handleConfirmDelete = () => {
-    if (!canDelete) return;
-
-    onDelete(item.id);
-    setIsDeleteDialogOpen(false);
+    try {
+      await onDelete(item.id);
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      setDeleteError(
+        error instanceof Error
+          ? error.message
+          : "Unable to delete this inventory item.",
+      );
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const openEditDialog = () => setIsEditDialogOpen(true);
@@ -105,7 +116,10 @@ export const EditItemModal: React.FC<EditItemModalProps> = ({
           </DropdownMenuItem>
           <DropdownMenuItem
             className="cursor-pointer text-red-600 focus:text-red-600"
-            onClick={() => setIsDeleteDialogOpen(true)}
+            onClick={() => {
+              setDeleteError("");
+              setIsDeleteDialogOpen(true);
+            }}
           >
             <Trash2 className="h-4 w-4" />
             Delete
@@ -246,67 +260,44 @@ export const EditItemModal: React.FC<EditItemModalProps> = ({
         <DialogContent className="w-[calc(100vw-2rem)] max-w-md p-4 sm:p-6">
           <DialogHeader className="pr-8">
             <DialogTitle className="text-xl font-bold text-slate-950">
-              {canDelete ? "Delete Inventory Item" : "Cannot Delete Item"}
+              Delete Inventory Item
             </DialogTitle>
 
             <DialogDescription>
-              {canDelete
-                ? `Are you sure you want to delete "${item.name}" from the inventory?`
-                : `This item still has ${item.quantity} units in inventory.`}
+              {`Are you sure you want to delete "${item.name}" from the inventory?`}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            <div
-              className={
-                canDelete
-                  ? "rounded-lg border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700"
-                  : "rounded-lg border border-amber-100 bg-amber-50 p-4 text-sm text-amber-700"
-              }
-            >
-              {canDelete ? (
-                <>
-                  This item has no remaining stock. This action cannot be
-                  undone.
-                </>
-              ) : (
-                <>
-                  Only items with 0 quantity can be deleted. Please reduce the
-                  quantity to 0 before deleting this inventory item.
-                </>
-              )}
+            <div className="rounded-lg border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
+              This permanently removes all {item.quantity} {item.quantity === 1 ? "unit" : "units"}
+              {" "}and their QR codes. This cannot be undone. Items that have
+              rental or transfer records cannot be deleted.
             </div>
+            {deleteError ? (
+              <p className="text-sm font-medium text-rose-700">{deleteError}</p>
+            ) : null}
           </div>
 
           <DialogFooter className="flex-col gap-2 border-t-0 bg-transparent p-0 sm:flex-row">
-            {canDelete ? (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsDeleteDialogOpen(false)}
-                  className="w-full sm:w-auto"
-                >
-                  Cancel
-                </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isDeleting}
+              onClick={() => setIsDeleteDialogOpen(false)}
+              className="w-full sm:w-auto"
+            >
+              Cancel
+            </Button>
 
-                <Button
-                  type="button"
-                  onClick={handleConfirmDelete}
-                  className="w-full bg-rose-700 text-white hover:bg-rose-800 sm:w-auto"
-                >
-                  Delete
-                </Button>
-              </>
-            ) : (
-              <Button
-                type="button"
-                onClick={() => setIsDeleteDialogOpen(false)}
-                className="w-full bg-slate-950 text-white hover:bg-slate-800 sm:w-auto"
-              >
-                OK
-              </Button>
-            )}
+            <Button
+              type="button"
+              disabled={isDeleting}
+              onClick={() => void handleConfirmDelete()}
+              className="w-full bg-rose-700 text-white hover:bg-rose-800 sm:w-auto"
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

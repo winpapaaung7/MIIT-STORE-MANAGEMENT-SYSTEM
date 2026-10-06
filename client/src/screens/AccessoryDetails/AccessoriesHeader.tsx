@@ -30,9 +30,6 @@ export default function AccessoriesHeader({
           <h1 className="text-2xl font-bold tracking-normal text-slate-950 sm:text-3xl">
             {t("accessories")}
           </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            {t("manageAccessoryRecords")}
-          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">

@@ -6,15 +6,25 @@ export function createItemDetailsRouter(prisma: any, recordActivity: any) {
   const router = Router();
 router.get("/", async (req, res) => {
   try {
-    const text = normalizeString(req.query.search), category = normalizeString(req.query.category), itemName = normalizeString(req.query.itemName), department = normalizeString(req.query.department), room = normalizeString(req.query.room), academicYear = normalizeString(req.query.academicYear), status = normalizeString(req.query.status);
-    const page = Math.max(1, Number(req.query.page) || 1), limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
+    const text = normalizeString(req.query.search), category = normalizeString(req.query.category), itemName = normalizeString(req.query.itemName), department = normalizeString(req.query.department), room = normalizeString(req.query.room), academicYear = normalizeString(req.query.academicYear), date = normalizeString(req.query.date), status = normalizeString(req.query.status);
+    if (date && (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(new Date(`${date}T00:00:00.000Z`).getTime()))) {
+      return res.status(400).json({ ok: false, message: "Invalid date" });
+    }
+    const dateStart = date ? new Date(`${date}T00:00:00.000Z`) : null;
+    const dateEnd = dateStart ? new Date(dateStart) : null;
+    if (dateEnd) dateEnd.setUTCDate(dateEnd.getUTCDate() + 1);
+    const page = Math.max(1, Number(req.query.page) || 1), limit = Math.min(1000, Math.max(1, Number(req.query.limit) || 50));
     const where = {
       ...(text ? { OR: [{ detail_code: { contains: text } }, { notes: { contains: text } }, { item: { item_name: { contains: text } } }] } : {}),
       ...(category ? { item: { category: { category_name: category } } } : {}),
       ...(itemName ? { item: { item_name: itemName } } : {}),
       ...(department ? { department: { department_name: department } } : {}),
-      ...(room ? { room: { building_name: room } } : {}),
+      ...(room ? { room: { building_name: room === "Unknown" ? null : room } } : {}),
       ...(academicYear ? { budget_year: { year_name: academicYear } } : {}),
+      ...(dateStart && dateEnd ? { AND: [{ OR: [
+        { purchase_date: { gte: dateStart, lt: dateEnd } },
+        { purchase_date: null, created_at: { gte: dateStart, lt: dateEnd } },
+      ] }] } : {}),
       ...(status ? { status } : {}),
     };
     const [details, total] = await Promise.all([prisma.item_detail.findMany({
