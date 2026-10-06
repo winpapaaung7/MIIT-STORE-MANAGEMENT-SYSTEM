@@ -16,6 +16,8 @@
     "seed:academic-years": "tsx src/scripts/seed-academic-years.ts",
     "seed:database": "tsx src/scripts/seed-database.ts",
     "seed:export": "tsx src/scripts/export-safe-seed-data.ts",
+    "seed:history": "tsx src/scripts/seed-history.ts",
+    "seed:export-history": "tsx src/scripts/export-safe-seed-data.ts --history-only",
     "sync:locations": "tsx src/scripts/sync-locations.ts",
     "sync:departments": "npm run sync:locations",
     "clear:rooms": "tsx src/scripts/clear-rooms.ts",

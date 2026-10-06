@@ -42,7 +42,7 @@ try {
       where: { year_name: CURRENT_ACADEMIC_YEAR },
       data: { status: "Active" },
     });
-  });
+  }, { maxWait: 10_000, timeout: 60_000 });
   console.log(`Academic years 2015-2016 through ${CURRENT_ACADEMIC_YEAR} are available. ${CURRENT_ACADEMIC_YEAR} is active.`);
 } finally {
   await prisma.$disconnect();

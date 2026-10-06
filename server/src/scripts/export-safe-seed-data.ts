@@ -8,7 +8,8 @@ const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error("DATABASE_URL is not set");
 
 const prisma = new PrismaClient({ adapter: new PrismaMariaDb(databaseUrl) });
-const outputFile = path.resolve("prisma", "seed-data.json");
+const historyOnly = process.argv.includes("--history-only");
+const outputFile = path.resolve("prisma", historyOnly ? "history-data.json" : "seed-data.json");
 
 function date(value: Date | null) {
   return value?.toISOString() ?? null;
@@ -16,7 +17,14 @@ function date(value: Date | null) {
 
 try {
   // Authentication secrets, password hashes, refresh sessions, OTP challenges,
-  // rental/transfer history, and activity logs are intentionally not exported.
+  // and rental/transfer tables are not exported. Activity logs are included
+  // for Settings history and notifications; they may contain personal data.
+  const activityLogs = await prisma.activity_log.findMany({ orderBy: { activity_log_id: "asc" } });
+  const exportedLogs = activityLogs.map((row) => ({ ...row, created_at: date(row.created_at) }));
+  if (historyOnly) {
+    await writeFile(outputFile, `${JSON.stringify({ generatedAt: new Date().toISOString(), activityLogs: exportedLogs }, null, 2)}\n`, "utf8");
+    console.log(`Exported ${activityLogs.length} activity logs to ${outputFile}.`);
+  } else {
   const [roles, budgetYears, categories, departments, rooms, semesters, students, users, items, details, qrCodes] = await Promise.all([
     prisma.role.findMany({ orderBy: { role_id: "asc" } }),
     prisma.budget_year.findMany({ orderBy: { budget_year_id: "asc" } }),
@@ -36,6 +44,7 @@ try {
 
   const seedData = {
     generatedAt: new Date().toISOString(),
+    activityLogs: exportedLogs,
     roles,
     budgetYears: budgetYears.map((row) => ({ ...row, start_date: date(row.start_date), end_date: date(row.end_date) })),
     categories,
@@ -66,6 +75,8 @@ try {
 
   await writeFile(outputFile, `${JSON.stringify(seedData, null, 2)}\n`, "utf8");
   console.log(`Exported ${students.length} students, ${users.length} users, ${items.length} items, and ${details.length} item details to ${outputFile}.`);
+  console.log(`Included ${activityLogs.length} activity logs for Settings history and notifications.`);
+  }
 } finally {
   await prisma.$disconnect();
 }

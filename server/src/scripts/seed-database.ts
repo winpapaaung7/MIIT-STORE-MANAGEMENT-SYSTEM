@@ -4,6 +4,7 @@ import path from "node:path";
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "../generated/prisma/client.js";
 import { hashPassword } from "../auth/service.js";
+import { importActivityLogs, parseActivityLogs } from "./activity-seed.js";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) throw new Error("DATABASE_URL is not set");
@@ -33,6 +34,7 @@ async function requireEmptyDatabase() {
 try {
   await requireEmptyDatabase();
   const data = JSON.parse(await readFile(seedFile, "utf8")) as SeedData;
+  const activityLogs = parseActivityLogs(data);
   const passwordHash = await hashPassword(seedUserPassword);
 
   await prisma.$transaction(async (tx) => {
@@ -83,10 +85,12 @@ try {
     for (const row of data.users.filter((user: any) => user.department_head_code)) {
       await tx.users.update({ where: { user_id: row.user_id }, data: { department_head_of_id: departmentIds.get(row.department_head_code) } });
     }
+    await importActivityLogs(tx, activityLogs);
   }, { timeout: 60_000 });
 
   console.log(`Loaded ${data.students.length} students, ${data.users.length} users, ${data.items.length} items, and ${data.itemDetails.length} item details.`);
   console.log("All seeded users share SEED_USER_PASSWORD. Change those passwords before allowing sign-in.");
+  console.log(`Included ${activityLogs.length} source activity logs. History cannot be restored if the seed file contains none.`);
 } finally {
   await prisma.$disconnect();
 }
