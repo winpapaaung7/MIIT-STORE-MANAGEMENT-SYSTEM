@@ -1,0 +1,661 @@
+[1mdiff --git a/client/src/screens/LaptopRental/BulkIssueRentalModal.tsx b/client/src/screens/LaptopRental/BulkIssueRentalModal.tsx[m
+[1mindex 01d4a04..01b1bd2 100644[m
+[1m--- a/client/src/screens/LaptopRental/BulkIssueRentalModal.tsx[m
+[1m+++ b/client/src/screens/LaptopRental/BulkIssueRentalModal.tsx[m
+[36m@@ -5,10 +5,10 @@[m [mimport { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u[m
+ import { useLanguage } from "@/context/LanguageContext";[m
+ [m
+ const API = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";[m
+[31m-type Student = { student_id: number; student_name: string; roll_number?: string; major?: string; batch?: string };[m
+[31m-type Teacher = { user_id: number; full_name: string; email: string; department: string };[m
+[31m-type Data = { students: Student[]; teachers: Teacher[]; unavailableStudentIds: number[]; unavailableTeacherIds: number[]; availableLaptops: unknown[] };[m
+[31m-const empty: Data = { students: [], teachers: [], unavailableStudentIds: [], unavailableTeacherIds: [], availableLaptops: [] };[m
+[32m+[m[32mtype Student = { student_id: number; student_name: string; roll_number?: string; major?: string; batch?: string; personal_laptop_status?: string };[m
+[32m+[m[32mtype Teacher = { user_id: number; full_name: string; email: string; department: string; personal_laptop_status?: string };[m
+[32m+[m[32mtype Data = { students: Student[]; teachers: Teacher[]; unavailableStudentIds: number[]; unavailableTeacherIds: number[]; personalLaptopStudentIds: number[]; personalLaptopTeacherIds: number[]; availableLaptops: unknown[] };[m
+[32m+[m[32mconst empty: Data = { students: [], teachers: [], unavailableStudentIds: [], unavailableTeacherIds: [], personalLaptopStudentIds: [], personalLaptopTeacherIds: [], availableLaptops: [] };[m
+ const today = () => new Date().toISOString().slice(0, 10);[m
+ const due = () => { const date = new Date(); date.setMonth(date.getMonth() + 3); return date.toISOString().slice(0, 10); };[m
+ [m
+[36m@@ -20,13 +20,15 @@[m [mexport default function BulkIssueRentalModal({ open, onOpenChange, onIssued }: {[m
+   const majors = useMemo(() => [...new Set(data.students.map((student) => student.major).filter(Boolean))] as string[], [data.students]);[m
+   const batches = useMemo(() => [...new Set(data.students.filter((student) => !major || student.major === major).map((student) => student.batch).filter(Boolean))] as string[], [data.students, major]);[m
+   const borrowers = useMemo(() => role === "Student" ? data.students.filter((student) => (!major || student.major === major) && (!batch || student.batch === batch) && `${student.student_name} ${student.roll_number ?? ""}`.toLowerCase().includes(query.toLowerCase())).map((student) => ({ id: student.student_id, name: student.student_name, detail: student.roll_number ?? "-" })) : data.teachers.filter((teacher) => `${teacher.full_name} ${teacher.email}`.toLowerCase().includes(query.toLowerCase())).map((teacher) => ({ id: teacher.user_id, name: teacher.full_name, detail: `${teacher.department} · ${teacher.email}` })), [role, data, major, batch, query]);[m
+[31m-  const blocked = new Set(role === "Student" ? data.unavailableStudentIds : data.unavailableTeacherIds);[m
+[32m+[m[32m  const rentalBlocked = new Set(role === "Student" ? data.unavailableStudentIds : data.unavailableTeacherIds);[m
+[32m+[m[32m  const personalLaptopBlocked = new Set(role === "Student" ? data.personalLaptopStudentIds : data.personalLaptopTeacherIds);[m
+[32m+[m[32m  const blocked = new Set([...rentalBlocked, ...personalLaptopBlocked]);[m
+   const eligible = borrowers.filter((borrower) => !blocked.has(borrower.id));[m
+   const all = eligible.length > 0 && eligible.every((borrower) => selected.includes(borrower.id));[m
+   const submit = async () => { if (!selected.length) return setMessage("Select at least one borrower."); if (selected.length > data.availableLaptops.length) return setMessage("Not enough QR-tagged laptops available."); setSaving(true); try { const response = await fetch(`${API}/api/laptop-rentals/bulk-issue`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ role, borrowerIds: selected, dueDate }) }); const payload = await response.json(); if (!response.ok) throw new Error(payload.message); onIssued(); onOpenChange(false); } catch (error) { setMessage(error instanceof Error ? error.message : "Unable to issue rentals."); } finally { setSaving(false); } };[m
+   const roleLabel = role === "Student" ? t("student") : t("teacher");[m
+ [m
+[31m-  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>{t("bulkIssueRental")}</DialogTitle><p className="text-sm text-slate-500">{t("assignLaptops")}</p></DialogHeader><div className="grid gap-3 sm:grid-cols-2"><Field label={t("borrowerRole")}><select value={role} onChange={(event) => { setRole(event.target.value); setSelected([]); setMajor(""); setBatch(""); }}><option value="Student">{t("student")}</option><option value="Teacher">{t("teacher")}</option></select></Field>{role === "Student" && <><Field label={t("major")}><select value={major} onChange={(event) => { setMajor(event.target.value); setBatch(""); setSelected([]); }}><option value="">{t("allMajors")}</option>{majors.map((value) => <option key={value}>{value}</option>)}</select></Field><Field label={t("batch")}><select value={batch} onChange={(event) => { setBatch(event.target.value); setSelected([]); }}><option value="">{t("allBatches")}</option>{batches.map((value) => <option key={value}>{value}</option>)}</select></Field></>}</div><div className="grid grid-cols-2 rounded-lg bg-slate-50 p-3 text-center"><div><b className="block text-lg">{borrowers.length}</b>{roleLabel} {t("shown")}</div><div><b className="block text-lg text-blue-700">{selected.length}</b>{t("selected")}</div></div><div className="flex justify-between text-sm"><label><input className="mr-2" type="checkbox" checked={all} onChange={() => setSelected(all ? selected.filter((id) => !eligible.some((borrower) => borrower.id === id)) : [...new Set([...selected, ...eligible.map((borrower) => borrower.id)])])}/>{t("selectAllEligible")}</label><span className="text-slate-500">{data.availableLaptops.length} {t("qrLaptops")}</span></div><label className="relative block"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"/><input className="h-10 w-full rounded-md border border-slate-200 pl-10" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`${t("search")} ${roleLabel}...`}/></label><div className="max-h-60 overflow-y-auto rounded-lg border">{loading ? <p className="p-6 text-center">{t("loading")}</p> : borrowers.map((borrower) => <label key={borrower.id} className="flex items-center gap-3 border-b p-3"><input type="checkbox" disabled={blocked.has(borrower.id)} checked={selected.includes(borrower.id)} onChange={() => setSelected(selected.includes(borrower.id) ? selected.filter((id) => id !== borrower.id) : [...selected, borrower.id])}/><span className="flex-1"><b>{borrower.name}</b><small className="ml-2 text-slate-500">{borrower.detail}</small></span>{blocked.has(borrower.id) && <span className="rounded bg-amber-100 px-2 py-1 text-xs text-amber-800">{t("alreadyRented")}</span>}</label>)}</div><div className="grid gap-3 sm:grid-cols-2"><Field label={t("issuedDate")}><input value={today()} readOnly/></Field><Field label={t("expectedReturnDate")}><input type="date" value={dueDate} min={today()} onChange={(event) => setDueDate(event.target.value)}/></Field></div>{message && <p className="rounded bg-red-50 p-3 text-sm text-red-700">{message}</p>}<div className="flex justify-end gap-2"><Button variant="outline" onClick={() => onOpenChange(false)}>{t("cancel")}</Button><Button disabled={saving || !selected.length} onClick={submit}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}<CheckSquare className="mr-2 h-4 w-4"/>{t("confirmRental")}</Button></div></DialogContent></Dialog>;[m
+[32m+[m[32m  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>{t("bulkIssueRental")}</DialogTitle><p className="text-sm text-slate-500">{t("assignLaptops")}</p></DialogHeader><div className="grid gap-3 sm:grid-cols-2"><Field label={t("borrowerRole")}><select value={role} onChange={(event) => { setRole(event.target.value); setSelected([]); setMajor(""); setBatch(""); }}><option value="Student">{t("student")}</option><option value="Teacher">{t("teacher")}</option></select></Field>{role === "Student" && <><Field label={t("major")}><select value={major} onChange={(event) => { setMajor(event.target.value); setBatch(""); setSelected([]); }}><option value="">{t("allMajors")}</option>{majors.map((value) => <option key={value}>{value}</option>)}</select></Field><Field label={t("batch")}><select value={batch} onChange={(event) => { setBatch(event.target.value); setSelected([]); }}><option value="">{t("allBatches")}</option>{batches.map((value) => <option key={value}>{value}</option>)}</select></Field></>}</div><div className="grid grid-cols-2 rounded-lg bg-slate-50 p-3 text-center"><div><b className="block text-lg">{borrowers.length}</b>{roleLabel} {t("shown")}</div><div><b className="block text-lg text-blue-700">{selected.length}</b>{t("selected")}</div></div><div className="flex justify-between text-sm"><label><input className="mr-2" type="checkbox" checked={all} onChange={() => setSelected(all ? selected.filter((id) => !eligible.some((borrower) => borrower.id === id)) : [...new Set([...selected, ...eligible.map((borrower) => borrower.id)])])}/>{t("selectAllEligible")}</label><span className="text-slate-500">{data.availableLaptops.length} {t("qrLaptops")}</span></div><label className="relative block"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"/><input className="h-10 w-full rounded-md border border-slate-200 pl-10" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`${t("search")} ${roleLabel}...`}/></label><div className="max-h-60 overflow-y-auto rounded-lg border">{loading ? <p className="p-6 text-center">{t("loading")}</p> : borrowers.map((borrower) => <label key={borrower.id} className="flex items-center gap-3 border-b p-3"><input type="checkbox" disabled={blocked.has(borrower.id)} checked={selected.includes(borrower.id)} onChange={() => setSelected(selected.includes(borrower.id) ? selected.filter((id) => id !== borrower.id) : [...selected, borrower.id])}/><span className="flex-1"><b>{borrower.name}</b><small className="ml-2 text-slate-500">{borrower.detail}</small></span>{blocked.has(borrower.id) && <span className="rounded px-2 py-1 text-xs text-amber-800 bg-amber-100">{personalLaptopBlocked.has(borrower.id) ? "Working personal laptop" : t("alreadyRented")}</span>}</label>)}</div><div className="grid gap-3 sm:grid-cols-2"><Field label={t("issuedDate")}><input value={today()} readOnly/></Field><Field label={t("expectedReturnDate")}><input type="date" value={dueDate} min={today()} onChange={(event) => setDueDate(event.target.value)}/></Field></div>{message && <p className="rounded bg-red-50 p-3 text-sm text-red-700">{message}</p>}<div className="flex justify-end gap-2"><Button variant="outline" onClick={() => onOpenChange(false)}>{t("cancel")}</Button><Button disabled={saving || !selected.length} onClick={submit}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}<CheckSquare className="mr-2 h-4 w-4"/>{t("confirmRental")}</Button></div></DialogContent></Dialog>;[m
+ }[m
+ [m
+ function Field({ label, children }: { label: string; children: ReactNode }) { return <label className="text-sm font-medium">{label}<span className="mt-1 block [&_input]:h-10 [&_input]:w-full [&_input]:rounded-md [&_input]:border [&_input]:border-slate-200 [&_input]:px-3 [&_select]:h-10 [&_select]:w-full [&_select]:rounded-md [&_select]:border [&_select]:border-slate-200 [&_select]:bg-white [&_select]:px-3">{children}</span></label>; }[m
+[1mdiff --git a/client/src/screens/LaptopRental/LaptopRentalpage.tsx b/client/src/screens/LaptopRental/LaptopRentalpage.tsx[m
+[1mindex 2a1c8b5..ba35cb9 100644[m
+[1m--- a/client/src/screens/LaptopRental/LaptopRentalpage.tsx[m
+[1m+++ b/client/src/screens/LaptopRental/LaptopRentalpage.tsx[m
+[36m@@ -1,7 +1,7 @@[m
+ import { useEffect, useRef, useState } from "react";[m
+ import * as XLSX from "xlsx";[m
+ import type { ChangeEvent } from "react";[m
+[31m-import { CheckCircle2, Clock3, Download, Laptop, MoreHorizontal, Pencil, Plus, QrCode, Search, Trash2, Upload, Users } from "lucide-react";[m
+[32m+[m[32mimport { AlertTriangle, BookOpen, Download, FileDown, Gauge, Laptop, MoreHorizontal, Pencil, Plus, QrCode, Search, ShieldCheck, Trash2, Upload, Users } from "lucide-react";[m
+ import { Button } from "@/components/ui/button";[m
+ import { Card, CardContent } from "@/components/ui/card";[m
+ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";[m
+[36m@@ -16,12 +16,12 @@[m [mimport { useAuth } from "@/auth/AuthContext";[m
+ [m
+ const API = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";[m
+ type Rental = { id: number; rentalCode: string; studentName: string; rollNumber: string; role: string; department: string; academicYear: string; year: string; laptopName: string; laptopId: string; qrCode: string; issuedAt: string; dueDate: string; returnedAt: string | null; issuedBy: string; status: string; inventoryStatus: AccessoryStatus; inventoryDepartment: string; inventoryRoom: string; inventoryRegisteredDate: string; inventoryRemark: string };[m
+[31m-type RentalData = { summary: { all: number; pending: number; active: number; returned: number; available: number }; rentals: Rental[]; pagination?: { page: number; totalPages: number; total: number } };[m
+[32m+[m[32mtype RentalData = { summary: { all: number; pending: number; active: number; returned: number; available: number; damaged: number }; rentals: Rental[]; pagination?: { page: number; totalPages: number; total: number } };[m
+ type FilterOptions = { departments: { id: number; name: string }[]; academicYears: { id: number; name: string }[] };[m
+[31m-type Student = { student_id: number; student_name: string; roll_number: string; email?: string; phone?: string; major?: string; batch?: string; status?: string; laptop_status?: string };[m
+[32m+[m[32mtype Student = { student_id: number; student_name: string; roll_number: string; email?: string; phone?: string; major?: string; batch?: string; status?: string; laptop_status?: string; personal_laptop_status?: string };[m
+ type Draft = Omit<Student, "student_id">;[m
+[31m-const zero = { all: 0, pending: 0, active: 0, returned: 0, available: 0 };[m
+[31m-const emptyStudent: Draft = { student_name: "", roll_number: "", email: "", phone: "", major: "CSE", batch: "", status: "Active" };[m
+[32m+[m[32mconst zero = { all: 0, pending: 0, active: 0, returned: 0, available: 0, damaged: 0 };[m
+[32m+[m[32mconst emptyStudent: Draft = { student_name: "", roll_number: "", email: "", phone: "", major: "CSE", batch: "", status: "Active", personal_laptop_status: "None" };[m
+ const qrStatusClasses: Record<AccessoryStatus, string> = { Available: "bg-green-50 text-green-700", "In Use": "bg-blue-50 text-blue-700", Damaged: "bg-red-50 text-red-700" };[m
+ const formatDateTime = (value: string) => new Date(value).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });[m
+ [m
+[36m@@ -51,6 +51,7 @@[m [mexport default function LaptopRentalPage() {[m
+     void loadRentals();[m
+   };[m
+   const exportRentals = () => { const rows = rentals.map((r) => ({ rental_id: r.rentalCode, role: r.role, borrower: r.studentName, borrower_id: r.rollNumber, issued_by: r.issuedBy, issued_at: r.issuedAt, returned_at: r.returnedAt ?? "", department: r.department, academic_year: r.academicYear, laptop: r.laptopName, inventory_qr: r.qrCode, expected_return_date: r.dueDate ? new Date(r.dueDate).toISOString().slice(0, 10) : "", status: r.status })); const book = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(book, XLSX.utils.json_to_sheet(rows), "Laptop Rentals"); XLSX.writeFile(book, "Laptop-Rentals.xlsx"); };[m
+[32m+[m[32m  const downloadRentalSample = () => { const book = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(book, XLSX.utils.json_to_sheet([{ role: "Student", borrower_id: "2026-MIIT-CSE-001", inventory_qr: "0009-000001", expected_return_date: "2027-01-04", status: "pending" }, { role: "Teacher", borrower_id: "teacher@miit.edu.mm", inventory_qr: "0009-000002", expected_return_date: "2027-01-04", status: "approved" }]), "Rental Import"); XLSX.utils.book_append_sheet(book, XLSX.utils.aoa_to_sheet([["How to use this file"], ["Student rows use the student's roll number in borrower_id."], ["Teacher rows use the teacher's email in borrower_id."], ["inventory_qr must be an active laptop QR code."], ["status must be pending, approved, returned, or rejected."]]), "Instructions"); XLSX.writeFile(book, "Laptop-Rental-Import-Sample.xlsx"); };[m
+   const importRentals = async (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; try { const book = XLSX.read(await file.arrayBuffer(), { type: "array" }); const sheet = book.Sheets[book.SheetNames[0]]; const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet).map((row) => Object.fromEntries(Object.entries(row).map(([key, value]) => [key.toLowerCase().replaceAll(" ", "_"), String(value ?? "")]))); const response = await fetch(API + "/api/laptop-rentals/import", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rentals: rows }) }); const payload = await response.json(); if (!response.ok) throw new Error(payload.message ?? "Import failed."); window.alert("Imported " + payload.imported + " rental records."); setLoading(true); void loadRentals(); } catch (error) { window.alert(error instanceof Error ? error.message : "Import failed."); } finally { event.target.value = ""; } };[m
+   const rentals = data.rentals;[m
+   const setSelectedQrItem = (item: AccessoryItem | null) => {[m
+[36m@@ -60,9 +61,9 @@[m [mexport default function LaptopRentalPage() {[m
+     setSelectedQrItemState({ ...item, status: rental.inventoryStatus, department: rental.inventoryDepartment as AccessoryItem["department"], room: rental.inventoryRoom, registeredDate: rental.inventoryRegisteredDate, createdAt: rental.inventoryRegisteredDate, remark: rental.inventoryRemark, borrowerName: rental.studentName, borrowerId: rental.rollNumber });[m
+   };[m
+   return <div className="laptop-rental-page space-y-5 pb-4">[m
+[31m-    <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div><h1 className="text-3xl font-bold text-slate-950">{t("laptopRental")}</h1></div><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => rentalImportRef.current?.click()}><Upload className="mr-2 h-4 w-4"/>{t("import")}</Button><Button variant="outline" onClick={exportRentals}><Download className="mr-2 h-4 w-4"/>{t("export")}</Button><Button onClick={() => setBulkIssueOpen(true)}><Plus className="mr-2 h-4 w-4"/>{t("issueRental")}</Button></div></header>[m
+[32m+[m[32m    <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div><h1 className="text-3xl font-bold text-slate-950">{t("laptopRental")}</h1></div><div className="flex flex-wrap gap-2"><Button type="button" variant="outline" onClick={downloadRentalSample} className="h-10 gap-2 rounded-xl border-slate-200 bg-white px-4 font-medium text-slate-700 shadow-sm hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 hover:shadow-md sm:px-5"><FileDown className="h-4 w-4"/>Sample File</Button><Button variant="outline" onClick={() => rentalImportRef.current?.click()}><Upload className="mr-2 h-4 w-4"/>{t("import")}</Button><Button variant="outline" onClick={exportRentals}><Download className="mr-2 h-4 w-4"/>{t("export")}</Button><Button onClick={() => setBulkIssueOpen(true)}><Plus className="mr-2 h-4 w-4"/>{t("issueRental")}</Button></div></header>[m
+     <input ref={rentalImportRef} type="file" accept=".csv,.xlsx,.xls" className="hidden" onChange={importRentals}/>[m
+[31m-    <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><Stat label={t("allQuantity")} value={data.summary.all} Icon={Users} tone="text-slate-900"/><Stat label={t("pendingQuantity")} value={data.summary.pending} Icon={Clock3} tone="text-amber-600"/><Stat label={t("inUseQuantity")} value={data.summary.active} Icon={Laptop} tone="text-blue-600"/><Stat label={t("availableQuantity")} value={data.summary.available} Icon={CheckCircle2} tone="text-green-600"/></section>[m
+[32m+[m[32m    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><RentalStat label={t("allQuantity")} value={data.summary.all} Icon={Users} tone="text-blue-600" surface="bg-blue-50"/><RentalStat label={t("inUseQuantity")} value={data.summary.active} Icon={Laptop} tone="text-blue-600" surface="bg-blue-50"/><RentalAvailability available={data.summary.available} pending={data.summary.pending}/><RentalStat label={t("damagedMaintenance")} value={data.summary.damaged} Icon={AlertTriangle} tone="text-red-600" surface="bg-red-50"/></section>[m
+     <RentalFilters value={filters} departments={filterOptions.departments} academicYears={filterOptions.academicYears} loading={loading} onChange={(next) => { setPage(1); setFilters((current) => ({ ...current, ...next })); }} onReset={() => { setPage(1); setFilters({ status: "", role: "", department: "", academicYear: "", query: "" }); }} onOpenStudents={() => setStudentsOpen(true)} onOpenTeachers={() => setTeachersOpen(true)} onOpenPolicies={() => setPoliciesOpen(true)} />[m
+     {filterError && <p className="rounded-md bg-red-50 p-3 text-sm text-red-700">{filterError}</p>}[m
+     <Card className="overflow-hidden border-slate-200 shadow-sm"><div className="overflow-x-auto"><table className="w-full min-w-[1180px] text-sm"><thead className="border-b bg-slate-50 text-left text-xs text-slate-500"><tr>{["ID", t("borrower"), `${t("role")} / ${t("department")} / ${t("academicYear")}`, t("laptop"), t("inventoryQr"), "Issued", "Returned", t("status"), t("actions")].map((h) => <th key={h} className="px-4 py-3 font-medium">{h}</th>)}</tr></thead><tbody>{rentals.map((r) => <tr key={r.id} className="border-b last:border-0"><td className="px-4 py-4 font-mono text-xs text-slate-600">{r.rentalCode}</td><td className="px-4 py-4"><p className="font-medium">{r.studentName}</p><p className="text-xs text-slate-500">{r.rollNumber}</p></td><td className="px-4 py-4"><p>{r.role}</p><p className="text-xs text-slate-500">{r.department}</p><p className="text-xs text-slate-500">{r.academicYear}</p></td><td className="px-4 py-4"><p className="font-medium">{r.laptopName}</p><p className="font-mono text-xs text-slate-500">{r.laptopId}</p></td><td className="px-4 py-4"><div className="flex justify-center">{r.qrCode === "-" ? <span className="font-mono text-xs text-slate-500">-</span> : <button type="button" aria-label={`${t("qrCode")}: ${r.laptopName}`} onClick={() => setSelectedQrItem({ id: r.qrCode, itemName: r.laptopName, subCategory: "Laptop Rental", status: "In Use", department: "Store", room: "", academicYear: r.academicYear, registeredDate: r.issuedAt, createdAt: r.issuedAt, remark: `${r.studentName} · ${r.rentalCode}` })} className="flex size-11 shrink-0 items-center justify-center rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-slate-200"><QrCode className="size-5 text-slate-800"/></button>}</div></td><td className="px-4 py-4 text-slate-600"><p>{formatDateTime(r.issuedAt)}</p><p className="text-xs text-slate-500">By {r.issuedBy}</p><p className="text-xs text-slate-500">Due {new Date(r.dueDate).toLocaleDateString()}</p></td><td className="px-4 py-4 text-slate-600">{r.returnedAt ? formatDateTime(r.returnedAt) : "-"}</td><td className="px-4 py-4"><Status status={r.status}/></td><td className="px-4 py-4"><select aria-label={t("status")} value={["issued", "active"].includes(r.status.toLowerCase()) ? "approved" : r.status.toLowerCase()} onChange={(e) => { if (e.target.value !== r.status.toLowerCase()) void updateRentalStatus(r.id, e.target.value); }} className="h-9 rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-700 shadow-sm"><option value="pending">{t("pending")}</option><option value="approved">{t("approved")}</option><option value="returned">{t("returned")}</option><option value="rejected">{t("rejected")}</option></select></td></tr>)}</tbody></table></div>{loading && <div className="py-16 text-center text-sm text-slate-500">{t("loadingRentalRecords")}</div>}{!loading && !rentals.length && <div className="py-16 text-center text-sm text-slate-500">{t("noRentalRecords")}</div>}</Card>[m
+[36m@@ -85,7 +86,46 @@[m [mfunction RentalPoliciesModal({ open, onOpenChange }: { open: boolean; onOpenChan[m
+   const [message, setMessage] = useState("");[m
+   useEffect(() => { if (open) { fetch(`${API}/api/laptop-rentals/policies`).then((response) => response.json()).then((payload) => { const loaded = payload.policies ?? []; setPolicies(loaded); setSavedPolicies(loaded); setMessage(""); }).catch(() => setMessage("Unable to load rental policies.")); } }, [open]);[m
+   const save = async () => { const response = await fetch(`${API}/api/laptop-rentals/policies`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ policies }) }); const payload = await response.json(); if (!response.ok) return setMessage(payload.message ?? "Unable to save rental policies."); const saved = payload.policies ?? policies; setPolicies(saved); setSavedPolicies(saved); setEditing(false); setMessage("Rental policies saved."); };[m
+[31m-  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="max-h-[90vh] w-[92vw] max-w-3xl overflow-y-auto"><DialogHeader><div className="flex items-start justify-between gap-4"><div><DialogTitle>Laptop Rental Policies</DialogTitle><p className="mt-1 text-sm text-slate-500">Rules applied when issuing and managing laptop rentals.</p></div>{canEdit && !editing && <Button type="button" size="sm" variant="outline" onClick={() => setEditing(true)}>Edit</Button>}</div></DialogHeader><div className="space-y-3 text-sm text-slate-700">{policies.map((policy, index) => <div key={`${policy.title}-${index}`} className="rounded-lg border border-slate-200 bg-slate-50 p-3">{editing ? <><div className="flex gap-2"><input value={policy.title} onChange={(event) => setPolicies((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, title: event.target.value } : item))} className="h-9 flex-1 rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900"/>{isAdmin && <Button type="button" size="icon" variant="outline" aria-label={`Delete ${policy.title || "policy"}`} title="Delete policy" disabled={policies.length === 1} onClick={() => setPolicies((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="size-9 border-rose-200 text-rose-700 hover:bg-rose-50"><Trash2 className="size-4"/></Button>}</div><textarea value={policy.text} onChange={(event) => setPolicies((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, text: event.target.value } : item))} className="mt-2 min-h-20 w-full rounded-md border border-slate-200 bg-white p-2 text-sm text-slate-700"/></> : <><p className="font-medium text-slate-900">{policy.title}</p><p className="mt-1 text-slate-600">{policy.text}</p></>}</div>)}{!policies.length && !message && <p className="py-6 text-center text-slate-500">Loading policies...</p>}{message && <p className="text-sm text-slate-600">{message}</p>}{editing && <div className="flex justify-end gap-2">{isAdmin && <Button type="button" size="sm" variant="outline" onClick={() => setPolicies((current) => [...current, { title: "New policy", text: "Describe this rental policy." }])}><Plus className="mr-1.5 size-4"/>Add Policy</Button>}<Button type="button" size="sm" variant="outline" onClick={() => { setPolicies(savedPolicies); setEditing(false); }}>Cancel</Button><Button type="button" size="sm" onClick={() => void save()}>Save Policies</Button></div>}</div></DialogContent></Dialog>;[m
+[32m+[m[32m  return ([m
+[32m+[m[32m    <Dialog open={open} onOpenChange={onOpenChange}>[m
+[32m+[m[32m      <DialogContent className="max-h-[90vh] w-[92vw] max-w-3xl gap-0 overflow-y-auto p-0">[m
+[32m+[m[32m        <DialogHeader className="border-b border-slate-100 px-6 py-5 pr-12">[m
+[32m+[m[32m          <div className="flex items-start gap-3">[m
+[32m+[m[32m            <div className="rounded-xl bg-blue-50 p-2.5 text-blue-700"><BookOpen className="size-5" /></div>[m
+[32m+[m[32m            <div>[m
+[32m+[m[32m              <DialogTitle>Laptop Rental Policies</DialogTitle>[m
+[32m+[m[32m              <p className="mt-1 text-sm leading-6 text-slate-500">Rules applied when issuing and managing laptop rentals.</p>[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m        </DialogHeader>[m
+[32m+[m[32m        <div className="space-y-3 p-6 text-sm text-slate-700">[m
+[32m+[m[32m          {policies.map((policy, index) => ([m
+[32m+[m[32m            <div key={`${policy.title}-${index}`} className="rounded-xl border border-slate-200 bg-slate-50/80 p-4">[m
+[32m+[m[32m              {editing ? <>[m
+[32m+[m[32m                <div className="flex gap-2">[m
+[32m+[m[32m                  <input value={policy.title} onChange={(event) => setPolicies((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, title: event.target.value } : item))} className="h-9 flex-1 rounded-md border border-slate-200 bg-white px-2 text-sm font-medium text-slate-900" />[m
+[32m+[m[32m                  {isAdmin && <Button type="button" size="icon" variant="outline" aria-label={`Delete ${policy.title || "policy"}`} title="Delete policy" disabled={policies.length === 1} onClick={() => setPolicies((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="size-9 border-rose-200 text-rose-700 hover:bg-rose-50"><Trash2 className="size-4" /></Button>}[m
+[32m+[m[32m                </div>[m
+[32m+[m[32m                <textarea value={policy.text} onChange={(event) => setPolicies((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, text: event.target.value } : item))} className="mt-2 min-h-20 w-full rounded-md border border-slate-200 bg-white p-2 text-sm text-slate-700" />[m
+[32m+[m[32m              </> : <div className="flex items-start gap-3">[m
+[32m+[m[32m                <div className="mt-0.5 rounded-lg bg-white p-2 text-blue-700 shadow-sm ring-1 ring-slate-200"><ShieldCheck className="size-4" /></div>[m
+[32m+[m[32m                <div className="min-w-0"><p className="font-semibold text-slate-900">{policy.title}</p><p className="mt-1 leading-6 text-slate-600">{policy.text}</p></div>[m
+[32m+[m[32m              </div>}[m
+[32m+[m[32m            </div>[m
+[32m+[m[32m          ))}[m
+[32m+[m[32m          {!policies.length && !message && <p className="py-6 text-center text-slate-500">Loading policies...</p>}[m
+[32m+[m[32m          {message && <p className="text-sm text-slate-600">{message}</p>}[m
+[32m+[m[32m          {editing ? <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-4">[m
+[32m+[m[32m            {isAdmin && <Button type="button" size="sm" variant="outline" onClick={() => setPolicies((current) => [...current, { title: "New policy", text: "Describe this rental policy." }])}><Plus className="mr-1.5 size-4" />Add Policy</Button>}[m
+[32m+[m[32m            <Button type="button" size="sm" variant="outline" onClick={() => { setPolicies(savedPolicies); setEditing(false); }}>Cancel</Button>[m
+[32m+[m[32m            <Button type="button" size="sm" onClick={() => void save()}>Save Policies</Button>[m
+[32m+[m[32m          </div> : canEdit && <div className="flex justify-end border-t border-slate-100 pt-4">[m
+[32m+[m[32m            <Button type="button" size="sm" onClick={() => setEditing(true)}><Pencil className="mr-1.5 size-4" />Edit policies</Button>[m
+[32m+[m[32m          </div>}[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      </DialogContent>[m
+[32m+[m[32m    </Dialog>[m
+[32m+[m[32m  );[m
+ }[m
+ [m
+ function StudentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (value: boolean) => void }) {[m
+[36m@@ -96,15 +136,34 @@[m [mfunction StudentModal({ open, onOpenChange }: { open: boolean; onOpenChange: (va[m
+   const shown = students.filter((s) => (s.student_name + " " + s.roll_number + " " + (s.major ?? "")).toLowerCase().includes(search.toLowerCase()));[m
+   const save = async () => { if (!draft.student_name.trim() || !draft.roll_number.trim()) return setMessage("Student name and roll number are required."); const url = editingId ? API + "/api/students/" + editingId : API + "/api/students"; const response = await fetch(url, { method: editingId ? "PUT" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(draft) }); const payload = await response.json(); if (!response.ok) return setMessage(payload.message ?? "Unable to save student."); setDraft(emptyStudent); setEditingId(null); setMessage("Student saved successfully."); load(); };[m
+   const importFile = async (event: ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; if (!file) return; const lines = (await file.text()).trim().split(/\r?\n/); const headers = lines.shift()?.split(",").map((h) => h.trim()) ?? []; const rows = lines.filter(Boolean).map((line) => { const values = line.split(","); return Object.fromEntries(headers.map((h, i) => [h, values[i]?.trim() ?? ""])); }); const response = await fetch(API + "/api/students/import", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ students: rows }) }); const payload = await response.json(); setMessage(response.ok ? "Imported " + (payload.count ?? rows.length) + " students." : (payload.message ?? "Import failed.")); if (response.ok) load(); event.target.value = ""; };[m
+[31m-  const downloadSample = () => { const csv = "student_name,roll_number,email,phone,major,batch,status\nExample Student,2026-MIIT-CSE-001,student@miit.edu.mm,09123456789,CSE,2026 Batch,Active\n"; const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); const link = document.createElement("a"); link.href = url; link.download = "Student-Import-Sample.csv"; link.click(); URL.revokeObjectURL(url); };[m
+[32m+[m[32m  const downloadSample = () => { const csv = "student_name,roll_number,email,phone,major,batch,status,personal_laptop_status\nExample Student (No Laptop),2026-MIIT-CSE-001,student1@miit.edu.mm,09123456789,CSE,2026 Batch,Active,None\nExample Student (Working Laptop),2026-MIIT-CSE-002,student2@miit.edu.mm,09123456780,CSE,2026 Batch,Active,Working\nExample Student (Damaged Laptop),2026-MIIT-CSE-003,student3@miit.edu.mm,09123456781,CSE,2026 Batch,Active,Damaged\n"; const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); const link = document.createElement("a"); link.href = url; link.download = "Student-Import-Sample.csv"; link.click(); URL.revokeObjectURL(url); };[m
+   const remove = async (id: number) => { if (!window.confirm("Delete this student?")) return; const response = await fetch(API + "/api/students/" + id, { method: "DELETE" }); if (response.ok) { setMessage("Student deleted."); load(); } else setMessage("Unable to delete student."); };[m
+[31m-  const edit = (s: Student) => { setDraft({ student_name: s.student_name, roll_number: s.roll_number, email: s.email ?? "", phone: s.phone ?? "", major: s.major ?? "", batch: s.batch ?? "", status: s.status ?? "Active" }); setEditingId(s.student_id); setMessage("Editing " + s.roll_number); };[m
+[32m+[m[32m  const edit = (s: Student) => { setDraft({ student_name: s.student_name, roll_number: s.roll_number, email: s.email ?? "", phone: s.phone ?? "", major: s.major ?? "", batch: s.batch ?? "", status: s.status ?? "Active", personal_laptop_status: s.personal_laptop_status ?? "None" }); setEditingId(s.student_id); setMessage("Editing " + s.roll_number); };[m
+   const field = (name: keyof Draft, value: string) => setDraft({ ...draft, [name]: value });[m
+   const studentFields: [keyof Draft, string][] = [["student_name", t("studentName")], ["roll_number", t("rollNumber")], ["email", t("email")], ["phone", t("phone")], ["major", `${t("major")} (CSE / ECE)`], ["batch", t("batch")], ["status", t("status")]];[m
+[31m-  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="max-h-[92vh] w-[96vw] max-w-[96vw] overflow-y-auto sm:max-w-[min(96vw,1200px)]"><DialogHeader><DialogTitle>{t("studentList")}</DialogTitle><p className="text-sm text-slate-500">{t("manageStudents")}</p></DialogHeader><div className="grid gap-4 lg:grid-cols-[330px_1fr]"><Card className="border-slate-200"><CardContent className="space-y-3 p-4"><div className="flex items-center justify-between gap-2"><h3 className="font-semibold">{editingId ? t("editStudent") : t("addStudent")}</h3><div className="flex items-center gap-2"><Button type="button" variant="outline" size="sm" onClick={downloadSample} className="h-8 border-slate-200 px-2 text-xs"><Download className="mr-1.5 h-4 w-4"/>Sample</Button><label className="inline-flex h-8 cursor-pointer items-center rounded-md border border-blue-200 bg-blue-50 px-2.5 text-xs font-medium text-blue-700 shadow-sm transition-colors hover:bg-blue-100"><Upload className="mr-1.5 h-4 w-4"/>{t("importCsv")}<input type="file" accept=".csv" className="hidden" onChange={importFile}/></label></div></div>{studentFields.map(([name, label]) => <label key={name} className="block text-xs font-medium text-slate-600">{label}<input value={draft[name] ?? ""} onChange={(e) => field(name, e.target.value)} className="mt-1 h-9 w-full rounded-md border border-slate-200 px-2 text-sm"/></label>)}<div className="flex gap-2"><Button size="sm" onClick={save}>{editingId ? t("updateStudent") : t("addStudent")}</Button>{editingId && <Button size="sm" variant="outline" onClick={() => { setEditingId(null); setDraft(emptyStudent); }}>{t("cancel")}</Button>}</div>{message && <p className="text-xs text-slate-600">{message}</p>}</CardContent></Card><div className="min-w-0"><label className="relative block"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"/><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("searchStudents")} className="h-10 w-full rounded-lg border border-slate-200 pl-10 pr-3 text-sm"/></label><div className="mt-3 max-h-[520px] overflow-auto rounded-lg border border-slate-200"><table className="w-full min-w-[650px] text-sm"><thead className="sticky top-0 bg-slate-50 text-left text-xs text-slate-500"><tr>{[t("rollNumber"), t("student"), t("major"), t("batch"), t("laptopStatus"), t("actions")].map((h) => <th key={h} className="px-3 py-3">{h}</th>)}</tr></thead><tbody>{shown.map((s) => <tr key={s.student_id} className="border-t"><td className="px-3 py-3 font-mono text-xs">{s.roll_number}</td><td className="px-3 py-3"><p className="font-medium">{s.student_name}</p><p className="text-xs text-slate-500">{s.email || s.phone || "-"}</p></td><td className="px-3 py-3">{s.major || "-"}</td><td className="px-3 py-3">{s.batch || "-"}</td><td className="px-3 py-3"><Status status={s.laptop_status ?? "No Rental"}/></td><td className="px-3 py-3"><div className="flex justify-center"><DropdownMenu open={openActionId === s.student_id} onOpenChange={(isOpen) => setOpenActionId(isOpen ? s.student_id : null)}><DropdownMenuTrigger asChild><Button type="button" variant="outline" size="icon" aria-label={`Actions for ${s.student_name}`} className="size-9 rounded-lg border-slate-200 bg-white shadow-sm hover:bg-slate-50"><MoreHorizontal className="size-4"/></Button></DropdownMenuTrigger><DropdownMenuContent align="end" className="w-32"><DropdownMenuItem onClick={() => edit(s)}><Pencil className="size-4 text-sky-600"/>{t("edit")}</DropdownMenuItem><DropdownMenuItem onClick={() => remove(s.student_id)} className="text-rose-700 focus:text-rose-700"><Trash2 className="size-4"/>{t("delete")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div></td></tr>)}{!shown.length && <tr><td colSpan={6} className="px-3 py-12 text-center text-slate-500">{t("noStudents")}</td></tr>}</tbody></table></div></div></div></DialogContent></Dialog>;[m
+[32m+[m[32m  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="max-h-[92vh] w-[96vw] max-w-[96vw] overflow-y-auto sm:max-w-[min(96vw,1200px)]"><DialogHeader><DialogTitle>{t("studentList")}</DialogTitle><p className="text-sm text-slate-500">{t("manageStudents")}</p></DialogHeader><div className="grid gap-4 lg:grid-cols-[330px_1fr]"><Card className="border-slate-200"><CardContent className="space-y-3 p-4"><div className="flex items-center justify-between gap-2"><h3 className="font-semibold">{editingId ? t("editStudent") : t("addStudent")}</h3><div className="flex items-center gap-2"><Button type="button" variant="outline" size="sm" onClick={downloadSample} className="h-8 border-slate-200 px-2 text-xs"><FileDown className="mr-1.5 h-4 w-4"/>Sample File</Button><label className="inline-flex h-8 cursor-pointer items-center rounded-md border border-blue-200 bg-blue-50 px-2.5 text-xs font-medium text-blue-700 shadow-sm transition-colors hover:bg-blue-100"><Upload className="mr-1.5 h-4 w-4"/>{t("importCsv")}<input type="file" accept=".csv" className="hidden" onChange={importFile}/></label></div></div>{studentFields.map(([name, label]) => <label key={name} className="block text-xs font-medium text-slate-600">{label}<input value={draft[name] ?? ""} onChange={(e) => field(name, e.target.value)} className="mt-1 h-9 w-full rounded-md border border-slate-200 px-2 text-sm"/></label>)}<label className="block text-xs font-medium text-slate-600">Personal laptop<select value={draft.personal_laptop_status ?? "None"} onChange={(event) => field("personal_laptop_status", event.target.value)} className="mt-1 h-9 w-full rounded-md border border-slate-200 bg-white px-2 text-sm"><option value="None">No personal laptop</option><option value="Working">Working</option><option value="Damaged">Damaged</option></select></label><div className="flex gap-2"><Button size="sm" onClick={save}>{editingId ? t("updateStudent") : t("addStudent")}</Button>{editingId && <Button size="sm" variant="outline" onClick={() => { setEditingId(null); setDraft(emptyStudent); }}>{t("cancel")}</Button>}</div>{message && <p className="text-xs text-slate-600">{message}</p>}</CardContent></Card><div className="min-w-0"><label className="relative block"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"/><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("searchStudents")} className="h-10 w-full rounded-lg border border-slate-200 pl-10 pr-3 text-sm"/></label><div className="mt-3 max-h-[520px] overflow-auto rounded-lg border border-slate-200"><table className="w-full min-w-[760px] text-sm"><thead className="sticky top-0 bg-slate-50 text-left text-xs text-slate-500"><tr>{[t("rollNumber"), t("student"), t("major"), t("batch"), "Personal laptop", t("laptopStatus"), t("actions")].map((h) => <th key={h} className="px-3 py-3">{h}</th>)}</tr></thead><tbody>{shown.map((s) => <tr key={s.student_id} className="border-t"><td className="px-3 py-3 font-mono text-xs">{s.roll_number}</td><td className="px-3 py-3"><p className="font-medium">{s.student_name}</p><p className="text-xs text-slate-500">{s.email || s.phone || "-"}</p></td><td className="px-3 py-3">{s.major || "-"}</td><td className="px-3 py-3">{s.batch || "-"}</td><td className="px-3 py-3"><PersonalLaptopStatus status={s.personal_laptop_status}/></td><td className="px-3 py-3"><Status status={s.laptop_status ?? "No Rental"}/></td><td className="px-3 py-3"><div className="flex justify-center"><DropdownMenu open={openActionId === s.student_id} onOpenChange={(isOpen) => setOpenActionId(isOpen ? s.student_id : null)}><DropdownMenuTrigger asChild><Button type="button" variant="outline" size="icon" aria-label={`Actions for ${s.student_name}`} className="size-9 rounded-lg border-slate-200 bg-white shadow-sm hover:bg-slate-50"><MoreHorizontal className="size-4"/></Button></DropdownMenuTrigger><DropdownMenuContent align="end" className="w-32"><DropdownMenuItem onClick={() => edit(s)}><Pencil className="size-4 text-sky-600"/>{t("edit")}</DropdownMenuItem><DropdownMenuItem onClick={() => remove(s.student_id)} className="text-rose-700 focus:text-rose-700"><Trash2 className="size-4"/>{t("delete")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div></td></tr>)}{!shown.length && <tr><td colSpan={7} className="px-3 py-12 text-center text-slate-500">{t("noStudents")}</td></tr>}</tbody></table></div></div></div></DialogContent></Dialog>;[m
+ }[m
+ [m
+[31m-function Stat({ label, value, Icon, tone }: { label: string; value: number; Icon: typeof Laptop; tone: string }) { return <Card className="border-slate-200 shadow-sm"><CardContent className="flex items-center gap-3 p-4"><div className={"rounded-lg bg-slate-50 p-2.5 " + tone}><Icon className="h-5 w-5"/></div><div><p className={"text-2xl font-bold " + tone}>{value}</p><p className="text-xs text-slate-500">{label}</p></div></CardContent></Card>; }[m
+[32m+[m[32mfunction PersonalLaptopStatus({ status }: { status?: string }) {[m
+[32m+[m[32m  const normalized = status === "Working" || status === "Damaged" ? status : "None";[m
+[32m+[m[32m  const style = normalized === "Working" ? "bg-amber-50 text-amber-700" : normalized === "Damaged" ? "bg-red-50 text-red-700" : "bg-slate-100 text-slate-600";[m
+[32m+[m[32m  const label = normalized === "None" ? "No personal laptop" : normalized;[m
+[32m+[m[32m  return <span className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${style}`}>{label}</span>;[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mfunction RentalStat({ label, value, Icon, tone, surface }: { label: string; value: number; Icon: typeof Laptop; tone: string; surface: string }) { return <Card className="h-32 overflow-hidden border-slate-200/90 bg-white shadow-sm"><CardContent className="flex h-full flex-col px-4 pb-3 pt-3"><div className="flex items-start justify-between gap-3"><p className="truncate text-sm font-semibold tracking-tight text-slate-600">{label}</p><div className={`rounded-xl p-2 ${surface} ${tone}`}><Icon className="h-5 w-5"/></div></div><p className="mt-2 text-3xl font-bold leading-none text-slate-950">{value}</p></CardContent></Card>; }[m
+[32m+[m[32mfunction RentalAvailability({ available, pending }: { available: number; pending: number }) {[m
+[32m+[m[32m  return <Card className="flex h-32 min-w-0 flex-col overflow-hidden border-slate-200/90 bg-white shadow-sm">[m
+[32m+[m[32m    <CardContent className="relative flex h-full flex-col px-4 pb-3 pt-3">[m
+[32m+[m[32m      <div className="min-w-[140px] flex-1">[m
+[32m+[m[32m        <p className="whitespace-nowrap text-[13px] font-semibold tracking-tight text-slate-600">Rental availability</p>[m
+[32m+[m[32m        <div className="mt-2 flex items-baseline gap-2"><strong className="text-3xl font-bold leading-none text-green-600">{available}</strong><span className="text-sm font-medium text-slate-600">Available</span></div>[m
+[32m+[m[32m        <p className="mt-3 flex items-center gap-2 text-sm font-medium text-slate-600"><span className="size-2.5 rounded-full bg-amber-500"/><strong className="text-slate-950">{pending}</strong> Pending</p>[m
+[32m+[m[32m      </div>[m
+[32m+[m[32m      <div className="absolute right-4 top-3 rounded-xl bg-green-50 p-2 text-green-600"><Gauge className="size-5"/></div>[m
+[32m+[m[32m    </CardContent>[m
+[32m+[m[32m  </Card>;[m
+[32m+[m[32m}[m
+ function Status({ status }: { status: string }) { const { t } = useLanguage(); const key = status.toLowerCase(); const style = key === "returned" || key === "completed" ? "bg-slate-100 text-slate-700" : key === "pending" ? "bg-amber-50 text-amber-700" : key === "approved" || key === "active" || key === "issued" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"; const label = key === "returned" || key === "completed" ? t("returned") : key === "pending" ? t("pending") : key === "approved" || key === "active" || key === "issued" ? t("approved") : key === "rejected" ? t("rejected") : status; return <span className={"rounded-full px-2.5 py-1 text-xs font-medium " + style}>{label}</span>; }[m
+ [m
+ [m
+[1mdiff --git a/client/src/screens/LaptopRental/TeacherListModal.tsx b/client/src/screens/LaptopRental/TeacherListModal.tsx[m
+[1mindex 77e805e..338b394 100644[m
+[1m--- a/client/src/screens/LaptopRental/TeacherListModal.tsx[m
+[1m+++ b/client/src/screens/LaptopRental/TeacherListModal.tsx[m
+[36m@@ -1,6 +1,6 @@[m
+ import { useEffect, useState } from "react";[m
+ import type { ChangeEvent } from "react";[m
+[31m-import { Download, MoreHorizontal, Pencil, Plus, Search, Trash2, Upload } from "lucide-react";[m
+[32m+[m[32mimport { FileDown, MoreHorizontal, Pencil, Plus, Search, Trash2, Upload } from "lucide-react";[m
+ import { Button } from "@/components/ui/button";[m
+ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";[m
+ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";[m
+[36m@@ -8,8 +8,8 @@[m [mimport { useLanguage } from "@/context/LanguageContext";[m
+ [m
+ const API = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";[m
+ type Department = { id: number; name: string };[m
+[31m-type Teacher = { id: number; name: string; email: string; phone: string; departmentId: number; department: string; laptopStatus?: string };[m
+[31m-const blank = { name: "", email: "", phone: "", departmentId: "" };[m
+[32m+[m[32mtype Teacher = { id: number; name: string; email: string; phone: string; departmentId: number; department: string; laptopStatus?: string; personalLaptopStatus?: string };[m
+[32m+[m[32mconst blank = { name: "", email: "", phone: "", departmentId: "", personalLaptopStatus: "None" };[m
+ [m
+ export default function TeacherListModal({ open, onOpenChange }: { open: boolean; onOpenChange: (value: boolean) => void }) {[m
+   const { t } = useLanguage();[m
+[36m@@ -24,7 +24,7 @@[m [mexport default function TeacherListModal({ open, onOpenChange }: { open: boolean[m
+   const load = async () => {[m
+     const [teacherResponse, departmentResponse] = await Promise.all([fetch(`${API}/api/teachers`).then((response) => response.json()), fetch(`${API}/api/departments`).then((response) => response.json())]);[m
+     setTeachers(teacherResponse.teachers ?? []);[m
+[31m-    setDepartments((departmentResponse.departments ?? []).map((department: { id?: number; department_id?: number; department: string }) => ({ id: department.id ?? department.department_id!, name: department.department })));[m
+[32m+[m[32m    setDepartments((departmentResponse.departments ?? []).map((department: { id?: number; department_id?: number; department: string }) => ({ id: department.department_id ?? department.id!, name: department.department })));[m
+   };[m
+   useEffect(() => { if (open) { void load(); setMessage(""); } }, [open]);[m
+ [m
+[36m@@ -48,11 +48,34 @@[m [mexport default function TeacherListModal({ open, onOpenChange }: { open: boolean[m
+     const response = await fetch(`${API}/api/teachers/import`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ teachers }) });[m
+     const payload = await response.json(); setMessage(response.ok ? `Imported ${payload.imported ?? teachers.length} teacher(s).` : (payload.message ?? "Import failed.")); if (response.ok) void load(); event.target.value = "";[m
+   };[m
+[31m-  const downloadSample = () => { const csv = "name,email,phone,department\nExample Teacher,teacher@miit.edu.mm,09123456789,Faculty of Computing\n"; const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); const link = document.createElement("a"); link.href = url; link.download = "Teacher-Import-Sample.csv"; link.click(); URL.revokeObjectURL(url); };[m
+[32m+[m[32m  const downloadSample = () => { const csv = "name,email,phone,department,personal_laptop_status\nExample Teacher (No Laptop),teacher1@miit.edu.mm,09123456789,Faculty of Computing,None\nExample Teacher (Working Laptop),teacher2@miit.edu.mm,09123456780,Faculty of Computing,Working\nExample Teacher (Damaged Laptop),teacher3@miit.edu.mm,09123456781,Faculty of Computing,Damaged\n"; const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); const link = document.createElement("a"); link.href = url; link.download = "Teacher-Import-Sample.csv"; link.click(); URL.revokeObjectURL(url); };[m
+   const shown = teachers.filter((teacher) => `${teacher.name} ${teacher.email} ${teacher.phone} ${teacher.department}`.toLowerCase().includes(query.toLowerCase()));[m
+   const fields = [["name", t("teacherName")], ["phone", t("phoneNumber")], ["email", t("email")]] as const;[m
+ [m
+[31m-  return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="max-h-[92vh] w-[96vw] max-w-[96vw] overflow-y-auto sm:max-w-[min(96vw,1100px)]"><DialogHeader><DialogTitle>{t("teacherList")}</DialogTitle><p className="text-sm text-slate-500">{t("manageTeachers")}</p></DialogHeader><div className="grid gap-4 lg:grid-cols-[310px_1fr]"><div className="space-y-3 rounded-lg border p-4"><div className="flex items-center justify-between gap-2"><h3 className="font-semibold">{editing ? t("editTeacher") : t("addTeacher")}</h3><div className="flex items-center gap-2"><Button type="button" variant="outline" size="sm" onClick={downloadSample} className="h-8 border-slate-200 px-2 text-xs"><Download className="mr-1.5 h-4 w-4"/>Sample</Button><label className="inline-flex h-8 cursor-pointer items-center rounded-md border border-blue-200 bg-blue-50 px-2.5 text-xs font-medium text-blue-700 shadow-sm transition-colors hover:bg-blue-100"><Upload className="mr-1.5 h-4 w-4"/>Import<input type="file" accept=".csv" className="hidden" onChange={importFile}/></label></div></div>{fields.map(([key, label]) => <label key={key} className="block text-xs font-medium">{label}<input className="mt-1 h-9 w-full rounded border px-2 text-sm" value={draft[key]} onChange={(event) => setDraft({ ...draft, [key]: event.target.value })}/></label>)}<label className="block text-xs font-medium">{t("department")}<select className="mt-1 h-9 w-full rounded border px-2 text-sm" value={draft.departmentId} onChange={(event) => setDraft({ ...draft, departmentId: event.target.value })}><option value="">{t("selectDepartment")}</option>{departments.map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}</select></label><div className="flex gap-2"><Button size="sm" onClick={save}><Plus className="mr-1 h-4 w-4"/>{editing ? t("updateTeacher") : t("addTeacher")}</Button>{editing && <Button size="sm" variant="outline" onClick={() => { setEditing(null); setDraft(blank); }}>{t("cancel")}</Button>}</div>{message && <p className="text-xs text-red-600">{message}</p>}</div><div><label className="relative block"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"/><input className="h-10 w-full rounded border pl-10 text-sm" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("searchTeachers")}/></label><div className="mt-3 overflow-auto rounded-lg border"><table className="w-full min-w-[700px] text-sm"><thead className="bg-slate-50 text-left text-xs text-slate-500"><tr>{[t("teacher"), t("phone"), t("email"), t("department"), t("laptopStatus"), t("actions")].map((heading) => <th key={heading} className="p-3">{heading}</th>)}</tr></thead><tbody>{shown.map((teacher) => <tr key={teacher.id} className="border-t"><td className="p-3 font-medium">{teacher.name}</td><td className="p-3">{teacher.phone}</td><td className="p-3">{teacher.email}</td><td className="p-3">{teacher.department}</td><td className="p-3"><RentalStatus status={teacher.laptopStatus ?? "No Rental"}/></td><td className="p-3"><div className="flex justify-center"><DropdownMenu open={openActionId === teacher.id} onOpenChange={(isOpen) => setOpenActionId(isOpen ? teacher.id : null)}><DropdownMenuTrigger asChild><Button type="button" variant="outline" size="icon" aria-label={`Actions for ${teacher.name}`} className="size-9 rounded-lg border-slate-200 bg-white shadow-sm hover:bg-slate-50"><MoreHorizontal className="size-4"/></Button></DropdownMenuTrigger><DropdownMenuContent align="end" className="w-32"><DropdownMenuItem onClick={() => { setEditing(teacher.id); setDraft({ name: teacher.name, email: teacher.email, phone: teacher.phone, departmentId: String(teacher.departmentId) }); }}><Pencil className="size-4 text-sky-600"/>{t("edit")}</DropdownMenuItem><DropdownMenuItem onClick={() => void remove(teacher.id)} className="text-rose-700 focus:text-rose-700"><Trash2 className="size-4"/>{t("delete")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div></td></tr>)}{!shown.length && <tr><td colSpan={6} className="p-10 text-center text-slate-500">{t("noTeachers")}</td></tr>}</tbody></table></div></div></div></DialogContent></Dialog>;[m
+[32m+[m[32m  return ([m
+[32m+[m[32m    <Dialog open={open} onOpenChange={onOpenChange}>[m
+[32m+[m[32m      <DialogContent className="max-h-[92vh] w-[96vw] max-w-[96vw] overflow-y-auto sm:max-w-[min(96vw,1100px)]">[m
+[32m+[m[32m        <DialogHeader><DialogTitle>{t("teacherList")}</DialogTitle><p className="text-sm text-slate-500">{t("manageTeachers")}</p></DialogHeader>[m
+[32m+[m[32m        <div className="grid gap-4 lg:grid-cols-[310px_1fr]">[m
+[32m+[m[32m          <div className="space-y-3 rounded-lg border p-4">[m
+[32m+[m[32m            <div className="flex items-center justify-between gap-2"><h3 className="font-semibold">{editing ? t("editTeacher") : t("addTeacher")}</h3><div className="flex items-center gap-2"><Button type="button" variant="outline" size="sm" onClick={downloadSample} className="h-8 border-slate-200 px-2 text-xs"><FileDown className="mr-1.5 h-4 w-4"/>Sample File</Button><label className="inline-flex h-8 cursor-pointer items-center rounded-md border border-blue-200 bg-blue-50 px-2.5 text-xs font-medium text-blue-700 shadow-sm transition-colors hover:bg-blue-100"><Upload className="mr-1.5 h-4 w-4"/>Import<input type="file" accept=".csv" className="hidden" onChange={importFile}/></label></div></div>[m
+[32m+[m[32m            {fields.map(([key, label]) => <label key={key} className="block text-xs font-medium">{label}<input className="mt-1 h-9 w-full rounded border px-2 text-sm" value={draft[key]} onChange={(event) => setDraft({ ...draft, [key]: event.target.value })}/></label>)}[m
+[32m+[m[32m            <label className="block text-xs font-medium">{t("department")}<select className="mt-1 h-9 w-full rounded border px-2 text-sm" value={draft.departmentId} onChange={(event) => setDraft({ ...draft, departmentId: event.target.value })}><option value="">{t("selectDepartment")}</option>{departments.map((department) => <option key={department.id} value={department.id}>{department.name}</option>)}</select></label>[m
+[32m+[m[32m            <label className="block text-xs font-medium">Personal laptop<select className="mt-1 h-9 w-full rounded border px-2 text-sm" value={draft.personalLaptopStatus} onChange={(event) => setDraft({ ...draft, personalLaptopStatus: event.target.value })}><option value="None">No personal laptop</option><option value="Working">Working</option><option value="Damaged">Damaged</option></select><span className="mt-1 block font-normal text-slate-500">A working personal laptop prevents an MIIT rental.</span></label>[m
+[32m+[m[32m            <div className="flex gap-2"><Button size="sm" onClick={save}><Plus className="mr-1 h-4 w-4"/>{editing ? t("updateTeacher") : t("addTeacher")}</Button>{editing && <Button size="sm" variant="outline" onClick={() => { setEditing(null); setDraft(blank); }}>{t("cancel")}</Button>}</div>{message && <p className="text-xs text-red-600">{message}</p>}[m
+[32m+[m[32m          </div>[m
+[32m+[m[32m          <div><label className="relative block"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"/><input className="h-10 w-full rounded border pl-10 text-sm" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("searchTeachers")}/></label><div className="mt-3 overflow-auto rounded-lg border"><table className="w-full min-w-[820px] text-sm"><thead className="bg-slate-50 text-left text-xs text-slate-500"><tr>{[t("teacher"), t("phone"), t("email"), t("department"), "Personal laptop", t("laptopStatus"), t("actions")].map((heading) => <th key={heading} className="p-3">{heading}</th>)}</tr></thead><tbody>{shown.map((teacher) => <tr key={teacher.id} className="border-t"><td className="p-3 font-medium">{teacher.name}</td><td className="p-3">{teacher.phone}</td><td className="p-3">{teacher.email}</td><td className="p-3">{teacher.department}</td><td className="p-3"><PersonalLaptopStatus status={teacher.personalLaptopStatus ?? "None"}/></td><td className="p-3"><RentalStatus status={teacher.laptopStatus ?? "No Rental"}/></td><td className="p-3"><div className="flex justify-center"><DropdownMenu open={openActionId === teacher.id} onOpenChange={(isOpen) => setOpenActionId(isOpen ? teacher.id : null)}><DropdownMenuTrigger asChild><Button type="button" variant="outline" size="icon" aria-label={`Actions for ${teacher.name}`} className="size-9 rounded-lg border-slate-200 bg-white shadow-sm hover:bg-slate-50"><MoreHorizontal className="size-4"/></Button></DropdownMenuTrigger><DropdownMenuContent align="end" className="w-32"><DropdownMenuItem onClick={() => { setEditing(teacher.id); setDraft({ name: teacher.name, email: teacher.email, phone: teacher.phone, departmentId: String(teacher.departmentId), personalLaptopStatus: teacher.personalLaptopStatus ?? "None" }); }}><Pencil className="size-4 text-sky-600"/>{t("edit")}</DropdownMenuItem><DropdownMenuItem onClick={() => void remove(teacher.id)} className="text-rose-700 focus:text-rose-700"><Trash2 className="size-4"/>{t("delete")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu></div></td></tr>)}{!shown.length && <tr><td colSpan={7} className="p-10 text-center text-slate-500">{t("noTeachers")}</td></tr>}</tbody></table></div></div>[m
+[32m+[m[32m        </div>[m
+[32m+[m[32m      </DialogContent>[m
+[32m+[m[32m    </Dialog>[m
+[32m+[m[32m  );[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mfunction PersonalLaptopStatus({ status }: { status: string }) {[m
+[32m+[m[32m  const normalized = status.toLowerCase();[m
+[32m+[m[32m  const style = normalized === "working" ? "bg-amber-50 text-amber-700" : normalized === "damaged" ? "bg-rose-50 text-rose-700" : "bg-slate-100 text-slate-600";[m
+[32m+[m[32m  const label = normalized === "working" ? "Working" : normalized === "damaged" ? "Damaged" : "No personal laptop";[m
+[32m+[m[32m  return <span className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${style}`}>{label}</span>;[m
+ }[m
+ [m
+ function RentalStatus({ status }: { status: string }) {[m
+[1mdiff --git a/server/data/rental-policies.json b/server/data/rental-policies.json[m
+[1mindex 858727f..f5ac017 100644[m
+[1m--- a/server/data/rental-policies.json[m
+[1m+++ b/server/data/rental-policies.json[m
+[36m@@ -3,6 +3,10 @@[m
+     "title": "Eligible borrowers",[m
+     "text": "Only active students and teachers can receive a laptop rental."[m
+   },[m
+[32m+[m[32m  {[m
+[32m+[m[32m    "title": "Personal laptop eligibility",[m
+[32m+[m[32m    "text": "Borrowers with a working personal laptop cannot receive an MIIT laptop. A damaged personal laptop remains eligible."[m
+[32m+[m[32m  },[m
+   {[m
+     "title": "Laptop availability",[m
+     "text": "A rental can be issued only when a QR-tagged laptop is available."[m
+[36m@@ -19,4 +23,4 @@[m
+     "title": "New policy",[m
+     "text": "Describe this rental policy."[m
+   }[m
+[31m-][m
+\ No newline at end of file[m
+[32m+[m[32m][m
+[1mdiff --git a/server/prisma/migrations/202610050001_add_personal_laptop_status/migration.sql b/server/prisma/migrations/202610050001_add_personal_laptop_status/migration.sql[m
+[1mnew file mode 100644[m
+[1mindex 0000000..3edb643[m
+[1m--- /dev/null[m
+[1m+++ b/server/prisma/migrations/202610050001_add_personal_laptop_status/migration.sql[m
+[36m@@ -0,0 +1,5 @@[m
+[32m+[m[32mALTER TABLE `student`[m
+[32m+[m[32m  ADD COLUMN `personal_laptop_status` VARCHAR(20) NOT NULL DEFAULT 'None';[m
+[32m+[m
+[32m+[m[32mALTER TABLE `users`[m
+[32m+[m[32m  ADD COLUMN `personal_laptop_status` VARCHAR(20) NOT NULL DEFAULT 'None';[m
+[1mdiff --git a/server/prisma/schema.prisma b/server/prisma/schema.prisma[m
+[1mindex c256ba5..9db5d58 100644[m
+[1m--- a/server/prisma/schema.prisma[m
+[1m+++ b/server/prisma/schema.prisma[m
+[36m@@ -166,6 +166,7 @@[m [mmodel student {[m
+   status        String          @db.VarChar(20)[m
+   roll_number   String?         @db.VarChar(20)[m
+   major         String?         @db.VarChar(20)[m
+[32m+[m[32m  personal_laptop_status String @default("None") @db.VarChar(20)[m
+   laptop_rental laptop_rental[][m
+ }[m
+ [m
+[36m@@ -225,6 +226,7 @@[m [mmodel users {[m
+   role_id                               Int[m
+   department_id                         Int?[m
+   status                                String          @db.VarChar(20)[m
+[32m+[m[32m  personal_laptop_status                String          @default("None") @db.VarChar(20)[m
+   language                              String          @default("eng") @db.VarChar(5)[m
+   two_step_enabled                      Boolean         @default(true)[m
+   created_at                            DateTime        @default(now()) @db.DateTime(0)[m
+[1mdiff --git a/server/src/app.ts b/server/src/app.ts[m
+[1mindex 523bdd5..bb9c9c8 100644[m
+[1m--- a/server/src/app.ts[m
+[1m+++ b/server/src/app.ts[m
+[36m@@ -43,6 +43,7 @@[m [mconst uploadsDirectory = path.resolve("uploads");[m
+ const rentalPoliciesFile = path.resolve("data", "rental-policies.json");[m
+ const defaultRentalPolicies = [[m
+   { title: "Eligible borrowers", text: "Only active students and teachers can receive a laptop rental." },[m
+[32m+[m[32m  { title: "Personal laptop eligibility", text: "Borrowers with a working personal laptop cannot receive an MIIT laptop. A damaged personal laptop remains eligible." },[m
+   { title: "Laptop availability", text: "A rental can be issued only when a QR-tagged laptop is available." },[m
+   { title: "Active rentals", text: "A borrower cannot receive another laptop while they have an active rental." },[m
+   { title: "Return and condition", text: "Record the return date and laptop condition when the item is returned." },[m
+[36m@@ -320,9 +321,31 @@[m [mapp.get("/api/activity-log", async (req, res) => {[m
+       offset,[m
+     );[m
+ [m
+[32m+[m[32m    // Older rental audit entries did not store the assigned laptop QR code.[m
+[32m+[m[32m    // Resolve it from the rental so the activity details can still show a QR[m
+[32m+[m[32m    // label for those existing records.[m
+[32m+[m[32m    const rentalIds = [...new Set(rows[m
+[32m+[m[32m      .filter((row) => row.module === "Laptop Rental" && /^\d+$/.test(row.target_id ?? ""))[m
+[32m+[m[32m      .map((row) => Number(row.target_id)))];[m
+[32m+[m[32m    const rentalQrCodes = new Map<number, string>();[m
+[32m+[m[32m    if (rentalIds.length) {[m
+[32m+[m[32m      const rentals = await prisma.laptop_rental.findMany({[m
+[32m+[m[32m        where: { rental_id: { in: rentalIds } },[m
+[32m+[m[32m        include: { item_detail: { include: { qr_code: { where: { is_active: true }, orderBy: { generated_at: "asc" }, take: 1 } } } },[m
+[32m+[m[32m      });[m
+[32m+[m[32m      rentals.forEach((rental) => {[m
+[32m+[m[32m        const qrCode = rental.item_detail.qr_code[0]?.qr_code_id;[m
+[32m+[m[32m        if (qrCode) rentalQrCodes.set(rental.rental_id, qrCode);[m
+[32m+[m[32m      });[m
+[32m+[m[32m    }[m
+[32m+[m
+     res.json({[m
+       ok: true,[m
+[31m-      activities: rows.map((row) => ({ ...row, details: parseActivityDetails(row.details) })),[m
+[32m+[m[32m      activities: rows.map((row) => {[m
+[32m+[m[32m        const details = parseActivityDetails(row.details);[m
+[32m+[m[32m        const qrCode = row.module === "Laptop Rental" && row.target_id ? rentalQrCodes.get(Number(row.target_id)) : undefined;[m
+[32m+[m[32m        return { ...row, details: qrCode && !Array.isArray(details?.qr_codes) ? { ...(details ?? {}), qr_codes: [qrCode] } : details };[m
+[32m+[m[32m      }),[m
+       pagination: { page: currentPage, limit, total, totalPages },[m
+     });[m
+   } catch (error) {[m
+[36m@@ -706,25 +729,20 @@[m [mfunction validateItemId(itemId: string) {[m
+ [m
+ app.get("/api/departments", async (req, res) => {[m
+   try {[m
+[31m-    const rooms = await prisma.room.findMany({[m
+[32m+[m[32m    // The dashboard is based on department records, whereas this endpoint[m
+[32m+[m[32m    // previously returned only rooms. Query departments first so both pages[m
+[32m+[m[32m    // include the same departments, even when no room has been assigned yet.[m
+[32m+[m[32m    const departments = await prisma.department.findMany({[m
+       where: req.auth?.role.code === "DEPARTMENT_HEAD" ? { department_id: req.auth.department!.id } : undefined,[m
+[31m-      include: {[m
+[31m-        department: true,[m
+[31m-      },[m
+[31m-      orderBy: { room_id: "asc" },[m
+[32m+[m[32m      include: { room: { orderBy: { room_id: "asc" } } },[m
+[32m+[m[32m      orderBy: { department_name: "asc" },[m
+     });[m
+ [m
+     res.json({[m
+       ok: true,[m
+[31m-      departments: rooms.map((room) => ({[m
+[31m-        id: room.room_id,[m
+[31m-        department_id: room.department_id,[m
+[31m-        department: room.department.department_name,[m
+[31m-        // A Library location has no recorded room number. Keep it visible in[m
+[31m-        // the UI and selectable in room filters instead of dropping it.[m
+[31m-        classroom: room.building_name ?? "Unknown",[m
+[31m-        status: room.status ? "Available" : "Closed",[m
+[31m-      })),[m
+[32m+[m[32m      departments: departments.flatMap((department) => department.room.length[m
+[32m+[m[32m        ? department.room.map((room) => ({ id: room.room_id, department_id: department.department_id, department: department.department_name, classroom: room.building_name ?? "Unknown", status: room.status ? "Available" : "Closed", has_room: true }))[m
+[32m+[m[32m        : [{ id: -department.department_id, department_id: department.department_id, department: department.department_name, classroom: "No room assigned", status: "Unassigned", has_room: false }]),[m
+     });[m
+   } catch (error) {[m
+     console.error(error);[m
+[36m@@ -788,9 +806,11 @@[m [mapp.post("/api/departments", async (req, res) => {[m
+       ok: true,[m
+       department: {[m
+         id: room.room_id,[m
+[32m+[m[32m        department_id: room.department_id,[m
+         department: room.department.department_name,[m
+         classroom: room.building_name ?? "",[m
+         status: room.status ? "Available" : "Closed",[m
+[32m+[m[32m        has_room: true,[m
+       },[m
+     });[m
+   } catch (error) {[m
+[36m@@ -1094,6 +1114,17 @@[m [mapp.get("/api/accessories/by-code/:code", async (req, res) => {[m
+ [m
+ [m
+ [m
+[32m+[m[32mfunction normalizePersonalLaptopStatus(value: unknown) {[m
+[32m+[m[32m  const status = normalizeString(value).toLowerCase();[m
+[32m+[m[32m  if (status === "working") return "Working";[m
+[32m+[m[32m  if (status === "damaged") return "Damaged";[m
+[32m+[m[32m  return "None";[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mfunction hasWorkingPersonalLaptop(borrower: { personal_laptop_status?: string | null }) {[m
+[32m+[m[32m  return normalizePersonalLaptopStatus(borrower.personal_laptop_status) === "Working";[m
+[32m+[m[32m}[m
+[32m+[m
+ app.get("/api/students", async (_req, res) => {[m
+   const students = await prisma.student.findMany({[m
+     orderBy: { roll_number: "asc" },[m
+[36m@@ -1117,7 +1148,7 @@[m [mapp.get("/api/students", async (_req, res) => {[m
+ [m
+ app.post("/api/students/import", async (req, res) => {[m
+   const rows = Array.isArray(req.body.students) ? req.body.students : [];[m
+[31m-  const valid = rows.map((row: any) => ({ student_name: normalizeString(row.student_name), roll_number: normalizeString(row.roll_number), email: normalizeString(row.email) || null, phone: normalizeString(row.phone) || null, major: normalizeString(row.major) || null, batch: normalizeString(row.batch) || null, status: normalizeString(row.status) || "Active" })).filter((row: any) => row.student_name && row.roll_number);[m
+[32m+[m[32m  const valid = rows.map((row: any) => ({ student_name: normalizeString(row.student_name), roll_number: normalizeString(row.roll_number), email: normalizeString(row.email) || null, phone: normalizeString(row.phone) || null, major: normalizeString(row.major) || null, batch: normalizeString(row.batch) || null, status: normalizeString(row.status) || "Active", personal_laptop_status: normalizePersonalLaptopStatus(row.personal_laptop_status) })).filter((row: any) => row.student_name && row.roll_number);[m
+   if (!valid.length) return res.status(400).json({ ok: false, message: "No valid student rows were provided" });[m
+   const uniqueRows: any[] = Array.from(new Map<string, any>(valid.map((row: any) => [row.roll_number.toLowerCase(), row])).values());[m
+   const existing = await prisma.student.findMany({ where: { roll_number: { in: uniqueRows.map((row: any) => row.roll_number) } }, select: { roll_number: true } });[m
+[36m@@ -1130,7 +1161,7 @@[m [mapp.post("/api/students/import", async (req, res) => {[m
+ app.post("/api/students", async (req, res) => {[m
+   const student_name = normalizeString(req.body.student_name); const roll_number = normalizeString(req.body.roll_number);[m
+   if (!student_name || !roll_number) return res.status(400).json({ ok: false, message: "Student name and roll number are required" });[m
+[31m-  try { const student = await prisma.student.create({ data: { student_name, roll_number, email: normalizeString(req.body.email) || null, phone: normalizeString(req.body.phone) || null, major: normalizeString(req.body.major) || null, batch: normalizeString(req.body.batch) || null, status: normalizeString(req.body.status) || "Active" } }); res.json({ ok: true, student }); }[m
+[32m+[m[32m  try { const student = await prisma.student.create({ data: { student_name, roll_number, email: normalizeString(req.body.email) || null, phone: normalizeString(req.body.phone) || null, major: normalizeString(req.body.major) || null, batch: normalizeString(req.body.batch) || null, status: normalizeString(req.body.status) || "Active", personal_laptop_status: normalizePersonalLaptopStatus(req.body.personal_laptop_status) } }); res.json({ ok: true, student }); }[m
+   catch { res.status(409).json({ ok: false, message: "Roll number or email already exists" }); }[m
+ });[m
+ [m
+[36m@@ -1140,7 +1171,7 @@[m [mapp.put("/api/students/:id", async (req, res) => {[m
+   const roll_number = normalizeString(req.body.roll_number);[m
+   if (!Number.isInteger(student_id) || !student_name || !roll_number) return res.status(400).json({ ok: false, message: "Student name and roll number are required" });[m
+   try {[m
+[31m-    const student = await prisma.student.update({ where: { student_id }, data: { student_name, roll_number, email: normalizeString(req.body.email) || null, phone: normalizeString(req.body.phone) || null, major: normalizeString(req.body.major) || null, batch: normalizeString(req.body.batch) || null, status: normalizeString(req.body.status) || "Active" } });[m
+[32m+[m[32m    const student = await prisma.student.update({ where: { student_id }, data: { student_name, roll_number, email: normalizeString(req.body.email) || null, phone: normalizeString(req.body.phone) || null, major: normalizeString(req.body.major) || null, batch: normalizeString(req.body.batch) || null, status: normalizeString(req.body.status) || "Active", personal_laptop_status: normalizePersonalLaptopStatus(req.body.personal_laptop_status) } });[m
+     res.json({ ok: true, student });[m
+   } catch {[m
+     res.status(409).json({ ok: false, message: "Unable to update student. Check roll number and email." });[m
+[36m@@ -1165,7 +1196,7 @@[m [mapp.get("/api/teachers", async (_req, res) => {[m
+     },[m
+     orderBy: { full_name: "asc" },[m
+   });[m
+[31m-  res.json({ ok: true, teachers: teachers.map((teacher) => ({ id: teacher.user_id, name: teacher.full_name, email: teacher.email, phone: teacher.phone, departmentId: teacher.department_id, department: teacher.department?.department_name ?? "-", laptopStatus: teacher.laptop_rental_as_borrower[0]?.rental_status ?? "No Rental" })) });[m
+[32m+[m[32m  res.json({ ok: true, teachers: teachers.map((teacher) => ({ id: teacher.user_id, name: teacher.full_name, email: teacher.email, phone: teacher.phone, departmentId: teacher.department_id, department: teacher.department?.department_name ?? "-", laptopStatus: teacher.laptop_rental_as_borrower[0]?.rental_status ?? "No Rental", personalLaptopStatus: normalizePersonalLaptopStatus(teacher.personal_laptop_status) })) });[m
+ });[m
+ [m
+ app.post("/api/teachers/import", async (req, res) => {[m
+[36m@@ -1177,7 +1208,7 @@[m [mapp.post("/api/teachers/import", async (req, res) => {[m
+     const email = normalizeString(row.email).toLowerCase();[m
+     const phone = normalizeString(row.phone || row.phone_number);[m
+     const departmentId = Number(row.department_id || row.departmentId) || departmentByName.get(normalizeString(row.department).toLowerCase());[m
+[31m-    return { name, email, phone, departmentId };[m
+[32m+[m[32m    return { name, email, phone, departmentId, personalLaptopStatus: normalizePersonalLaptopStatus(row.personal_laptop_status) };[m
+   }).filter((row: any) => row.name && row.email && row.phone && Number.isInteger(row.departmentId));[m
+   if (!valid.length) return res.status(400).json({ ok: false, message: "Each teacher row requires name, email, phone, and a valid department." });[m
+   const uniqueRows = Array.from(new Map(valid.map((row: any) => [row.email, row])).values());[m
+[36m@@ -1185,7 +1216,7 @@[m [mapp.post("/api/teachers/import", async (req, res) => {[m
+   const existingEmails = new Set(existing.map((teacher) => teacher.email.toLowerCase()));[m
+   const newRows = uniqueRows.filter((row: any) => !existingEmails.has(row.email));[m
+   const teacherRole = await prisma.role.upsert({ where: { role_name: "Teacher" }, update: {}, create: { role_name: "Teacher" } });[m
+[31m-  if (newRows.length) await prisma.users.createMany({ data: newRows.map((row: any) => ({ full_name: row.name, username: `teacher-import-${randomUUID()}`, email: row.email, phone: row.phone, password_hash: "teacher-record", role_id: teacherRole.role_id, department_id: row.departmentId, status: "Active" })) });[m
+[32m+[m[32m  if (newRows.length) await prisma.users.createMany({ data: newRows.map((row: any) => ({ full_name: row.name, username: `teacher-import-${randomUUID()}`, email: row.email, phone: row.phone, password_hash: "teacher-record", role_id: teacherRole.role_id, department_id: row.departmentId, status: "Active", personal_laptop_status: row.personalLaptopStatus })) });[m
+   res.status(201).json({ ok: true, imported: newRows.length, skipped: valid.length - newRows.length });[m
+ });[m
+ [m
+[36m@@ -1195,7 +1226,7 @@[m [mapp.post("/api/teachers", async (req, res) => {[m
+   try {[m
+     const teacherRole = await prisma.role.upsert({ where: { role_name: "Teacher" }, update: {}, create: { role_name: "Teacher" } });[m
+     const username = "teacher-" + Date.now() + "-" + Math.floor(Math.random() * 1000);[m
+[31m-    const teacher = await prisma.users.create({ data: { full_name: name, username, email, phone, password_hash: "teacher-record", role_id: teacherRole.role_id, department_id: departmentId, status: "Active" } });[m
+[32m+[m[32m    const teacher = await prisma.users.create({ data: { full_name: name, username, email, phone, password_hash: "teacher-record", role_id: teacherRole.role_id, department_id: departmentId, status: "Active", personal_laptop_status: normalizePersonalLaptopStatus(req.body.personalLaptopStatus) } });[m
+     res.status(201).json({ ok: true, teacher });[m
+   } catch {[m
+     res.status(409).json({ ok: false, message: "This teacher email already exists." });[m
+[36m@@ -1205,7 +1236,7 @@[m [mapp.post("/api/teachers", async (req, res) => {[m
+ app.put("/api/teachers/:id", async (req, res) => {[m
+   const id = Number(req.params.id); const name = normalizeString(req.body.name); const email = normalizeString(req.body.email).toLowerCase(); const phone = normalizeString(req.body.phone); const departmentId = Number(req.body.departmentId);[m
+   if (!Number.isInteger(id) || !name || !email || !phone || !Number.isInteger(departmentId)) return res.status(400).json({ ok: false, message: "Name, email, phone, and department are required." });[m
+[31m-  try { const teacher = await prisma.users.update({ where: { user_id: id }, data: { full_name: name, email, phone, department_id: departmentId } }); res.json({ ok: true, teacher }); }[m
+[32m+[m[32m  try { const teacher = await prisma.users.update({ where: { user_id: id }, data: { full_name: name, email, phone, department_id: departmentId, personal_laptop_status: normalizePersonalLaptopStatus(req.body.personalLaptopStatus) } }); res.json({ ok: true, teacher }); }[m
+   catch { res.status(409).json({ ok: false, message: "Unable to update teacher. Check the email." }); }[m
+ });[m
+ [m
+[36m@@ -1241,7 +1272,9 @@[m [mapp.get("/api/laptop-rentals/bulk-options", async (_req, res) => {[m
+     ]);[m
+     const unavailableStudentIds = [...new Set(activeRentals.map((rental) => rental.student_id).filter((id): id is number => id !== null))];[m
+     const unavailableTeacherIds = [...new Set(activeRentals.map((rental) => rental.teacher_user_id).filter((id): id is number => id !== null))];[m
+[31m-    res.json({ ok: true, students, teachers: teachers.map((teacher) => ({ user_id: teacher.user_id, full_name: teacher.full_name, email: teacher.email, department: teacher.department?.department_name ?? "-" })), unavailableStudentIds, unavailableTeacherIds, availableLaptops: availableLaptops.map((laptop) => ({ id: laptop.item_detail_id, code: laptop.detail_code, qrCode: laptop.qr_code[0]?.qr_code_id, name: laptop.item.item_name })), semesters });[m
+[32m+[m[32m    const personalLaptopStudentIds = students.filter(hasWorkingPersonalLaptop).map((student) => student.student_id);[m
+[32m+[m[32m    const personalLaptopTeacherIds = teachers.filter(hasWorkingPersonalLaptop).map((teacher) => teacher.user_id);[m
+[32m+[m[32m    res.json({ ok: true, students, teachers: teachers.map((teacher) => ({ user_id: teacher.user_id, full_name: teacher.full_name, email: teacher.email, department: teacher.department?.department_name ?? "-", personal_laptop_status: normalizePersonalLaptopStatus(teacher.personal_laptop_status) })), unavailableStudentIds, unavailableTeacherIds, personalLaptopStudentIds, personalLaptopTeacherIds, availableLaptops: availableLaptops.map((laptop) => ({ id: laptop.item_detail_id, code: laptop.detail_code, qrCode: laptop.qr_code[0]?.qr_code_id, name: laptop.item.item_name })), semesters });[m
+   } catch (error) {[m
+     console.error(error);[m
+     res.status(500).json({ ok: false, message: "Unable to prepare bulk rental data" });[m
+[36m@@ -1271,6 +1304,7 @@[m [mapp.post("/api/laptop-rentals/bulk-issue", async (req, res) => {[m
+         ? await tx.student.findMany({ where: { student_id: { in: borrowerIds }, status: "Active" }, orderBy: { roll_number: "asc" } })[m
+         : await tx.users.findMany({ where: { user_id: { in: borrowerIds }, status: "Active", role: { role_name: "Teacher" } }, orderBy: { full_name: "asc" } });[m
+       if (borrowers.length !== borrowerIds.length) throw new Error("Some selected borrowers are not active or do not exist.");[m
+[32m+[m[32m      if (borrowers.some(hasWorkingPersonalLaptop)) throw new Error("Borrowers with a working personal laptop cannot rent an MIIT laptop.");[m
+       const existing = await tx.laptop_rental.findMany({ where: { ...(borrowerRole === "student" ? { student_id: { in: borrowerIds } } : { teacher_user_id: { in: borrowerIds } }), rental_status: { in: ["pending", "approved", "active", "issued"] } }, select: { rental_id: true } });[m
+       if (existing.length) throw new Error("One or more selected borrowers already have an active laptop rental.");[m
+       const laptops = await tx.item_detail.findMany({ where: { status: "Available", item: { category: { rental_allowed: true } }, qr_code: { some: { is_active: true } }, laptop_rental: { none: { rental_status: { in: ["pending", "approved", "active", "issued"] } } } }, orderBy: { detail_code: "asc" }, take: borrowers.length });[m
+[36m@@ -1306,6 +1340,7 @@[m [mapp.post("/api/laptop-rentals/import", async (req, res) => {[m
+         if (!borrowerKey || !qrCode || Number.isNaN(dueDate.getTime()) || !["pending", "approved", "returned", "rejected"].includes(status)) throw new Error("Each import row requires valid role, borrower_id, inventory_qr, expected_return_date, and status.");[m
+         const borrower = role === "student" ? await tx.student.findFirst({ where: { roll_number: borrowerKey, status: "Active" } }) : await tx.users.findFirst({ where: { email: borrowerKey, status: "Active", role: { role_name: "Teacher" } } });[m
+         if (!borrower) throw new Error("Borrower not found: " + borrowerKey);[m
+[32m+[m[32m        if (hasWorkingPersonalLaptop(borrower)) throw new Error("Borrower has a working personal laptop and cannot rent an MIIT laptop: " + borrowerKey);[m
+         const qr = await tx.qr_code.findFirst({ where: { qr_code_id: qrCode, is_active: true }, include: { item_detail: true } });[m
+         if (!qr || !qr.item_detail || !["Available"].includes(qr.item_detail.status)) throw new Error("QR laptop is unavailable: " + qrCode);[m
+         const existingRental = await tx.laptop_rental.findFirst({ where: { item_detail_id: qr.item_detail.item_detail_id, rental_status: { in: ["pending", "approved", "active", "issued"] } }, select: { rental_id: true } });[m
+[36m@@ -1358,6 +1393,9 @@[m [mapp.patch("/api/laptop-rentals/:id/status", async (req, res) => {[m
+       const rental = await tx.laptop_rental.findUnique({ where: { rental_id: rentalId }, include: { student: true, teacher: true, item_detail: true } });[m
+       if (!rental) throw new Error("Rental record not found.");[m
+       const releasing = ["returned", "rejected"].includes(rentalStatus);[m
+[32m+[m[32m      if (!releasing && hasWorkingPersonalLaptop(rental.student ?? rental.teacher ?? {})) {[m
+[32m+[m[32m        throw new Error("A borrower with a working personal laptop cannot rent an MIIT laptop.");[m
+[32m+[m[32m      }[m
+       const terminalRental = ["returned", "rejected", "completed"].includes(rental.rental_status.toLowerCase());[m
+       const item = await tx.item_detail.findUnique({ where: { item_detail_id: rental.item_detail_id } });[m
+       if (!item) throw new Error("Assigned laptop no longer exists.");[m
+[36m@@ -1416,7 +1454,7 @@[m [mapp.get("/api/laptop-rentals", async (req, res) => {[m
+       item: { category: { rental_allowed: true } },[m
+       qr_code: { some: { is_active: true } },[m
+     };[m
+[31m-    const [rentals, availableQuantity, inUseQuantity, totalQuantity] = await Promise.all([[m
+[32m+[m[32m    const [rentals, availableQuantity, inUseQuantity, damagedQuantity, totalQuantity] = await Promise.all([[m
+       prisma.laptop_rental.findMany({[m
+         include: {[m
+           student: true,[m
+[36m@@ -1431,6 +1469,7 @@[m [mapp.get("/api/laptop-rentals", async (req, res) => {[m
+       }),[m
+       prisma.item_detail.count({ where: { ...rentalLaptopWhere, status: "Available" } }),[m
+       prisma.item_detail.count({ where: { ...rentalLaptopWhere, status: "In Use" } }),[m
+[32m+[m[32m      prisma.item_detail.count({ where: { ...rentalLaptopWhere, status: "Damaged" } }),[m
+       prisma.item_detail.count({ where: rentalLaptopWhere }),[m
+     ]);[m
+     const rows = rentals.map((rental: any, index: number) => ({[m
+[36m@@ -1470,7 +1509,7 @@[m [mapp.get("/api/laptop-rentals", async (req, res) => {[m
+     // completed/rejected records, while item_detail is the source of truth for[m
+     // whether a physical laptop is currently available or in use.[m
+     const pagedRows = filteredRows.slice((page - 1) * limit, page * limit);[m
+[31m-    res.json({ ok: true, summary: { all: totalQuantity, pending: count(["pending"]), active: inUseQuantity, returned: count(["returned", "completed"]), available: availableQuantity }, rentals: pagedRows, pagination: { page, limit, total: filteredRows.length, totalPages: Math.max(1, Math.ceil(filteredRows.length / limit)) } });[m
+[32m+[m[32m    res.json({ ok: true, summary: { all: totalQuantity, pending: count(["pending"]), active: inUseQuantity, returned: count(["returned", "completed"]), available: availableQuantity, damaged: damagedQuantity }, rentals: pagedRows, pagination: { page, limit, total: filteredRows.length, totalPages: Math.max(1, Math.ceil(filteredRows.length / limit)) } });[m
+   } catch (error) {[m
+     console.error(error);[m
+     res.status(500).json({ ok: false, message: "Unable to load laptop rentals" });[m
+[36m@@ -2019,8 +2058,8 @@[m [mapp.post("/api/items/import", async (req, res) => {[m
+       if (!row.itemName || !row.categoryName || !Number.isInteger(row.quantity) || row.quantity < 1 || row.remark.length > 255) {[m
+         return res.status(400).json({ ok: false, message: `Row ${row.row}: item name, category, and a whole-number quantity are required.` });[m
+       }[m
+[31m-      if (!row.departmentName || !row.roomName || !row.academicYearName || !["Available", "In Use", "Damaged"].includes(row.status)) {[m
+[31m-        return res.status(400).json({ ok: false, message: `Row ${row.row}: use an existing department, room, academic year, and valid status.` });[m
+[32m+[m[32m      if (!row.academicYearName || !["Available", "In Use", "Damaged"].includes(row.status)) {[m
+[32m+[m[32m        return res.status(400).json({ ok: false, message: `Row ${row.row}: use an existing academic year and valid status.` });[m
+       }[m
+       if (row.imageUrl && !/^https?:\/\/\S+$/i.test(row.imageUrl)) {[m
+         return res.status(400).json({ ok: false, message: `Row ${row.row}: image_url must be a valid http or https URL.` });[m
+[36m@@ -2037,20 +2076,23 @@[m [mapp.post("/api/items/import", async (req, res) => {[m
+       prisma.budget_year.findMany({ select: { budget_year_id: true, year_name: true } }),[m
+     ]);[m
+     const categoryByName = new Map(categories.map((category) => [category.category_name, category]));[m
+[31m-    const departmentByName = new Map(departments.map((department) => [department.department_name, department]));[m
+     const yearByName = new Map(years.map((year) => [year.year_name, year]));[m
+[32m+[m[32m    const storageDepartment = departments.find((department) => ["store", "storage"].includes(department.department_name.trim().toLowerCase()));[m
+[32m+[m[32m    const storageRoom = storageDepartment[m
+[32m+[m[32m      ? rooms.find((room) => room.department_id === storageDepartment.department_id && room.building_name)[m
+[32m+[m[32m      : undefined;[m
+[32m+[m
+[32m+[m[32m    if (!storageDepartment || !storageRoom?.building_name) {[m
+[32m+[m[32m      return res.status(400).json({ ok: false, message: "Configure a Storage department and room before importing inventory." });[m
+[32m+[m[32m    }[m
+ [m
+     const resolvedRows: ResolvedBulkImportRow[] = rows.map((row) => {[m
+       const category = categoryByName.get(row.categoryName);[m
+[31m-      const department = departmentByName.get(row.departmentName);[m
+       const year = yearByName.get(row.academicYearName);[m
+[31m-      const room = department[m
+[31m-        ? rooms.find((candidate) => candidate.department_id === department.department_id && candidate.building_name === row.roomName)[m
+[31m-        : undefined;[m
+[31m-      if (!category || !department || !room || !year) {[m
+[31m-        throw new Error(`Row ${row.row}: category, department, room, or academic year does not exist.`);[m
+[32m+[m[32m      if (!category || !year) {[m
+[32m+[m[32m        throw new Error(`Row ${row.row}: category or academic year does not exist.`);[m
+       }[m
+[31m-      return { ...row, category, department, room, year };[m
+[32m+[m[32m      return { ...row, departmentName: storageDepartment.department_name, roomName: storageRoom.building_name!, category, department: storageDepartment, room: storageRoom, year };[m
+     });[m
+ [m
+     const result = await prisma.$transaction(async (tx: any) => {[m
+[36m@@ -2177,6 +2219,18 @@[m [mapp.post("/api/items", async (req, res) => {[m
+       return;[m
+     }[m
+ [m
+[32m+[m[32m    const storageDepartment = (await prisma.department.findMany({[m
+[32m+[m[32m      select: { department_id: true, department_name: true },[m
+[32m+[m[32m    })).find((department) => ["store", "storage"].includes(department.department_name.trim().toLowerCase()));[m
+[32m+[m
+[32m+[m[32m    if (!storageDepartment || departmentId !== storageDepartment.department_id) {[m
+[32m+[m[32m      res.status(400).json({[m
+[32m+[m[32m        ok: false,[m
+[32m+[m[32m        message: "New inventory can only be added to Storage. Transfer items to departments after they are added.",[m
+[32m+[m[32m      });[m
+[32m+[m[32m      return;[m
+[32m+[m[32m    }[m
+[32m+[m
+     if (imageUrl && !/^https?:\/\/\S+$/i.test(imageUrl)) {[m
+       res.status(400).json({ ok: false, message: "image_url must be a valid http or https URL" });[m
+       return;[m
+[36m@@ -2485,9 +2539,11 @@[m [mapp.put("/api/departments/:id", async (req, res) => {[m
+       ok: true,[m
+       department: {[m
+         id: room.room_id,[m
+[32m+[m[32m        department_id: room.department_id,[m
+         department: room.department.department_name,[m
+         classroom: room.building_name ?? "",[m
+         status: room.status ? "Available" : "Closed",[m
+[32m+[m[32m        has_room: true,[m
+       },[m
+     });[m
+   } catch (error) {[m
+[36m@@ -2504,7 +2560,7 @@[m [mapp.delete("/api/departments/:id", async (req, res) => {[m
+   try {[m
+     const roomId = Number(req.params.id);[m
+ [m
+[31m-    if (!Number.isInteger(roomId) || roomId <= 0) {[m
+[32m+[m[32m    if (!Number.isInteger(roomId) || roomId === 0) {[m
+       res.status(400).json({[m
+         ok: false,[m
+         message: "Invalid department id",[m
+[36m@@ -2512,6 +2568,36 @@[m [mapp.delete("/api/departments/:id", async (req, res) => {[m
+       return;[m
+     }[m
+ [m
+[32m+[m[32m    // A negative ID represents the virtual row used for a department that[m
+[32m+[m[32m    // has no room yet. It may be deleted only when it has no linked records.[m
+[32m+[m[32m    if (roomId < 0) {[m
+[32m+[m[32m      const departmentId = -roomId;[m
+[32m+[m[32m      const [department, rooms, items, users, heads, transfersFrom, transfersTo] = await Promise.all([[m
+[32m+[m[32m        prisma.department.findUnique({ where: { department_id: departmentId }, select: { department_id: true, department_name: true } }),[m
+[32m+[m[32m        prisma.room.count({ where: { department_id: departmentId } }),[m
+[32m+[m[32m        prisma.item_detail.count({ where: { current_department_id: departmentId } }),[m
+[32m+[m[32m        prisma.users.count({ where: { department_id: departmentId } }),[m
+[32m+[m[32m        prisma.users.count({ where: { department_head_of_id: departmentId } }),[m
+[32m+[m[32m        prisma.transfer.count({ where: { from_department_id: departmentId } }),[m
+[32m+[m[32m        prisma.transfer.count({ where: { to_department_id: departmentId } }),[m
+[32m+[m[32m      ]);[m
+[32m+[m
+[32m+[m[32m      if (!department) {[m
+[32m+[m[32m        res.status(404).json({ ok: false, message: "Department not found" });[m
+[32m+[m[32m        return;[m
+[32m+[m[32m      }[m
+[32m+[m
+[32m+[m[32m      if (rooms || items || users || heads || transfersFrom || transfersTo) {[m
+[32m+[m[32m        res.status(409).json({ ok: false, message: "This department cannot be deleted because it has linked records." });[m
+[32m+[m[32m        return;[m
+[32m+[m[32m      }[m
+[32m+[m
+[32m+[m[32m      await prisma.department.delete({ where: { department_id: departmentId } });[m
+[32m+[m[32m      await recordActivity("deleted", "Department", { type: "Department", id: departmentId, name: department.department_name });[m
+[32m+[m[32m      res.json({ ok: true });[m
+[32m+[m[32m      return;[m
+[32m+[m[32m    }[m
+[32m+[m
+     const room = await prisma.room.findUnique({[m
+       where: { room_id: roomId },[m
+       include: { department: true },[m
