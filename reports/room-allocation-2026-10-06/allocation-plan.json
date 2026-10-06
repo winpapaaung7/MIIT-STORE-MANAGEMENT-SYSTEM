@@ -1,0 +1,2692 @@
+{
+  "generatedAt": "2026-10-06T11:09:12.042Z",
+  "assumptions": "Classrooms: 30 seats (9 three-seat bench tables + 3 chairs). Faculty: 12 seats. Library: 20 reading chairs. Other rooms: conservative office/clinic needs. Physical capacities not measured; database allocations only.",
+  "total": 2345,
+  "moved": 297,
+  "transfers": 35,
+  "summary": [
+    {
+      "roomId": 1,
+      "room": "Storage",
+      "department": "Store",
+      "before": 2260,
+      "after": 2014,
+      "incoming": 15,
+      "outgoing": 261
+    },
+    {
+      "roomId": 2,
+      "room": "201",
+      "department": "Faculty of Information Science(FIS)",
+      "before": 14,
+      "after": 31,
+      "incoming": 27,
+      "outgoing": 10
+    },
+    {
+      "roomId": 3,
+      "room": "202",
+      "department": "Faculty of Computer Science(FCS)",
+      "before": 2,
+      "after": 31,
+      "incoming": 29,
+      "outgoing": 0
+    },
+    {
+      "roomId": 4,
+      "room": "301",
+      "department": "Faculty of Computing(FC)",
+      "before": 8,
+      "after": 31,
+      "incoming": 29,
+      "outgoing": 6
+    },
+    {
+      "roomId": 5,
+      "room": "302",
+      "department": "Faculty of Computer Systems and Technology(FCST)",
+      "before": 3,
+      "after": 31,
+      "incoming": 29,
+      "outgoing": 1
+    },
+    {
+      "roomId": 6,
+      "room": "203",
+      "department": "Department of English",
+      "before": 4,
+      "after": 19,
+      "incoming": 16,
+      "outgoing": 1
+    },
+    {
+      "roomId": 7,
+      "room": "205",
+      "department": "Department of Natural Science(NS)",
+      "before": 5,
+      "after": 23,
+      "incoming": 19,
+      "outgoing": 1
+    },
+    {
+      "roomId": 8,
+      "room": "102",
+      "department": "Information Technology Supporting and Maintainance(ITSM)",
+      "before": 8,
+      "after": 21,
+      "incoming": 17,
+      "outgoing": 4
+    },
+    {
+      "roomId": 9,
+      "room": "303",
+      "department": "Library",
+      "before": 8,
+      "after": 42,
+      "incoming": 36,
+      "outgoing": 2
+    },
+    {
+      "roomId": 10,
+      "room": "300",
+      "department": "Department of Student Affair",
+      "before": 3,
+      "after": 22,
+      "incoming": 19,
+      "outgoing": 0
+    },
+    {
+      "roomId": 11,
+      "room": "304",
+      "department": "Clinic",
+      "before": 10,
+      "after": 22,
+      "incoming": 16,
+      "outgoing": 4
+    },
+    {
+      "roomId": 12,
+      "room": "100",
+      "department": "Data Center",
+      "before": 3,
+      "after": 12,
+      "incoming": 9,
+      "outgoing": 0
+    },
+    {
+      "roomId": 13,
+      "room": "211",
+      "department": "Classroom",
+      "before": 8,
+      "after": 23,
+      "incoming": 19,
+      "outgoing": 4
+    },
+    {
+      "roomId": 14,
+      "room": "204",
+      "department": "Classroom",
+      "before": 9,
+      "after": 23,
+      "incoming": 17,
+      "outgoing": 3
+    }
+  ],
+  "exceptions": [],
+  "targets": {
+    "100": {
+      "0003": 1,
+      "0005": 1,
+      "0009": 2,
+      "0011": 2,
+      "0012": 2,
+      "0015": 2,
+      "0017": 2
+    },
+    "102": {
+      "0001": 1,
+      "0003": 1,
+      "0005": 1,
+      "0007": 1,
+      "0008": 2,
+      "0009": 3,
+      "0010": 2,
+      "0011": 2,
+      "0012": 1,
+      "0015": 3,
+      "0017": 3,
+      "0004": 1
+    },
+    "201": {
+      "0001": 2,
+      "0003": 1,
+      "0005": 1,
+      "0007": 1,
+      "0008": 8,
+      "0009": 5,
+      "0010": 2,
+      "0011": 2,
+      "0012": 1,
+      "0013": 1,
+      "0014": 1,
+      "0015": 4,
+      "0017": 2
+    },
+    "202": {
+      "0001": 2,
+      "0003": 1,
+      "0005": 1,
+      "0007": 1,
+      "0008": 8,
+      "0009": 5,
+      "0010": 2,
+      "0011": 2,
+      "0012": 1,
+      "0013": 1,
+      "0014": 1,
+      "0015": 4,
+      "0017": 2
+    },
+    "203": {
+      "0001": 1,
+      "0003": 1,
+      "0005": 1,
+      "0007": 1,
+      "0008": 2,
+      "0009": 2,
+      "0010": 4,
+      "0011": 2,
+      "0012": 1,
+      "0015": 2,
+      "0017": 2
+    },
+    "204": {
+      "0001": 2,
+      "0003": 1,
+      "0005": 1,
+      "0007": 2,
+      "0008": 3,
+      "0011": 1,
+      "0012": 1,
+      "0013": 1,
+      "0014": 1,
+      "0017": 1,
+      "0018": 9
+    },
+    "205": {
+      "0001": 1,
+      "0003": 1,
+      "0005": 1,
+      "0007": 2,
+      "0008": 2,
+      "0009": 2,
+      "0010": 4,
+      "0011": 2,
+      "0012": 1,
+      "0015": 2,
+      "0017": 2,
+      "0004": 1,
+      "0013": 1,
+      "0014": 1
+    },
+    "211": {
+      "0001": 2,
+      "0003": 1,
+      "0005": 1,
+      "0007": 2,
+      "0008": 3,
+      "0011": 1,
+      "0012": 1,
+      "0013": 1,
+      "0014": 1,
+      "0017": 1,
+      "0018": 9
+    },
+    "300": {
+      "0001": 1,
+      "0003": 1,
+      "0005": 1,
+      "0007": 1,
+      "0008": 2,
+      "0009": 2,
+      "0010": 6,
+      "0011": 3,
+      "0012": 1,
+      "0015": 2,
+      "0017": 2
+    },
+    "301": {
+      "0001": 2,
+      "0003": 1,
+      "0005": 1,
+      "0007": 1,
+      "0008": 8,
+      "0009": 5,
+      "0010": 2,
+      "0011": 2,
+      "0012": 1,
+      "0013": 1,
+      "0014": 1,
+      "0015": 4,
+      "0017": 2
+    },
+    "302": {
+      "0001": 2,
+      "0003": 1,
+      "0005": 1,
+      "0007": 1,
+      "0008": 8,
+      "0009": 5,
+      "0010": 2,
+      "0011": 2,
+      "0012": 1,
+      "0013": 1,
+      "0014": 1,
+      "0015": 4,
+      "0017": 2
+    },
+    "303": {
+      "0001": 2,
+      "0003": 2,
+      "0005": 1,
+      "0008": 20,
+      "0009": 2,
+      "0010": 2,
+      "0011": 3,
+      "0012": 2,
+      "0015": 5,
+      "0017": 3
+    },
+    "304": {
+      "0001": 1,
+      "0003": 2,
+      "0004": 2,
+      "0005": 1,
+      "0006": 1,
+      "0009": 1,
+      "0010": 6,
+      "0011": 3,
+      "0012": 1,
+      "0015": 2,
+      "0017": 2
+    }
+  },
+  "moves": [
+    {
+      "id": 2,
+      "code": "0001-000002",
+      "itemId": "0001",
+      "from": 2,
+      "to": 1,
+      "status": "Damaged"
+    },
+    {
+      "id": 2074,
+      "code": "0001-000105",
+      "itemId": "0001",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 2075,
+      "code": "0001-000106",
+      "itemId": "0001",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 2076,
+      "code": "0001-000107",
+      "itemId": "0001",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 2077,
+      "code": "0001-000108",
+      "itemId": "0001",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 2078,
+      "code": "0001-000109",
+      "itemId": "0001",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 2094,
+      "code": "0001-000125",
+      "itemId": "0001",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 2095,
+      "code": "0001-000126",
+      "itemId": "0001",
+      "from": 1,
+      "to": 6,
+      "status": "Available"
+    },
+    {
+      "id": 2096,
+      "code": "0001-000127",
+      "itemId": "0001",
+      "from": 1,
+      "to": 8,
+      "status": "Available"
+    },
+    {
+      "id": 2097,
+      "code": "0001-000128",
+      "itemId": "0001",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 2098,
+      "code": "0001-000129",
+      "itemId": "0001",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 2114,
+      "code": "0001-000145",
+      "itemId": "0001",
+      "from": 1,
+      "to": 10,
+      "status": "Available"
+    },
+    {
+      "id": 2115,
+      "code": "0001-000146",
+      "itemId": "0001",
+      "from": 1,
+      "to": 11,
+      "status": "Available"
+    },
+    {
+      "id": 2116,
+      "code": "0001-000147",
+      "itemId": "0001",
+      "from": 1,
+      "to": 13,
+      "status": "Available"
+    },
+    {
+      "id": 2117,
+      "code": "0001-000148",
+      "itemId": "0001",
+      "from": 1,
+      "to": 13,
+      "status": "Available"
+    },
+    {
+      "id": 2118,
+      "code": "0001-000149",
+      "itemId": "0001",
+      "from": 1,
+      "to": 14,
+      "status": "Available"
+    },
+    {
+      "id": 2134,
+      "code": "0001-000165",
+      "itemId": "0001",
+      "from": 1,
+      "to": 14,
+      "status": "Available"
+    },
+    {
+      "id": 5,
+      "code": "0002-000001",
+      "itemId": "0002",
+      "from": 2,
+      "to": 1,
+      "status": "Available"
+    },
+    {
+      "id": 6,
+      "code": "0002-000002",
+      "itemId": "0002",
+      "from": 13,
+      "to": 1,
+      "status": "Damaged"
+    },
+    {
+      "id": 7,
+      "code": "0002-000003",
+      "itemId": "0002",
+      "from": 2,
+      "to": 1,
+      "status": "Available"
+    },
+    {
+      "id": 9,
+      "code": "0002-000005",
+      "itemId": "0002",
+      "from": 13,
+      "to": 1,
+      "status": "Available"
+    },
+    {
+      "id": 10,
+      "code": "0002-000006",
+      "itemId": "0002",
+      "from": 13,
+      "to": 1,
+      "status": "Available"
+    },
+    {
+      "id": 11,
+      "code": "0002-000007",
+      "itemId": "0002",
+      "from": 2,
+      "to": 1,
+      "status": "Available"
+    },
+    {
+      "id": 12,
+      "code": "0002-000008",
+      "itemId": "0002",
+      "from": 2,
+      "to": 1,
+      "status": "Available"
+    },
+    {
+      "id": 13,
+      "code": "0002-000009",
+      "itemId": "0002",
+      "from": 2,
+      "to": 1,
+      "status": "Available"
+    },
+    {
+      "id": 14,
+      "code": "0002-000010",
+      "itemId": "0002",
+      "from": 2,
+      "to": 1,
+      "status": "Available"
+    },
+    {
+      "id": 15,
+      "code": "0003-000001",
+      "itemId": "0003",
+      "from": 14,
+      "to": 1,
+      "status": "Damaged"
+    },
+    {
+      "id": 18,
+      "code": "0003-000004",
+      "itemId": "0003",
+      "from": 11,
+      "to": 1,
+      "status": "Damaged"
+    },
+    {
+      "id": 19,
+      "code": "0003-000005",
+      "itemId": "0003",
+      "from": 11,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 20,
+      "code": "0003-000006",
+      "itemId": "0003",
+      "from": 11,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 22,
+      "code": "0003-000008",
+      "itemId": "0003",
+      "from": 2,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 23,
+      "code": "0003-000009",
+      "itemId": "0003",
+      "from": 2,
+      "to": 7,
+      "status": "Available"
+    },
+    {
+      "id": 29,
+      "code": "0003-000015",
+      "itemId": "0003",
+      "from": 1,
+      "to": 8,
+      "status": "Available"
+    },
+    {
+      "id": 2554,
+      "code": "0003-000116",
+      "itemId": "0003",
+      "from": 1,
+      "to": 10,
+      "status": "Available"
+    },
+    {
+      "id": 2555,
+      "code": "0003-000117",
+      "itemId": "0003",
+      "from": 1,
+      "to": 13,
+      "status": "Available"
+    },
+    {
+      "id": 30,
+      "code": "0004-000001",
+      "itemId": "0004",
+      "from": 1,
+      "to": 7,
+      "status": "Available"
+    },
+    {
+      "id": 31,
+      "code": "0004-000002",
+      "itemId": "0004",
+      "from": 1,
+      "to": 11,
+      "status": "Available"
+    },
+    {
+      "id": 32,
+      "code": "0004-000003",
+      "itemId": "0004",
+      "from": 1,
+      "to": 11,
+      "status": "Available"
+    },
+    {
+      "id": 34,
+      "code": "0004-000005",
+      "itemId": "0004",
+      "from": 8,
+      "to": 1,
+      "status": "Available"
+    },
+    {
+      "id": 40,
+      "code": "0005-000001",
+      "itemId": "0005",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 41,
+      "code": "0005-000002",
+      "itemId": "0005",
+      "from": 11,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 42,
+      "code": "0005-000003",
+      "itemId": "0005",
+      "from": 8,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 44,
+      "code": "0005-000005",
+      "itemId": "0005",
+      "from": 8,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 45,
+      "code": "0005-000006",
+      "itemId": "0005",
+      "from": 1,
+      "to": 6,
+      "status": "Available"
+    },
+    {
+      "id": 46,
+      "code": "0005-000007",
+      "itemId": "0005",
+      "from": 8,
+      "to": 7,
+      "status": "Available"
+    },
+    {
+      "id": 49,
+      "code": "0005-000010",
+      "itemId": "0005",
+      "from": 1,
+      "to": 10,
+      "status": "Available"
+    },
+    {
+      "id": 50,
+      "code": "0005-000011",
+      "itemId": "0005",
+      "from": 1,
+      "to": 12,
+      "status": "Available"
+    },
+    {
+      "id": 51,
+      "code": "0005-000012",
+      "itemId": "0005",
+      "from": 1,
+      "to": 13,
+      "status": "Available"
+    },
+    {
+      "id": 52,
+      "code": "0005-000013",
+      "itemId": "0005",
+      "from": 1,
+      "to": 14,
+      "status": "Available"
+    },
+    {
+      "id": 56,
+      "code": "0006-000001",
+      "itemId": "0006",
+      "from": 1,
+      "to": 11,
+      "status": "Available"
+    },
+    {
+      "id": 61,
+      "code": "0006-000006",
+      "itemId": "0006",
+      "from": 9,
+      "to": 1,
+      "status": "Available"
+    },
+    {
+      "id": 62,
+      "code": "0006-000007",
+      "itemId": "0006",
+      "from": 9,
+      "to": 1,
+      "status": "Available"
+    },
+    {
+      "id": 70,
+      "code": "0007-000002",
+      "itemId": "0007",
+      "from": 2,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 72,
+      "code": "0007-000004",
+      "itemId": "0007",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 76,
+      "code": "0007-000008",
+      "itemId": "0007",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 77,
+      "code": "0007-000009",
+      "itemId": "0007",
+      "from": 1,
+      "to": 6,
+      "status": "Available"
+    },
+    {
+      "id": 3514,
+      "code": "0007-000110",
+      "itemId": "0007",
+      "from": 1,
+      "to": 7,
+      "status": "Available"
+    },
+    {
+      "id": 3515,
+      "code": "0007-000111",
+      "itemId": "0007",
+      "from": 1,
+      "to": 7,
+      "status": "Available"
+    },
+    {
+      "id": 3516,
+      "code": "0007-000112",
+      "itemId": "0007",
+      "from": 1,
+      "to": 8,
+      "status": "Available"
+    },
+    {
+      "id": 3517,
+      "code": "0007-000113",
+      "itemId": "0007",
+      "from": 1,
+      "to": 10,
+      "status": "Available"
+    },
+    {
+      "id": 81,
+      "code": "0008-000004",
+      "itemId": "0008",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 3754,
+      "code": "0008-000105",
+      "itemId": "0008",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 3755,
+      "code": "0008-000106",
+      "itemId": "0008",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 3756,
+      "code": "0008-000107",
+      "itemId": "0008",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 3757,
+      "code": "0008-000108",
+      "itemId": "0008",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 3758,
+      "code": "0008-000109",
+      "itemId": "0008",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 3774,
+      "code": "0008-000125",
+      "itemId": "0008",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 3775,
+      "code": "0008-000126",
+      "itemId": "0008",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 3776,
+      "code": "0008-000127",
+      "itemId": "0008",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 3777,
+      "code": "0008-000128",
+      "itemId": "0008",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 3778,
+      "code": "0008-000129",
+      "itemId": "0008",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 3794,
+      "code": "0008-000145",
+      "itemId": "0008",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 3795,
+      "code": "0008-000146",
+      "itemId": "0008",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 3796,
+      "code": "0008-000147",
+      "itemId": "0008",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 3797,
+      "code": "0008-000148",
+      "itemId": "0008",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 3798,
+      "code": "0008-000149",
+      "itemId": "0008",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 3814,
+      "code": "0008-000165",
+      "itemId": "0008",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 3815,
+      "code": "0008-000166",
+      "itemId": "0008",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 3816,
+      "code": "0008-000167",
+      "itemId": "0008",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 3817,
+      "code": "0008-000168",
+      "itemId": "0008",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 3818,
+      "code": "0008-000169",
+      "itemId": "0008",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 3834,
+      "code": "0008-000185",
+      "itemId": "0008",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 3835,
+      "code": "0008-000186",
+      "itemId": "0008",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 3836,
+      "code": "0008-000187",
+      "itemId": "0008",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 3837,
+      "code": "0008-000188",
+      "itemId": "0008",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 3838,
+      "code": "0008-000189",
+      "itemId": "0008",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 3854,
+      "code": "0008-000205",
+      "itemId": "0008",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 3855,
+      "code": "0008-000206",
+      "itemId": "0008",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 3856,
+      "code": "0008-000207",
+      "itemId": "0008",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 3857,
+      "code": "0008-000208",
+      "itemId": "0008",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 3858,
+      "code": "0008-000209",
+      "itemId": "0008",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 3874,
+      "code": "0008-000225",
+      "itemId": "0008",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 3875,
+      "code": "0008-000226",
+      "itemId": "0008",
+      "from": 1,
+      "to": 6,
+      "status": "Available"
+    },
+    {
+      "id": 3876,
+      "code": "0008-000227",
+      "itemId": "0008",
+      "from": 1,
+      "to": 6,
+      "status": "Available"
+    },
+    {
+      "id": 3877,
+      "code": "0008-000228",
+      "itemId": "0008",
+      "from": 1,
+      "to": 7,
+      "status": "Available"
+    },
+    {
+      "id": 3878,
+      "code": "0008-000229",
+      "itemId": "0008",
+      "from": 1,
+      "to": 7,
+      "status": "Available"
+    },
+    {
+      "id": 3894,
+      "code": "0008-000245",
+      "itemId": "0008",
+      "from": 1,
+      "to": 8,
+      "status": "Available"
+    },
+    {
+      "id": 3895,
+      "code": "0008-000246",
+      "itemId": "0008",
+      "from": 1,
+      "to": 8,
+      "status": "Available"
+    },
+    {
+      "id": 3896,
+      "code": "0008-000247",
+      "itemId": "0008",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3897,
+      "code": "0008-000248",
+      "itemId": "0008",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3898,
+      "code": "0008-000249",
+      "itemId": "0008",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3914,
+      "code": "0008-000265",
+      "itemId": "0008",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3915,
+      "code": "0008-000266",
+      "itemId": "0008",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3916,
+      "code": "0008-000267",
+      "itemId": "0008",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3917,
+      "code": "0008-000268",
+      "itemId": "0008",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3918,
+      "code": "0008-000269",
+      "itemId": "0008",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3934,
+      "code": "0008-000285",
+      "itemId": "0008",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3935,
+      "code": "0008-000286",
+      "itemId": "0008",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3936,
+      "code": "0008-000287",
+      "itemId": "0008",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3937,
+      "code": "0008-000288",
+      "itemId": "0008",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3938,
+      "code": "0008-000289",
+      "itemId": "0008",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3954,
+      "code": "0008-000305",
+      "itemId": "0008",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3955,
+      "code": "0008-000306",
+      "itemId": "0008",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3956,
+      "code": "0008-000307",
+      "itemId": "0008",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3957,
+      "code": "0008-000308",
+      "itemId": "0008",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3958,
+      "code": "0008-000309",
+      "itemId": "0008",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3974,
+      "code": "0008-000325",
+      "itemId": "0008",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3975,
+      "code": "0008-000326",
+      "itemId": "0008",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3976,
+      "code": "0008-000327",
+      "itemId": "0008",
+      "from": 1,
+      "to": 10,
+      "status": "Available"
+    },
+    {
+      "id": 3977,
+      "code": "0008-000328",
+      "itemId": "0008",
+      "from": 1,
+      "to": 10,
+      "status": "Available"
+    },
+    {
+      "id": 3978,
+      "code": "0008-000329",
+      "itemId": "0008",
+      "from": 1,
+      "to": 13,
+      "status": "Available"
+    },
+    {
+      "id": 12743,
+      "code": "0008-000330",
+      "itemId": "0008",
+      "from": 1,
+      "to": 13,
+      "status": "Available"
+    },
+    {
+      "id": 12744,
+      "code": "0008-000331",
+      "itemId": "0008",
+      "from": 1,
+      "to": 14,
+      "status": "Available"
+    },
+    {
+      "id": 82,
+      "code": "0009-000001",
+      "itemId": "0009",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 84,
+      "code": "0009-000003",
+      "itemId": "0009",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 85,
+      "code": "0009-000004",
+      "itemId": "0009",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 86,
+      "code": "0009-000005",
+      "itemId": "0009",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 87,
+      "code": "0009-000006",
+      "itemId": "0009",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 88,
+      "code": "0009-000007",
+      "itemId": "0009",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 89,
+      "code": "0009-000008",
+      "itemId": "0009",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 90,
+      "code": "0009-000009",
+      "itemId": "0009",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 91,
+      "code": "0009-000010",
+      "itemId": "0009",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 92,
+      "code": "0009-000011",
+      "itemId": "0009",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 93,
+      "code": "0009-000012",
+      "itemId": "0009",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 94,
+      "code": "0009-000013",
+      "itemId": "0009",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 95,
+      "code": "0009-000014",
+      "itemId": "0009",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 96,
+      "code": "0009-000015",
+      "itemId": "0009",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 97,
+      "code": "0009-000016",
+      "itemId": "0009",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 98,
+      "code": "0009-000017",
+      "itemId": "0009",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 99,
+      "code": "0009-000018",
+      "itemId": "0009",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 100,
+      "code": "0009-000019",
+      "itemId": "0009",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 101,
+      "code": "0009-000020",
+      "itemId": "0009",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 102,
+      "code": "0009-000021",
+      "itemId": "0009",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 103,
+      "code": "0009-000022",
+      "itemId": "0009",
+      "from": 1,
+      "to": 6,
+      "status": "Available"
+    },
+    {
+      "id": 104,
+      "code": "0009-000023",
+      "itemId": "0009",
+      "from": 1,
+      "to": 6,
+      "status": "Available"
+    },
+    {
+      "id": 105,
+      "code": "0009-000024",
+      "itemId": "0009",
+      "from": 1,
+      "to": 7,
+      "status": "Available"
+    },
+    {
+      "id": 106,
+      "code": "0009-000025",
+      "itemId": "0009",
+      "from": 1,
+      "to": 7,
+      "status": "Available"
+    },
+    {
+      "id": 107,
+      "code": "0009-000026",
+      "itemId": "0009",
+      "from": 1,
+      "to": 8,
+      "status": "Available"
+    },
+    {
+      "id": 108,
+      "code": "0009-000027",
+      "itemId": "0009",
+      "from": 1,
+      "to": 8,
+      "status": "Available"
+    },
+    {
+      "id": 109,
+      "code": "0009-000028",
+      "itemId": "0009",
+      "from": 1,
+      "to": 8,
+      "status": "Available"
+    },
+    {
+      "id": 110,
+      "code": "0009-000029",
+      "itemId": "0009",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 111,
+      "code": "0009-000030",
+      "itemId": "0009",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 112,
+      "code": "0009-000031",
+      "itemId": "0009",
+      "from": 1,
+      "to": 10,
+      "status": "Available"
+    },
+    {
+      "id": 113,
+      "code": "0009-000032",
+      "itemId": "0009",
+      "from": 1,
+      "to": 10,
+      "status": "Available"
+    },
+    {
+      "id": 114,
+      "code": "0009-000033",
+      "itemId": "0009",
+      "from": 1,
+      "to": 11,
+      "status": "Available"
+    },
+    {
+      "id": 115,
+      "code": "0009-000034",
+      "itemId": "0009",
+      "from": 1,
+      "to": 12,
+      "status": "Available"
+    },
+    {
+      "id": 116,
+      "code": "0009-000035",
+      "itemId": "0009",
+      "from": 1,
+      "to": 12,
+      "status": "Available"
+    },
+    {
+      "id": 182,
+      "code": "0010-000001",
+      "itemId": "0010",
+      "from": 4,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 183,
+      "code": "0010-000002",
+      "itemId": "0010",
+      "from": 4,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 186,
+      "code": "0010-000005",
+      "itemId": "0010",
+      "from": 4,
+      "to": 6,
+      "status": "Available"
+    },
+    {
+      "id": 187,
+      "code": "0010-000006",
+      "itemId": "0010",
+      "from": 4,
+      "to": 6,
+      "status": "Available"
+    },
+    {
+      "id": 188,
+      "code": "0010-000007",
+      "itemId": "0010",
+      "from": 4,
+      "to": 6,
+      "status": "Available"
+    },
+    {
+      "id": 189,
+      "code": "0010-000008",
+      "itemId": "0010",
+      "from": 4,
+      "to": 7,
+      "status": "Available"
+    },
+    {
+      "id": 192,
+      "code": "0010-000011",
+      "itemId": "0010",
+      "from": 5,
+      "to": 7,
+      "status": "Available"
+    },
+    {
+      "id": 3994,
+      "code": "0010-000116",
+      "itemId": "0010",
+      "from": 1,
+      "to": 7,
+      "status": "Available"
+    },
+    {
+      "id": 3995,
+      "code": "0010-000117",
+      "itemId": "0010",
+      "from": 1,
+      "to": 8,
+      "status": "Available"
+    },
+    {
+      "id": 3996,
+      "code": "0010-000118",
+      "itemId": "0010",
+      "from": 1,
+      "to": 8,
+      "status": "Available"
+    },
+    {
+      "id": 3997,
+      "code": "0010-000119",
+      "itemId": "0010",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 3998,
+      "code": "0010-000120",
+      "itemId": "0010",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 4014,
+      "code": "0010-000136",
+      "itemId": "0010",
+      "from": 1,
+      "to": 10,
+      "status": "Available"
+    },
+    {
+      "id": 4015,
+      "code": "0010-000137",
+      "itemId": "0010",
+      "from": 1,
+      "to": 10,
+      "status": "Available"
+    },
+    {
+      "id": 4016,
+      "code": "0010-000138",
+      "itemId": "0010",
+      "from": 1,
+      "to": 10,
+      "status": "Available"
+    },
+    {
+      "id": 4017,
+      "code": "0010-000139",
+      "itemId": "0010",
+      "from": 1,
+      "to": 10,
+      "status": "Available"
+    },
+    {
+      "id": 4018,
+      "code": "0010-000140",
+      "itemId": "0010",
+      "from": 1,
+      "to": 10,
+      "status": "Available"
+    },
+    {
+      "id": 4034,
+      "code": "0010-000156",
+      "itemId": "0010",
+      "from": 1,
+      "to": 10,
+      "status": "Available"
+    },
+    {
+      "id": 4035,
+      "code": "0010-000157",
+      "itemId": "0010",
+      "from": 1,
+      "to": 11,
+      "status": "Available"
+    },
+    {
+      "id": 4036,
+      "code": "0010-000158",
+      "itemId": "0010",
+      "from": 1,
+      "to": 11,
+      "status": "Available"
+    },
+    {
+      "id": 4037,
+      "code": "0010-000159",
+      "itemId": "0010",
+      "from": 1,
+      "to": 11,
+      "status": "Available"
+    },
+    {
+      "id": 4038,
+      "code": "0010-000160",
+      "itemId": "0010",
+      "from": 1,
+      "to": 11,
+      "status": "Available"
+    },
+    {
+      "id": 4054,
+      "code": "0010-000176",
+      "itemId": "0010",
+      "from": 1,
+      "to": 11,
+      "status": "Available"
+    },
+    {
+      "id": 4055,
+      "code": "0010-000177",
+      "itemId": "0010",
+      "from": 1,
+      "to": 11,
+      "status": "Available"
+    },
+    {
+      "id": 197,
+      "code": "0011-000001",
+      "itemId": "0011",
+      "from": 14,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 198,
+      "code": "0011-000002",
+      "itemId": "0011",
+      "from": 14,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 200,
+      "code": "0011-000004",
+      "itemId": "0011",
+      "from": 13,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 216,
+      "code": "0011-000020",
+      "itemId": "0011",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 4234,
+      "code": "0011-000121",
+      "itemId": "0011",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 4235,
+      "code": "0011-000122",
+      "itemId": "0011",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 4236,
+      "code": "0011-000123",
+      "itemId": "0011",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 4237,
+      "code": "0011-000124",
+      "itemId": "0011",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 4238,
+      "code": "0011-000125",
+      "itemId": "0011",
+      "from": 1,
+      "to": 6,
+      "status": "Available"
+    },
+    {
+      "id": 4254,
+      "code": "0011-000141",
+      "itemId": "0011",
+      "from": 1,
+      "to": 6,
+      "status": "Available"
+    },
+    {
+      "id": 4255,
+      "code": "0011-000142",
+      "itemId": "0011",
+      "from": 1,
+      "to": 7,
+      "status": "Available"
+    },
+    {
+      "id": 217,
+      "code": "0012-000001",
+      "itemId": "0012",
+      "from": 7,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 219,
+      "code": "0012-000003",
+      "itemId": "0012",
+      "from": 6,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 221,
+      "code": "0012-000005",
+      "itemId": "0012",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 222,
+      "code": "0012-000006",
+      "itemId": "0012",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 223,
+      "code": "0012-000007",
+      "itemId": "0012",
+      "from": 1,
+      "to": 8,
+      "status": "Available"
+    },
+    {
+      "id": 224,
+      "code": "0012-000008",
+      "itemId": "0012",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 225,
+      "code": "0012-000009",
+      "itemId": "0012",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 226,
+      "code": "0012-000010",
+      "itemId": "0012",
+      "from": 1,
+      "to": 10,
+      "status": "Available"
+    },
+    {
+      "id": 227,
+      "code": "0012-000011",
+      "itemId": "0012",
+      "from": 1,
+      "to": 11,
+      "status": "Available"
+    },
+    {
+      "id": 228,
+      "code": "0012-000012",
+      "itemId": "0012",
+      "from": 1,
+      "to": 12,
+      "status": "Available"
+    },
+    {
+      "id": 229,
+      "code": "0012-000013",
+      "itemId": "0012",
+      "from": 1,
+      "to": 12,
+      "status": "Available"
+    },
+    {
+      "id": 230,
+      "code": "0012-000014",
+      "itemId": "0012",
+      "from": 1,
+      "to": 13,
+      "status": "Available"
+    },
+    {
+      "id": 231,
+      "code": "0012-000015",
+      "itemId": "0012",
+      "from": 1,
+      "to": 14,
+      "status": "Available"
+    },
+    {
+      "id": 232,
+      "code": "0013-000001",
+      "itemId": "0013",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 233,
+      "code": "0013-000002",
+      "itemId": "0013",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 234,
+      "code": "0013-000003",
+      "itemId": "0013",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 235,
+      "code": "0013-000004",
+      "itemId": "0013",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 236,
+      "code": "0013-000005",
+      "itemId": "0013",
+      "from": 1,
+      "to": 7,
+      "status": "Available"
+    },
+    {
+      "id": 237,
+      "code": "0013-000006",
+      "itemId": "0013",
+      "from": 1,
+      "to": 13,
+      "status": "Available"
+    },
+    {
+      "id": 238,
+      "code": "0013-000007",
+      "itemId": "0013",
+      "from": 1,
+      "to": 14,
+      "status": "Available"
+    },
+    {
+      "id": 242,
+      "code": "0014-000001",
+      "itemId": "0014",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 243,
+      "code": "0014-000002",
+      "itemId": "0014",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 244,
+      "code": "0014-000003",
+      "itemId": "0014",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 245,
+      "code": "0014-000004",
+      "itemId": "0014",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 246,
+      "code": "0014-000005",
+      "itemId": "0014",
+      "from": 1,
+      "to": 7,
+      "status": "Available"
+    },
+    {
+      "id": 247,
+      "code": "0014-000006",
+      "itemId": "0014",
+      "from": 1,
+      "to": 13,
+      "status": "Available"
+    },
+    {
+      "id": 248,
+      "code": "0014-000007",
+      "itemId": "0014",
+      "from": 1,
+      "to": 14,
+      "status": "Available"
+    },
+    {
+      "id": 317,
+      "code": "0015-000001",
+      "itemId": "0015",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 318,
+      "code": "0015-000002",
+      "itemId": "0015",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 319,
+      "code": "0015-000003",
+      "itemId": "0015",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 320,
+      "code": "0015-000004",
+      "itemId": "0015",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 321,
+      "code": "0015-000005",
+      "itemId": "0015",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 322,
+      "code": "0015-000006",
+      "itemId": "0015",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 323,
+      "code": "0015-000007",
+      "itemId": "0015",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 324,
+      "code": "0015-000008",
+      "itemId": "0015",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 325,
+      "code": "0015-000009",
+      "itemId": "0015",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 326,
+      "code": "0015-000010",
+      "itemId": "0015",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 5194,
+      "code": "0015-000111",
+      "itemId": "0015",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 5195,
+      "code": "0015-000112",
+      "itemId": "0015",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 5196,
+      "code": "0015-000113",
+      "itemId": "0015",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 5197,
+      "code": "0015-000114",
+      "itemId": "0015",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 5198,
+      "code": "0015-000115",
+      "itemId": "0015",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 5214,
+      "code": "0015-000131",
+      "itemId": "0015",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 5215,
+      "code": "0015-000132",
+      "itemId": "0015",
+      "from": 1,
+      "to": 6,
+      "status": "Available"
+    },
+    {
+      "id": 5216,
+      "code": "0015-000133",
+      "itemId": "0015",
+      "from": 1,
+      "to": 6,
+      "status": "Available"
+    },
+    {
+      "id": 5217,
+      "code": "0015-000134",
+      "itemId": "0015",
+      "from": 1,
+      "to": 7,
+      "status": "Available"
+    },
+    {
+      "id": 5218,
+      "code": "0015-000135",
+      "itemId": "0015",
+      "from": 1,
+      "to": 7,
+      "status": "Available"
+    },
+    {
+      "id": 5234,
+      "code": "0015-000151",
+      "itemId": "0015",
+      "from": 1,
+      "to": 8,
+      "status": "Available"
+    },
+    {
+      "id": 5235,
+      "code": "0015-000152",
+      "itemId": "0015",
+      "from": 1,
+      "to": 8,
+      "status": "Available"
+    },
+    {
+      "id": 5236,
+      "code": "0015-000153",
+      "itemId": "0015",
+      "from": 1,
+      "to": 8,
+      "status": "Available"
+    },
+    {
+      "id": 5237,
+      "code": "0015-000154",
+      "itemId": "0015",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 5238,
+      "code": "0015-000155",
+      "itemId": "0015",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 5254,
+      "code": "0015-000171",
+      "itemId": "0015",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 5255,
+      "code": "0015-000172",
+      "itemId": "0015",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 5256,
+      "code": "0015-000173",
+      "itemId": "0015",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 5257,
+      "code": "0015-000174",
+      "itemId": "0015",
+      "from": 1,
+      "to": 10,
+      "status": "Available"
+    },
+    {
+      "id": 5258,
+      "code": "0015-000175",
+      "itemId": "0015",
+      "from": 1,
+      "to": 10,
+      "status": "Available"
+    },
+    {
+      "id": 5274,
+      "code": "0015-000191",
+      "itemId": "0015",
+      "from": 1,
+      "to": 11,
+      "status": "Available"
+    },
+    {
+      "id": 5275,
+      "code": "0015-000192",
+      "itemId": "0015",
+      "from": 1,
+      "to": 11,
+      "status": "Available"
+    },
+    {
+      "id": 5276,
+      "code": "0015-000193",
+      "itemId": "0015",
+      "from": 1,
+      "to": 12,
+      "status": "Available"
+    },
+    {
+      "id": 5277,
+      "code": "0015-000194",
+      "itemId": "0015",
+      "from": 1,
+      "to": 12,
+      "status": "Available"
+    },
+    {
+      "id": 347,
+      "code": "0017-000001",
+      "itemId": "0017",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 348,
+      "code": "0017-000002",
+      "itemId": "0017",
+      "from": 1,
+      "to": 2,
+      "status": "Available"
+    },
+    {
+      "id": 349,
+      "code": "0017-000003",
+      "itemId": "0017",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 350,
+      "code": "0017-000004",
+      "itemId": "0017",
+      "from": 1,
+      "to": 3,
+      "status": "Available"
+    },
+    {
+      "id": 351,
+      "code": "0017-000005",
+      "itemId": "0017",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 352,
+      "code": "0017-000006",
+      "itemId": "0017",
+      "from": 1,
+      "to": 4,
+      "status": "Available"
+    },
+    {
+      "id": 353,
+      "code": "0017-000007",
+      "itemId": "0017",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 5674,
+      "code": "0017-000108",
+      "itemId": "0017",
+      "from": 1,
+      "to": 5,
+      "status": "Available"
+    },
+    {
+      "id": 5675,
+      "code": "0017-000109",
+      "itemId": "0017",
+      "from": 1,
+      "to": 6,
+      "status": "Available"
+    },
+    {
+      "id": 5676,
+      "code": "0017-000110",
+      "itemId": "0017",
+      "from": 1,
+      "to": 6,
+      "status": "Available"
+    },
+    {
+      "id": 5677,
+      "code": "0017-000111",
+      "itemId": "0017",
+      "from": 1,
+      "to": 7,
+      "status": "Available"
+    },
+    {
+      "id": 5678,
+      "code": "0017-000112",
+      "itemId": "0017",
+      "from": 1,
+      "to": 7,
+      "status": "Available"
+    },
+    {
+      "id": 5694,
+      "code": "0017-000128",
+      "itemId": "0017",
+      "from": 1,
+      "to": 8,
+      "status": "Available"
+    },
+    {
+      "id": 5695,
+      "code": "0017-000129",
+      "itemId": "0017",
+      "from": 1,
+      "to": 8,
+      "status": "Available"
+    },
+    {
+      "id": 5696,
+      "code": "0017-000130",
+      "itemId": "0017",
+      "from": 1,
+      "to": 8,
+      "status": "Available"
+    },
+    {
+      "id": 5697,
+      "code": "0017-000131",
+      "itemId": "0017",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 5698,
+      "code": "0017-000132",
+      "itemId": "0017",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 5714,
+      "code": "0017-000148",
+      "itemId": "0017",
+      "from": 1,
+      "to": 9,
+      "status": "Available"
+    },
+    {
+      "id": 5715,
+      "code": "0017-000149",
+      "itemId": "0017",
+      "from": 1,
+      "to": 10,
+      "status": "Available"
+    },
+    {
+      "id": 5716,
+      "code": "0017-000150",
+      "itemId": "0017",
+      "from": 1,
+      "to": 10,
+      "status": "Available"
+    },
+    {
+      "id": 5717,
+      "code": "0017-000151",
+      "itemId": "0017",
+      "from": 1,
+      "to": 11,
+      "status": "Available"
+    },
+    {
+      "id": 5718,
+      "code": "0017-000152",
+      "itemId": "0017",
+      "from": 1,
+      "to": 11,
+      "status": "Available"
+    },
+    {
+      "id": 5734,
+      "code": "0017-000168",
+      "itemId": "0017",
+      "from": 1,
+      "to": 12,
+      "status": "Available"
+    },
+    {
+      "id": 5735,
+      "code": "0017-000169",
+      "itemId": "0017",
+      "from": 1,
+      "to": 12,
+      "status": "Available"
+    },
+    {
+      "id": 5736,
+      "code": "0017-000170",
+      "itemId": "0017",
+      "from": 1,
+      "to": 13,
+      "status": "Available"
+    },
+    {
+      "id": 5737,
+      "code": "0017-000171",
+      "itemId": "0017",
+      "from": 1,
+      "to": 14,
+      "status": "Available"
+    },
+    {
+      "id": 354,
+      "code": "0018-000001",
+      "itemId": "0018",
+      "from": 1,
+      "to": 13,
+      "status": "Available"
+    },
+    {
+      "id": 355,
+      "code": "0018-000002",
+      "itemId": "0018",
+      "from": 1,
+      "to": 13,
+      "status": "Available"
+    },
+    {
+      "id": 356,
+      "code": "0018-000003",
+      "itemId": "0018",
+      "from": 1,
+      "to": 13,
+      "status": "Available"
+    },
+    {
+      "id": 357,
+      "code": "0018-000004",
+      "itemId": "0018",
+      "from": 1,
+      "to": 13,
+      "status": "Available"
+    },
+    {
+      "id": 358,
+      "code": "0018-000005",
+      "itemId": "0018",
+      "from": 1,
+      "to": 13,
+      "status": "Available"
+    },
+    {
+      "id": 359,
+      "code": "0018-000006",
+      "itemId": "0018",
+      "from": 1,
+      "to": 13,
+      "status": "Available"
+    },
+    {
+      "id": 360,
+      "code": "0018-000007",
+      "itemId": "0018",
+      "from": 1,
+      "to": 13,
+      "status": "Available"
+    },
+    {
+      "id": 361,
+      "code": "0018-000008",
+      "itemId": "0018",
+      "from": 1,
+      "to": 13,
+      "status": "Available"
+    },
+    {
+      "id": 362,
+      "code": "0018-000009",
+      "itemId": "0018",
+      "from": 1,
+      "to": 13,
+      "status": "Available"
+    },
+    {
+      "id": 363,
+      "code": "0018-000010",
+      "itemId": "0018",
+      "from": 1,
+      "to": 14,
+      "status": "Available"
+    },
+    {
+      "id": 364,
+      "code": "0018-000011",
+      "itemId": "0018",
+      "from": 1,
+      "to": 14,
+      "status": "Available"
+    },
+    {
+      "id": 365,
+      "code": "0018-000012",
+      "itemId": "0018",
+      "from": 1,
+      "to": 14,
+      "status": "Available"
+    },
+    {
+      "id": 366,
+      "code": "0018-000013",
+      "itemId": "0018",
+      "from": 1,
+      "to": 14,
+      "status": "Available"
+    },
+    {
+      "id": 367,
+      "code": "0018-000014",
+      "itemId": "0018",
+      "from": 1,
+      "to": 14,
+      "status": "Available"
+    },
+    {
+      "id": 368,
+      "code": "0018-000015",
+      "itemId": "0018",
+      "from": 1,
+      "to": 14,
+      "status": "Available"
+    },
+    {
+      "id": 369,
+      "code": "0018-000016",
+      "itemId": "0018",
+      "from": 1,
+      "to": 14,
+      "status": "Available"
+    },
+    {
+      "id": 370,
+      "code": "0018-000017",
+      "itemId": "0018",
+      "from": 1,
+      "to": 14,
+      "status": "Available"
+    },
+    {
+      "id": 371,
+      "code": "0018-000018",
+      "itemId": "0018",
+      "from": 1,
+      "to": 14,
+      "status": "Available"
+    }
+  ]
+}

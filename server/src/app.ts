@@ -16,6 +16,9 @@ import { createItemDetailsRouter } from "./routes/item-details.js";
 import { apiAuthorization, requireDepartmentScope } from "./auth/middleware.js";
 import { hashPassword, verifyPassword } from "./auth/service.js";
 import { SlidingWindowRateLimiter } from "./security/public-rate-limit.js";
+import { detailCodeForSerial, latestDetailSerial } from "./inventory/detail-code.js";
+import { createInventoryDetails } from "./inventory/create-details.js";
+import { myanmarDateBoundary, verifiedActivityDetails } from "./inventory/activity-information.js";
 
 const databaseUrl = process.env.DATABASE_URL;
 
@@ -233,7 +236,7 @@ async function recordActivity(
 ) {
   try {
     await prisma.$executeRawUnsafe(
-      "INSERT INTO activity_log (action, module, target_type, target_id, target_name, actor_name, details) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO activity_log (action, module, target_type, target_id, target_name, actor_name, details, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, UTC_TIMESTAMP())",
       action,
       module,
       target.type,
@@ -306,11 +309,11 @@ app.get("/api/activity-log", async (req, res) => {
     }
     if (/^\d{4}-\d{2}-\d{2}$/.test(from)) {
       where.push("created_at >= ?");
-      values.push(`${from} 00:00:00`);
+      values.push(myanmarDateBoundary(from));
     }
     if (/^\d{4}-\d{2}-\d{2}$/.test(to)) {
-      where.push("created_at < DATE_ADD(?, INTERVAL 1 DAY)");
-      values.push(to);
+      where.push("created_at < ?");
+      values.push(myanmarDateBoundary(to, true));
     }
     if (search) {
       where.push("(target_name LIKE ? OR actor_name LIKE ? OR details LIKE ?)");
@@ -338,11 +341,9 @@ app.get("/api/activity-log", async (req, res) => {
       details: string | null;
       created_at: Date;
     }>>(
-      // MariaDB stores DATETIME values without timezone metadata. This database
-      // writes audit timestamps in Myanmar time (+06:30); return a UTC instant
-      // so browsers can render the actual local change time correctly.
+      // Stored audit DATETIME values are UTC. Do not subtract a local offset.
       `SELECT activity_log_id, action, module, target_type, target_id, target_name, actor_name, details,
-              DATE_SUB(created_at, INTERVAL 390 MINUTE) AS created_at
+              created_at
        FROM activity_log${where.length ? ` WHERE ${where.join(" AND ")}` : ""}
        ORDER BY created_at DESC, activity_log_id DESC
        LIMIT ? OFFSET ?`,
@@ -372,7 +373,7 @@ app.get("/api/activity-log", async (req, res) => {
     res.json({
       ok: true,
       activities: rows.map((row) => {
-        const details = parseActivityDetails(row.details);
+        const details = verifiedActivityDetails(parseActivityDetails(row.details));
         const qrCode = row.module === "Laptop Rental" && row.target_id ? rentalQrCodes.get(Number(row.target_id)) : undefined;
         return { ...row, details: qrCode && !Array.isArray(details?.qr_codes) ? { ...(details ?? {}), qr_codes: [qrCode] } : details };
       }),
@@ -2142,9 +2143,14 @@ app.post("/api/items/import", async (req, res) => {
       const names = [...new Set(resolvedRows.map((row) => row.itemName))];
       const existingItems = await tx.item.findMany({
         where: { item_name: { in: names } },
-        include: { _count: { select: { item_detail: true } } },
+        include: { item_detail: { orderBy: { detail_code: "desc" }, take: 1, select: { detail_code: true } } },
       });
-      const itemsByKey = new Map<string, { item: any; detailCount: number }>(existingItems.map((item: any) => [`${item.item_name}\u0000${item.category_id}`, { item, detailCount: item._count.item_detail }]));
+      for (const item of [...existingItems].sort((a: any, b: any) => a.item_id.localeCompare(b.item_id))) {
+        await tx.$queryRaw`SELECT item_id FROM item WHERE item_id = ${item.item_id} FOR UPDATE`;
+        const latest = await tx.item_detail.findFirst({ where: { item_id: item.item_id }, orderBy: { detail_code: "desc" }, select: { detail_code: true } });
+        item.item_detail = latest ? [latest] : [];
+      }
+      const itemsByKey = new Map<string, { item: any; lastSerial: number }>(existingItems.map((item: any) => [`${item.item_name}\u0000${item.category_id}`, { item, lastSerial: latestDetailSerial(item.item_id, item.item_detail[0]?.detail_code) }]));
       const latestItem = await tx.item.findFirst({ orderBy: { item_id: "desc" } });
       let nextItemNumber = latestItem ? Math.max(Number(latestItem.item_id) || 0, 0) : 0;
       const detailRows: any[] = [];
@@ -2163,14 +2169,14 @@ app.post("/api/items/import", async (req, res) => {
           const item = await tx.item.create({
             data: { item_id: itemId, item_code: itemId, item_name: row.itemName, category_id: row.category.category_id, image_url: row.imageUrl || null },
           });
-          entry = { item, detailCount: 0 };
+          entry = { item, lastSerial: 0 };
           itemsByKey.set(key, entry);
         } else if (row.imageUrl && entry.item.image_url !== row.imageUrl) {
           entry.item = await tx.item.update({ where: { item_id: entry.item.item_id }, data: { image_url: row.imageUrl } });
         }
 
         for (let offset = 1; offset <= row.quantity; offset += 1) {
-          const detailCode = `${entry.item.item_id}-${String(entry.detailCount + offset).padStart(6, "0")}`;
+          const detailCode = detailCodeForSerial(entry.item.item_id, entry.lastSerial + offset);
           detailRows.push({
             item_id: entry.item.item_id,
             detail_code: detailCode,
@@ -2195,7 +2201,7 @@ app.post("/api/items/import", async (req, res) => {
             remark: row.remark,
           });
         }
-        entry.detailCount += row.quantity;
+        entry.lastSerial += row.quantity;
       }
 
       await tx.item_detail.createMany({ data: detailRows });
@@ -2208,7 +2214,7 @@ app.post("/api/items/import", async (req, res) => {
         skipDuplicates: true,
       });
       return { importedRows: resolvedRows.length, importedUnits: detailRows.length, qrCodes, qrItems };
-    });
+    }, { isolationLevel: "ReadCommitted", maxWait: 30_000, timeout: 120_000 });
 
     await recordActivity("created", "Inventory", { type: "Bulk import", name: "Excel inventory import" }, { imported_rows: result.importedRows, imported_units: result.importedUnits });
     return res.status(201).json({ ok: true, imported_rows: result.importedRows, imported_units: result.importedUnits, qr_codes: result.qrCodes, qr_items: result.qrItems });
@@ -2250,7 +2256,7 @@ app.post("/api/items", async (req, res) => {
     if (
       !itemName ||
       !categoryName ||
-      quantity < 1 ||
+      !Number.isSafeInteger(quantity) || quantity < 1 ||
       remark.length > 255 ||
       !["Available", "In Use", "Damaged"].includes(status)
     ) {
@@ -2381,57 +2387,19 @@ app.post("/api/items", async (req, res) => {
       );
     }
 
-    const startingSerial = existingItem
-      ? existingItem._count.item_detail + 1
-      : 1;
-
-    const detailRows = Array.from({ length: quantity }, (_, index) => {
-      const serialNumber = startingSerial + index;
-      const serialText = String(serialNumber).padStart(6, "0");
-
-      if (serialText.length !== 6) {
-        throw new Error(
-          `Generated serial text '${serialText}' is invalid; expected 6 digits.`,
-        );
-      }
-
-      const detailCode = `${createdOrExistingItem.item_id}-${serialText}`;
-
-      if (detailCode.length !== 11) {
-        throw new Error(
-          `Generated detail_code '${detailCode}' is invalid; expected 11 characters.`,
-        );
-      }
-
-      return {
-        item_id: createdOrExistingItem.item_id,
-        detail_code: detailCode,
-        budget_year_id: budgetYear.budget_year_id,
-        status,
-        notes: remark || null,
-        purchase_date: registeredDate ? new Date(`${registeredDate}T00:00:00.000Z`) : null,
-        current_department_id: departmentId,
-        current_room_id: room.room_id,
-      };
+    const allocation = await createInventoryDetails(prisma, createdOrExistingItem.item_id, quantity, {
+      budget_year_id: budgetYear.budget_year_id,
+      status,
+      notes: remark || null,
+      purchase_date: registeredDate ? new Date(`${registeredDate}T00:00:00.000Z`) : null,
+      current_department_id: departmentId,
+      current_room_id: room.room_id,
+    }, {
+      action: existingItem ? "updated" : "created", name: item.item_name,
+      actor: auditActorContext.getStore() ?? "System",
+      details: { category: category.category_name, room: room.building_name ?? "Unassigned room", notes: remark || null },
     });
-
-    const invalidRow = detailRows.find(
-      (row) => row.item_id.length !== 4 || row.detail_code.length !== 11,
-    );
-
-    if (invalidRow) {
-      throw new Error(
-        `Invalid item_detail row: item_id='${invalidRow.item_id}' (${invalidRow.item_id.length} chars), detail_code='${invalidRow.detail_code}' (${invalidRow.detail_code.length} chars)`,
-      );
-    }
-
-    await prisma.item_detail.createMany({
-      data: detailRows,
-    });
-
-    const createdDetailCodes = detailRows.map((row) => row.detail_code);
-    await createQrCodesForDetailCodes(createdDetailCodes);
-
+    const createdDetailCodes = allocation.codes;
     if (imageData) {
       const imageUrl = await saveItemImage(item.item_id, imageData);
       item = await prisma.item.update({
@@ -2459,19 +2427,7 @@ app.post("/api/items", async (req, res) => {
       });
     }
 
-    const totalQuantity = startingSerial + quantity - 1;
-
-    await recordActivity(existingItem ? "updated" : "created", "Inventory", {
-      type: "Item",
-      id: item.item_id,
-      name: item.item_name,
-    }, {
-      ...(existingItem ? { added_units: quantity, quantity_before: existingItem._count.item_detail, quantity_after: totalQuantity } : { added_units: quantity }),
-      qr_codes: createdDetailCodes,
-      category: category.category_name,
-      room: room.building_name ?? "Unassigned room",
-      notes: remark || null,
-    });
+    const totalQuantity = allocation.totalQuantity;
 
     res.status(existingItem ? 200 : 201).json({
       ok: true,

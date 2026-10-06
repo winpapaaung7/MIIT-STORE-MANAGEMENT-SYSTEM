@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { AlertTriangle, ArrowRight, Boxes, Check, CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, ClipboardCheck, type LucideIcon } from "lucide-react";
@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { type TranslationKey, useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/auth/AuthContext";
-import InventoryPage from "@/screens/Inventory/InventoryPage";
+const InventoryPage = lazy(() => import("@/screens/Inventory/InventoryPage"));
 import DepartmentHistory from "@/screens/Dashboard/DepartmentHistory";
 
 const API = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";
@@ -30,11 +30,18 @@ export default function DashboardPage({ scope }: { scope?: "mine" }) {
   const urlRoomId = scope === "mine" ? "" : searchParams.get("roomId") ?? "";
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const controller = useRef<AbortController | null>(null);
   const [filters, setFilters] = useState(() => ({ academicYearId: "", departmentId: urlDepartmentId, categoryId: "", roomId: urlRoomId, status: "", departmentItemsPage: 1 }));
   const [hover, setHover] = useState<string | null>(null);
   const request = useRef(0);
 
   const load = useCallback(async () => {
+    if (!accessToken) return;
+    controller.current?.abort();
+    const currentController = new AbortController();
+    controller.current = currentController;
+    const timeout = window.setTimeout(() => currentController.abort("timeout"), 30_000);
     const query = new URLSearchParams({ departmentItemsPage: String(filters.departmentItemsPage), departmentItemsLimit: "8", recentItemsLimit: "5" });
     if (scope === "mine") query.set("scope", "mine");
     Object.entries(filters).forEach(([key, value]) => { if (value && key !== "departmentItemsPage" && !(key === "roomId" && value === "storage")) query.set(key, String(value)); });
@@ -42,13 +49,17 @@ export default function DashboardPage({ scope }: { scope?: "mine" }) {
     const id = ++request.current;
     setLoading(true);
     try {
-      const response = await fetch(`${API}/api/dashboard/overview?${query}`, { headers: { Authorization: `Bearer ${accessToken ?? ""}` } });
+      const response = await fetch(`${API}/api/dashboard/overview?${query}`, { signal: currentController.signal, headers: { Authorization: `Bearer ${accessToken}` } });
       const payload = await response.json();
-      if (id === request.current) setData(payload);
-    } finally { if (id === request.current) setLoading(false); }
+      if (!response.ok || !payload.ok) throw new Error(payload.message ?? "Unable to load dashboard");
+      if (id === request.current) { setData(payload); setLoadError(""); }
+    } catch (error) {
+      if (id === request.current && currentController.signal.reason === "timeout") setLoadError("The server took too long to respond. Please retry.");
+      else if (!currentController.signal.aborted && id === request.current) setLoadError(error instanceof Error ? error.message : "Unable to load dashboard");
+    } finally { window.clearTimeout(timeout); if (id === request.current) setLoading(false); }
   }, [accessToken, filters, hover, scope]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { void load(); return () => controller.current?.abort(); }, [load]);
   useEffect(() => {
     const refreshAfterTransfer = () => void load();
     window.addEventListener("inventory-transfer-complete", refreshAfterTransfer);
@@ -130,6 +141,7 @@ export default function DashboardPage({ scope }: { scope?: "mine" }) {
   };
 
   return <div className="dashboard-page space-y-6 pb-4">
+    {loadError && <div role="alert" className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700"><span>{loadError}</span><Button variant="outline" onClick={() => void load()}>Retry</Button></div>}
     <header className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-center gap-2">
       {isDepartmentDashboard && <Button type="button" variant="ghost" size="icon" aria-label="Back to Departments" title="Back to Departments" onClick={() => navigate("/departments")}><ChevronLeft className="size-5" /></Button>}
       <h1 className="text-3xl font-bold text-slate-950">{scope === "mine" ? `My Department${user?.department ? ` — ${user.department.name}` : ""}` : isDepartmentDashboard ? `${selectedDepartment?.name ?? "Department"}${selectedDashboardRoom?.name ? selectedDashboardRoom.name === "Room number not assigned" ? " · Room number not assigned" : ` · Room ${selectedDashboardRoom.name}` : ""} Dashboard` : t("dashboard")}</h1>
@@ -156,7 +168,7 @@ export default function DashboardPage({ scope }: { scope?: "mine" }) {
       <Card className="min-w-0 overflow-hidden border-slate-200 shadow-sm"><CardHeader><CardTitle className="text-base">{t("departmentOverview")}</CardTitle></CardHeader><CardContent className="p-0"><div className="h-64 overflow-x-auto"><div className="h-full min-w-[760px]" style={{ width: Math.max(620, departments.length * 82) }}><ResponsiveContainer width="100%" height="100%"><BarChart data={departments} margin={{ left: 8, right: 12, bottom: 24 }} onClick={(state: any) => chooseDepartment(state?.activePayload?.[0]?.payload?.departmentId)}><XAxis dataKey="departmentName" interval={0} height={54} tick={<DepartmentAxisTick departments={departments} onSelect={chooseDepartment} />} /><YAxis allowDecimals={false} /><Tooltip content={<DepartmentTooltip />} /><Bar dataKey="available" name={t("available")} stackId="units" barSize={14}>{departments.map((row: any) => <Cell key={row.departmentId} onClick={() => chooseDepartment(row.departmentId)} fill={colors.available} fillOpacity={!hover || String(row.departmentId) === hover ? 1 : 0.3} />)}</Bar><Bar dataKey="inUse" name={t("inUse")} stackId="units" barSize={14}>{departments.map((row: any) => <Cell key={row.departmentId} onClick={() => chooseDepartment(row.departmentId)} fill={colors.inUse} fillOpacity={!hover || String(row.departmentId) === hover ? 1 : 0.3} />)}</Bar><Bar dataKey="damagedMaintenance" name={t("damagedMaintenance")} stackId="units" barSize={14}>{departments.map((row: any) => <Cell key={row.departmentId} onClick={() => chooseDepartment(row.departmentId)} fill={colors.damaged} fillOpacity={!hover || String(row.departmentId) === hover ? 1 : 0.3} />)}</Bar></BarChart></ResponsiveContainer></div></div></CardContent></Card>
       <Items t={t} data={data?.departmentItems} page={filters.departmentItemsPage} setPage={(page: number) => setFilters((current) => ({ ...current, departmentItemsPage: page }))} />
     </section>}
-    {isDepartmentDashboard && selectedDepartment && <InventoryPage embedded departmentName={selectedDepartment.name} roomName={selectedDashboardRoom?.name} />}
+    {isDepartmentDashboard && selectedDepartment && <Suspense fallback={<div role="status">Loading inventory...</div>}><InventoryPage embedded departmentName={selectedDepartment.name} roomName={selectedDashboardRoom?.name} /></Suspense>}
     {isDepartmentDashboard ? <DepartmentHistory events={data?.departmentHistory ?? []} /> : <RecentItems t={t} items={data?.recentItems ?? []} />}
   </div>;
 }

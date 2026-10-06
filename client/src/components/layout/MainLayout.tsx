@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from "react";
+import { Suspense, useState, type CSSProperties } from "react";
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 
@@ -10,7 +10,7 @@ export default function MainLayout() {
       <Sidebar collapsed={collapsed} onCollapsedChange={setCollapsed} />
 
       <main className="ml-[var(--sidebar-width)] min-h-screen min-w-0 bg-[#f1f5f9] p-4 sm:p-6 dark:bg-[#050814] dark:text-slate-100">
-        <Outlet />
+        <Suspense fallback={<div role="status" className="p-6 text-sm text-slate-500">Loading page...</div>}><Outlet /></Suspense>
       </main>
     </div>
   );

@@ -46,6 +46,7 @@ type ManagementNotification = {
 
 function notificationTime(value: string) {
   return new Date(value).toLocaleString(undefined, {
+    timeZone: "Asia/Yangon",
     dateStyle: "medium",
     timeStyle: "short",
   });

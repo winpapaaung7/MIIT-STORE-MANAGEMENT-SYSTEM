@@ -1,20 +1,21 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import MainLayout from "../components/layout/MainLayout";
-import InventoryPage from "../screens/Inventory/InventoryPage";
-import DepartmentPage from "../screens/Departments/DepartmentPage";
-import DepartmentRoomsPage from "../screens/Departments/DepartmentRoomsPage";
-import AccessoryDetailsPage from "../screens/AccessoryDetails/AccessoryDetailsPage";
-import PublicAccessoryScanPage from "../screens/AccessoryDetails/PublicAccessoryScanPage";
-import LaptopRentalPage from "../screens/LaptopRental/LaptopRentalpage";
-import LoginPage from "../screens/Login/LoginPage";
-import OtpVerificationPage from "../screens/Login/OtpVerificationPage";
-import SettingsPage from "../screens/Settings/SettingsPage";
-import DashboardPage from "../screens/Dashboard/DashboardPage";
-import UsersPage from "../screens/Users/UsersPage";
+const InventoryPage = lazy(() => import("../screens/Inventory/InventoryPage"));
+const DepartmentPage = lazy(() => import("../screens/Departments/DepartmentPage"));
+const DepartmentRoomsPage = lazy(() => import("../screens/Departments/DepartmentRoomsPage"));
+const AccessoryDetailsPage = lazy(() => import("../screens/AccessoryDetails/AccessoryDetailsPage"));
+const PublicAccessoryScanPage = lazy(() => import("../screens/AccessoryDetails/PublicAccessoryScanPage"));
+const LaptopRentalPage = lazy(() => import("../screens/LaptopRental/LaptopRentalpage"));
+const LoginPage = lazy(() => import("../screens/Login/LoginPage"));
+const OtpVerificationPage = lazy(() => import("../screens/Login/OtpVerificationPage"));
+const SettingsPage = lazy(() => import("../screens/Settings/SettingsPage"));
+const DashboardPage = lazy(() => import("../screens/Dashboard/DashboardPage"));
+const UsersPage = lazy(() => import("../screens/Users/UsersPage"));
 import { ForbiddenPage, ProtectedRoute, RoleDefaultRedirect } from "./ProtectedRoute";
 import { rolesFor } from "./routePermissions";
 
-export default function AppRoutes() { return <Routes>
+export default function AppRoutes() { return <Suspense fallback={<div role="status" className="p-6 text-sm text-slate-500">Loading page...</div>}><Routes>
   <Route path="scan/:code" element={<PublicAccessoryScanPage />} />
   <Route path="login" element={<LoginPage />} /><Route path="verify-otp" element={<OtpVerificationPage />} /><Route path="forbidden" element={<ForbiddenPage />} />
   <Route element={<ProtectedRoute />}><Route path="/" element={<MainLayout />}>
@@ -36,4 +37,4 @@ export default function AppRoutes() { return <Routes>
     <Route element={<ProtectedRoute roles={rolesFor("/transfers")} />}><Route path="transfers" element={<Navigate to="/inventory" replace />} /></Route>
   </Route></Route>
   <Route path="*" element={<Navigate to="/" replace />} />
-</Routes>; }
+</Routes></Suspense>; }

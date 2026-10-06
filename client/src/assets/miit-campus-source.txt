@@ -1,0 +1,5 @@
+MIIT campus photograph
+Source: Smart University Guide, https://sug.ucskt.edu.mm/ucs.php
+Image: https://sug.ucskt.edu.mm/assets/img/ucs/miit.jpg
+Downloaded for the authentication page. This is an alternative campus photograph;
+the user-provided photograph was available in chat but not as a local file.

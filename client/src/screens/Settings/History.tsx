@@ -63,6 +63,7 @@ const rentalStatuses = ["approved", "pending", "returned", "rejected"] as const;
 
 function dateTime(value: string) {
   return new Date(value).toLocaleString(undefined, {
+    timeZone: "Asia/Yangon",
     dateStyle: "medium",
     timeStyle: "short",
   });
@@ -93,6 +94,7 @@ function detailText(details: Record<string, unknown> | null) {
   if (!details || Object.keys(details).length === 0) return "";
 
   return Object.entries(details)
+    .filter(([field]) => field !== "qr_codes")
     .map(([field, value]) => {
       if (value && typeof value === "object" && "from" in value && "to" in value) {
         const change = value as { from?: unknown; to?: unknown };

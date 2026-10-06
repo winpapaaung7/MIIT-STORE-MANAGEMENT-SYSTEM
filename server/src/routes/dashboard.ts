@@ -47,7 +47,7 @@ export function createDashboardRouter(prisma: PrismaLike) {
         activeDepartmentId ? prisma.department.findUnique({ where: { department_id: activeDepartmentId } }) : null,
         categoryId ? prisma.category.findUnique({ where: { category_id: categoryId } }) : null,
         roomId ? prisma.room.findUnique({ where: { room_id: roomId } }) : null,
-        prisma.item_detail.findMany({ distinct: ["status"], select: { status: true }, orderBy: { status: "asc" } }),
+        prisma.item_detail.groupBy({ by: ["status"], orderBy: { status: "asc" } }),
       ]);
       if (academicYearId && !year) return res.status(400).json({ ok: false, message: "Unknown academic year" });
       if (departmentId && !department) return res.status(400).json({ ok: false, message: "Unknown department" });
@@ -67,9 +67,7 @@ export function createDashboardRouter(prisma: PrismaLike) {
       // It changes only when a department is selected in the overview chart.
       const selectedDepartmentId = activeDepartmentId;
       const departmentItemsWhere = selectedDepartmentId ? { current_department_id: selectedDepartmentId } : undefined;
-      const [totalItems, statusCounts, departmentCounts, itemGroups, academicYears, departments, categories, rooms, recentItems, departmentHistoryData] = await Promise.all([
-        prisma.item_detail.count({ where }),
-        prisma.item_detail.groupBy({ by: ["status"], where, _count: { _all: true } }),
+      const [departmentCounts, itemGroups, academicYears, departments, categories, rooms, recentItems, departmentHistoryData] = await Promise.all([
         prisma.item_detail.groupBy({ by: ["current_department_id", "status"], where, _count: { _all: true } }),
         departmentItemsWhere ? prisma.item_detail.groupBy({ by: ["item_id", "status"], where: departmentItemsWhere, _count: { _all: true } }) : [],
         prisma.budget_year.findMany({ select: { budget_year_id: true, year_name: true }, orderBy: { start_date: "desc" } }),
@@ -78,7 +76,7 @@ export function createDashboardRouter(prisma: PrismaLike) {
         prisma.room.findMany({ where: scopedDepartmentId ? { department_id: scopedDepartmentId } : undefined, select: { room_id: true, department_id: true, building_name: true }, orderBy: { building_name: "asc" } }),
         prisma.item.findMany({ where: scopedDepartmentId ? { item_detail: { some: { current_department_id: scopedDepartmentId } } } : undefined, take: recentItemsLimit, orderBy: { created_at: "desc" }, include: { category: { select: { category_name: true } }, _count: { select: { item_detail: true } } } }),
         departmentId ? Promise.all([
-          prisma.item_detail.findMany({ where: { current_department_id: departmentId }, take: recentItemsLimit, orderBy: { created_at: "desc" }, include: { item: { select: { item_name: true } } } }),
+          prisma.item_detail.findMany({ where: { current_department_id: departmentId }, take: recentItemsLimit, orderBy: { created_at: "desc" }, select: { detail_code: true, created_at: true, item: { select: { item_name: true } } } }),
           prisma.transfer.findMany({
             where: { OR: [{ from_department_id: departmentId }, { to_department_id: departmentId }] },
             take: recentItemsLimit,
@@ -90,7 +88,7 @@ export function createDashboardRouter(prisma: PrismaLike) {
               room_transfer_to_room_idToroom: { select: { building_name: true } },
               transfer_item: {
                 include: {
-                  item_detail: { include: { item: { select: { item_name: true } } } },
+                  item_detail: { select: { item: { select: { item_name: true } } } },
                 },
               },
             },
@@ -103,8 +101,9 @@ export function createDashboardRouter(prisma: PrismaLike) {
         if (aCurrent !== bCurrent) return aCurrent ? -1 : 1;
         return String(b.year_name).localeCompare(String(a.year_name));
       });
+      const totalItems = departmentCounts.reduce((total: number, row: any) => total + row._count._all, 0);
       const summary = { totalItems, available: 0, inUse: 0, damagedMaintenance: 0 };
-      for (const entry of statusCounts) {
+      for (const entry of departmentCounts) {
         summary[statusBucket(entry.status)] += entry._count._all;
       }
       // A count of item_detail rows is the source of truth for physical units.
@@ -153,7 +152,7 @@ export function createDashboardRouter(prisma: PrismaLike) {
       }
       const ids = [...itemTotals.keys()]; const totalItemRecords = ids.length;
       const pageIds = ids.slice((page - 1) * limit, page * limit);
-      const catalogue = pageIds.length ? await prisma.item.findMany({ where: { item_id: { in: pageIds } }, include: { category: { select: { category_name: true } } } }) : [];
+      const catalogue = pageIds.length ? await prisma.item.findMany({ where: { item_id: { in: pageIds } }, select: { item_id: true, item_code: true, item_name: true, category: { select: { category_name: true } } } }) : [];
       const itemById = new Map(catalogue.map((item: any) => [item.item_id, item]));
       const pagedItems = pageIds.map((id) => { const item = itemById.get(id) as any; const totals = itemTotals.get(id); return { itemId: id, itemCode: item?.item_code ?? id, itemName: item?.item_name ?? "Unknown item", category: item?.category?.category_name ?? "Uncategorised", ...totals }; });
 

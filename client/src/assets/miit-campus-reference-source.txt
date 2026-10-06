@@ -1,0 +1,5 @@
+Generated using the built-in image generation tool from the user's sign-in design reference.
+This is an AI-recreated campus visual, not an original documentary photograph.
+Prompt: Reproduce only the MIIT campus image in the supplied reference, preserving
+the street-level angle, angular roofs, glass facade, trees, and bright cloudy sky.
+Landscape 2:1, no interface, headings, fields, buttons, badges, or rounded corners.
