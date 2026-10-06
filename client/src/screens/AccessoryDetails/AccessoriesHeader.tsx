@@ -1,9 +1,5 @@
 import { type ChangeEvent, type RefObject } from "react"
 
-import AddItemButton from "@/components/buttons/AddItemButton"
-import ExportButton from "@/components/buttons/ExportButton"
-import ImportButton from "@/components/buttons/ImportButton"
-import { useLanguage } from "@/context/LanguageContext"
 
 export interface AccessoriesHeaderProps {
   insertFileInputRef: RefObject<HTMLInputElement | null>
@@ -14,36 +10,13 @@ export interface AccessoriesHeaderProps {
   onAddItem: () => void
 }
 
-export default function AccessoriesHeader({
-  insertFileInputRef,
-  canExport,
-  onInsertClick,
-  onInsertFile,
-  onExport,
-  onAddItem,
-}: AccessoriesHeaderProps) {
-  const { t } = useLanguage()
+export default function AccessoriesHeader(_props: AccessoriesHeaderProps) {
   return (
     <header className="shrink-0">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-normal text-slate-950 sm:text-3xl">
-            {t("accessories")}
-          </h1>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <input
-            ref={insertFileInputRef}
-            type="file"
-            accept=".csv,.xlsx,.xls,.json"
-            className="hidden"
-            onChange={onInsertFile}
-          />
-          <ImportButton label={t("import")} onClick={onInsertClick} />
-          <ExportButton label={t("export")} onClick={onExport} disabled={!canExport} />
-          <AddItemButton label={t("addItem")} onClick={onAddItem} />
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold tracking-normal text-slate-950 sm:text-3xl">
+          Item details
+        </h1>
       </div>
     </header>
   )

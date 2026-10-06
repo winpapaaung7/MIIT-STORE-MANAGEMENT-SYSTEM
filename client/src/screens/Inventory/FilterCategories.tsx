@@ -32,6 +32,7 @@ interface Props {
   selectedCategory: string;
   setSelectedCategory: (value: string) => void;
   onAddCategory: (name: string) => void | Promise<void>;
+  canAddCategory?: boolean;
 }
 
 export default function FilterCategories({
@@ -40,6 +41,7 @@ export default function FilterCategories({
   selectedCategory,
   setSelectedCategory,
   onAddCategory,
+  canAddCategory = true,
 }: Props) {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -106,37 +108,41 @@ export default function FilterCategories({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Button
-          variant="outline"
-          className="h-10 w-full rounded-lg border-dashed border-slate-300 bg-white px-5 text-slate-700 shadow-sm hover:bg-slate-50 sm:w-auto"
-          onClick={() => setOpen(true)}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          {t("addCategory")}
-        </Button>
+        {canAddCategory ? (
+          <Button
+            variant="outline"
+            className="h-10 w-full rounded-lg border-dashed border-slate-300 bg-white px-5 text-slate-700 shadow-sm hover:bg-slate-50 sm:w-auto"
+            onClick={() => setOpen(true)}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            {t("addCategory")}
+          </Button>
+        ) : null}
       </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t("addCategory")}</DialogTitle>
-          </DialogHeader>
+      {canAddCategory ? (
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t("addCategory")}</DialogTitle>
+            </DialogHeader>
 
-          <Input
-            placeholder={t("categoryName")}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
+            <Input
+              placeholder={t("categoryName")}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              {t("cancel")}
-            </Button>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                {t("cancel")}
+              </Button>
 
-            <Button onClick={handleAdd}>{t("add")}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              <Button onClick={handleAdd}>{t("add")}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      ) : null}
     </>
   );
 }

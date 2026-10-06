@@ -1,8 +1,9 @@
-import { type ReactNode, type RefObject, useRef, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { Archive, Download, Printer } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import QRCode from "qrcode";
 import miitLogo from "@/assets/MIIT_LOGO.jpg";
-import { accessoryScanUrl } from "@/lib/qr";
+import { accessoryScanUrl, downloadQrCodePdf } from "@/lib/qr";
 
 import {
   type AccessoryItem,
@@ -31,17 +32,10 @@ export interface ScanModalProps {
 
 export type QrScanModalProps = Omit<ScanModalProps, "onOpenChange">;
 
-function LargeQrCode({
-  value,
-  qrCodeRef,
-}: {
-  value: string;
-  qrCodeRef: RefObject<SVGSVGElement | null>;
-}) {
+function LargeQrCode({ value }: { value: string }) {
   return (
     <div className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-inner sm:p-4">
       <QRCodeSVG
-        ref={qrCodeRef}
         value={accessoryScanUrl(value)}
         size={192}
         level="H"
@@ -59,20 +53,6 @@ function LargeQrCode({
       <p className="font-mono text-sm font-semibold text-slate-700">{value}</p>
     </div>
   );
-}
-
-function escapeXml(value: string) {
-  return value.replace(/[<>&"']/g, (character) => {
-    const entities: Record<string, string> = {
-      "<": "&lt;",
-      ">": "&gt;",
-      "&": "&amp;",
-      '"': "&quot;",
-      "'": "&apos;",
-    };
-
-    return entities[character];
-  });
 }
 
 function DetailTile({
@@ -94,6 +74,16 @@ function DetailTile({
   );
 }
 
+function escapeHtml(value: string) {
+  return value.replace(/[<>&"']/g, (character) => ({
+    "<": "&lt;",
+    ">": "&gt;",
+    "&": "&amp;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[character] ?? character);
+}
+
 export default function ScanModal({
   selectedQrItem,
   onOpenChange,
@@ -102,8 +92,9 @@ export default function ScanModal({
   onDownloadAll,
   downloadAllCount = 0,
 }: ScanModalProps) {
-  const qrCodeRef = useRef<SVGSVGElement | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [isDownloadingAll, setIsDownloadingAll] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   const handleOpenChange = (open: boolean) => {
     onOpenChange?.(open);
@@ -113,60 +104,63 @@ export default function ScanModal({
     }
   };
 
-  const buildPrintableQrSvg = () => {
+  const handleDownload = async () => {
     const accessoryId = selectedQrItem?.id;
-    const qrCodeSvg = qrCodeRef.current;
 
-    if (!accessoryId || !qrCodeSvg) {
-      return null;
+    if (!accessoryId) {
+      return;
     }
 
-    const safeAccessoryId = escapeXml(accessoryId);
-
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="250" viewBox="0 0 240 250">
-  <rect width="240" height="250" fill="#ffffff"/>
-  <svg x="24" y="16" width="192" height="192" viewBox="0 0 192 192">${qrCodeSvg.innerHTML}</svg>
-  <text x="120" y="232" text-anchor="middle" font-family="monospace" font-size="14" font-weight="600" fill="#334155">${safeAccessoryId}</text>
-</svg>`;
+    setIsDownloading(true);
+    try {
+      await downloadQrCodePdf([accessoryId]);
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
-  const handleDownload = () => {
+  const handlePrint = async () => {
     const accessoryId = selectedQrItem?.id;
-    const qrSvg = buildPrintableQrSvg();
+    if (!accessoryId) return;
 
-    if (!accessoryId || !qrSvg) {
-      return;
+    // Open the print document immediately from the button click so popup
+    // blockers do not prevent printing after the QR image is generated.
+    const printWindow = window.open("", "_blank", "width=850,height=900");
+    if (!printWindow) return;
+
+    setIsPrinting(true);
+    try {
+      const qrImage = await QRCode.toDataURL(accessoryScanUrl(accessoryId), {
+        errorCorrectionLevel: "H",
+        margin: 1,
+        width: 600,
+        color: { dark: "#020617", light: "#f8fafc" },
+      });
+      const fileName = `MIIT-Store-QR-${accessoryId}`;
+      const safeFileName = escapeHtml(fileName);
+      const safeCode = escapeHtml(accessoryId);
+
+      printWindow.document.write(`<!doctype html>
+<html><head><title>${safeFileName}</title>
+<style>
+  @page { size: A4 portrait; margin: 12mm; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: #fff; }
+  .qr-label { width: 56mm; height: 56mm; border: .3mm solid #cbd5e1; border-radius: 2mm; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3mm 2mm 1.5mm; }
+  .qr-image { position: relative; width: 46mm; height: 46mm; }
+  .qr-image > .code { display: block; width: 46mm; height: 46mm; }
+  .qr-image > .logo { position: absolute; left: 18mm; top: 18mm; width: 10mm; height: 10mm; border-radius: 1.5mm; background: #f8fafc; padding: .7mm; object-fit: contain; }
+  .code-label { margin: .5mm 0 0; color: #334155; font: 700 7pt monospace; }
+</style></head>
+<body><section class="qr-label"><div class="qr-image"><img class="code" src="${qrImage}" alt="QR code" /><img class="logo" src="${miitLogo}" alt="MIIT" /></div><p class="code-label">${safeCode}</p></section>
+<script>window.onload = function () { window.focus(); window.print(); };</script>
+</body></html>`);
+      printWindow.document.close();
+    } catch {
+      printWindow.close();
+    } finally {
+      setIsPrinting(false);
     }
-
-    const downloadUrl = URL.createObjectURL(
-      new Blob([qrSvg], { type: "image/svg+xml;charset=utf-8" }),
-    );
-    const link = document.createElement("a");
-
-    link.href = downloadUrl;
-    link.download = `${accessoryId}.svg`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    URL.revokeObjectURL(downloadUrl);
-  };
-
-  const handlePrint = () => {
-    const accessoryId = selectedQrItem?.id;
-    const qrSvg = buildPrintableQrSvg();
-
-    if (!accessoryId || !qrSvg) {
-      return;
-    }
-
-    const printWindow = window.open("", "_blank", "width=420,height=520");
-
-    if (!printWindow) {
-      return;
-    }
-
-    printWindow.document.write(`<!doctype html><html><head><title>${escapeXml(accessoryId)}</title><style>body{margin:0;display:grid;min-height:100vh;place-items:center;background:#fff}</style></head><body>${qrSvg}<script>window.onload=function(){window.focus();window.print();}</script></body></html>`);
-    printWindow.document.close();
   };
 
   const handleDownloadAll = async () => {
@@ -195,10 +189,7 @@ export default function ScanModal({
 
         <div className="min-h-0 overflow-y-auto px-4 py-4 sm:px-6">
           <div className="flex flex-col items-center gap-4 sm:gap-5">
-            <LargeQrCode
-              value={selectedQrItem?.id ?? ""}
-              qrCodeRef={qrCodeRef}
-            />
+            <LargeQrCode value={selectedQrItem?.id ?? ""} />
 
             <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
               <DetailTile label="ID" value={selectedQrItem?.id} />
@@ -246,11 +237,12 @@ export default function ScanModal({
           <Button
             type="button"
             variant="outline"
-            onClick={handleDownload}
+            onClick={() => void handleDownload()}
+            disabled={isDownloading}
             className="w-full sm:w-auto"
           >
             <Download className="size-4" />
-            Download QR
+            {isDownloading ? "Preparing PDF..." : "Download PDF"}
           </Button>
           {onDownloadAll && downloadAllCount > 1 ? (
             <Button
@@ -267,11 +259,12 @@ export default function ScanModal({
           <Button
             type="button"
             variant="outline"
-            onClick={handlePrint}
+            onClick={() => void handlePrint()}
+            disabled={isPrinting}
             className="w-full sm:w-auto"
           >
             <Printer className="size-4" />
-            Print QR
+            {isPrinting ? "Preparing PDF..." : "Print QR"}
           </Button>
           <Button
             type="button"

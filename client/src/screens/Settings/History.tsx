@@ -7,6 +7,7 @@ import {
   History as HistoryIcon,
   PencilLine,
   Plus,
+  QrCode,
   Search,
   Trash2,
   UserRound,
@@ -38,6 +39,7 @@ type Activity = {
   target_id: string | null;
   target_name: string;
   actor_name: string;
+  actor_email: string | null;
   details: Record<string, unknown> | null;
   created_at: string;
 };
@@ -174,13 +176,14 @@ export default function History() {
 
   const exportCsv = () => {
     const rows = [
-      ["Action", "Module", "Record", "Record ID", "Performed by", "Date", "Details"],
+      ["Action", "Module", "Record", "Record ID", "Performed by", "Performer email", "Date", "Details"],
       ...activities.map((activity) => [
         actionLabel(activity.action),
         activity.module,
         activity.target_name,
         activity.target_id ?? "",
         activity.actor_name,
+        activity.actor_email ?? "",
         dateTime(activity.created_at),
         detailText(activity.details),
       ]),
@@ -304,6 +307,7 @@ function ActivityRow({ activity, label, detail, onView }: { activity: Activity; 
   }[activity.action];
   const Icon = activity.action === "created" ? Plus : activity.action === "updated" ? PencilLine : activity.action === "transferred" ? ArrowRightLeft : Trash2;
   const critical = activity.action === "deleted" || (activity.module === "Profile" && /role|password|permission|status/i.test(Object.keys(activity.details ?? {}).join(" ")));
+  const hasQrCodes = activityQrCodes(activity.module, activity.details).length > 0;
 
   return (
     <article className="flex gap-3 px-4 py-3.5 sm:px-5">
@@ -318,7 +322,10 @@ function ActivityRow({ activity, label, detail, onView }: { activity: Activity; 
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400"><UserRound className="mr-1 inline h-3.5 w-3.5" />{activity.actor_name} · {dateTime(activity.created_at)}</p>
         {detail ? <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">{detail}</p> : null}
       </div>
-      <Button variant="ghost" size="icon-sm" onClick={onView} aria-label="View activity details" className="shrink-0 text-slate-500"><Eye className="h-4 w-4" /></Button>
+      <div className="flex shrink-0 items-center gap-1">
+        {hasQrCodes ? <Button variant="ghost" size="icon-sm" onClick={onView} aria-label="View activity QR codes" title="View QR codes" className="text-slate-500"><QrCode className="h-4 w-4" /></Button> : null}
+        <Button variant="ghost" size="icon-sm" onClick={onView} aria-label="View activity details" className="text-slate-500"><Eye className="h-4 w-4" /></Button>
+      </div>
     </article>
   );
 }
@@ -338,6 +345,7 @@ function ActivityDetailsDialog({ activity, onOpenChange }: { activity: Activity 
         <div className="grid gap-3 text-sm">
           <Detail label="Record" value={activity.target_name} />
           <Detail label="Performed by" value={activity.actor_name} />
+          <Detail label="Performer email" value={activity.actor_email ?? "Not available"} />
           <Detail label="Action" value={activity.action} />
           {fields.length ? (
             <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700">

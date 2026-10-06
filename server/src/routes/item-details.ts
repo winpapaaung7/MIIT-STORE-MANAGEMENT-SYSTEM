@@ -2,6 +2,16 @@ import { Router } from "express";
 
 const normalizeString = (value: unknown) => typeof value === "string" ? value.trim() : "";
 
+async function getScopedDepartmentId(prisma: any, req: any) {
+  if (req.auth?.role.code === "DEPARTMENT_HEAD") return req.auth.department?.id;
+  if (req.auth?.role.code !== "LAPTOP_RENTAL") return undefined;
+  const itsm = await prisma.department.findFirst({
+    where: { OR: [{ department_code: "ITSM" }, { department_name: { contains: "(ITSM)" } }] },
+    select: { department_id: true },
+  });
+  return itsm?.department_id ?? null;
+}
+
 export function createItemDetailsRouter(prisma: any, recordActivity: any) {
   const router = Router();
 router.get("/", async (req, res) => {
@@ -14,19 +24,39 @@ router.get("/", async (req, res) => {
     const dateEnd = dateStart ? new Date(dateStart) : null;
     if (dateEnd) dateEnd.setUTCDate(dateEnd.getUTCDate() + 1);
     const page = Math.max(1, Number(req.query.page) || 1), limit = Math.min(1000, Math.max(1, Number(req.query.limit) || 50));
-    const where = {
-      ...(text ? { OR: [{ detail_code: { contains: text } }, { notes: { contains: text } }, { item: { item_name: { contains: text } } }] } : {}),
-      ...(category ? { item: { category: { category_name: category } } } : {}),
-      ...(itemName ? { item: { item_name: itemName } } : {}),
-      ...(department ? { department: { department_name: department } } : {}),
-      ...(room ? { room: { building_name: room === "Room number not assigned" || room === "Unknown" ? null : room } } : {}),
-      ...(academicYear ? { budget_year: { year_name: academicYear } } : {}),
-      ...(dateStart && dateEnd ? { AND: [{ OR: [
+    const scopedDepartmentId = await getScopedDepartmentId(prisma, req);
+    if (scopedDepartmentId === null) return res.status(503).json({ ok: false, message: "ITSM department is not configured." });
+    const isRentalRole = req.auth?.role.code === "LAPTOP_RENTAL";
+    const roomWhere = room
+      ? { room: { building_name: room === "Room number not assigned" || room === "Unknown" ? null : room } }
+      : {};
+    const conditions: any[] = [
+      ...(isRentalRole && scopedDepartmentId
+        ? [{
+            OR: [
+              { current_department_id: scopedDepartmentId, ...roomWhere },
+              {
+                item: { category: { rental_allowed: true } },
+                OR: [{ current_department_id: { not: scopedDepartmentId } }, { current_department_id: null }],
+              },
+            ],
+          }]
+        : [
+            ...(scopedDepartmentId ? [{ current_department_id: scopedDepartmentId }] : []),
+            ...(!scopedDepartmentId && department ? [{ department: { department_name: department } }] : []),
+            ...(room ? [roomWhere] : []),
+          ]),
+      ...(text ? [{ OR: [{ detail_code: { contains: text } }, { notes: { contains: text } }, { item: { item_name: { contains: text } } }] }] : []),
+      ...(category ? [{ item: { category: { category_name: category } } }] : []),
+      ...(itemName ? [{ item: { item_name: itemName } }] : []),
+      ...(academicYear ? [{ budget_year: { year_name: academicYear } }] : []),
+      ...(dateStart && dateEnd ? [{ OR: [
         { purchase_date: { gte: dateStart, lt: dateEnd } },
         { purchase_date: null, created_at: { gte: dateStart, lt: dateEnd } },
-      ] }] } : {}),
-      ...(status ? { status } : {}),
-    };
+      ] }] : []),
+      ...(status ? [{ status }] : []),
+    ];
+    const where = conditions.length ? { AND: conditions } : {};
     const [details, total] = await Promise.all([prisma.item_detail.findMany({
       where,
       include: {
@@ -102,7 +132,7 @@ router.put("/:detailCode", async (req, res) => {
 
     const itemDetail = await prisma.item_detail.findUnique({
       where: { detail_code: detailCode },
-      select: { item_detail_id: true },
+      select: { item_detail_id: true, current_department_id: true },
     });
 
     if (!itemDetail) {
@@ -110,6 +140,11 @@ router.put("/:detailCode", async (req, res) => {
         ok: false,
         message: "Item detail not found",
       });
+      return;
+    }
+
+    if (req.auth?.role.code === "DEPARTMENT_HEAD" && itemDetail.current_department_id !== req.auth.department?.id) {
+      res.status(404).json({ ok: false, message: "Item detail not found" });
       return;
     }
 
@@ -127,6 +162,60 @@ router.put("/:detailCode", async (req, res) => {
     res.status(500).json({
       ok: false,
       message: "Failed to update accessory details",
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+router.delete("/:detailCode", async (req, res) => {
+  try {
+    const detailCode = normalizeString(req.params.detailCode);
+    if (!detailCode) {
+      return res.status(400).json({ ok: false, message: "Item detail code is required." });
+    }
+
+    const itemDetail = await prisma.item_detail.findUnique({
+      where: { detail_code: detailCode },
+      include: { item: { select: { item_name: true } } },
+    });
+    if (!itemDetail) {
+      return res.status(404).json({ ok: false, message: "Item detail not found." });
+    }
+
+    if (req.auth?.role.code === "DEPARTMENT_HEAD" && itemDetail.current_department_id !== req.auth.department?.id) {
+      return res.status(404).json({ ok: false, message: "Item detail not found." });
+    }
+
+    const [rentalCount, transferCount] = await Promise.all([
+      prisma.laptop_rental.count({ where: { item_detail_id: itemDetail.item_detail_id } }),
+      prisma.transfer_item.count({ where: { item_detail_id: itemDetail.item_detail_id } }),
+    ]);
+    if (rentalCount || transferCount) {
+      return res.status(409).json({
+        ok: false,
+        message: "This item cannot be deleted because it has rental or transfer history.",
+      });
+    }
+
+    await prisma.$transaction(async (tx: any) => {
+      await tx.item_detail.delete({ where: { item_detail_id: itemDetail.item_detail_id } });
+      const remainingUnits = await tx.item_detail.count({ where: { item_id: itemDetail.item_id } });
+      if (remainingUnits === 0) {
+        await tx.item.delete({ where: { item_id: itemDetail.item_id } });
+      }
+    });
+    await recordActivity(
+      "deleted",
+      "Inventory",
+      { type: "Item detail", id: itemDetail.item_detail_id, name: itemDetail.item.item_name },
+      { qr_codes: [itemDetail.detail_code], removed_units: 1 },
+    );
+
+    return res.json({ ok: true, message: "Item detail deleted successfully." });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      ok: false,
+      message: "Failed to delete item detail.",
       error: error instanceof Error ? error.message : String(error),
     });
   }

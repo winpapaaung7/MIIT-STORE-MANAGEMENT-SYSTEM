@@ -130,7 +130,7 @@ export default function LoginPage() {
                 <p className="text-xs text-[#64748B]">Management System</p>
               </div>
             </header>
-            <div className="rounded-xl border border-[#DCE3ED] bg-[#FFFFFF] p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-8">
+            <div className="rounded-xl border border-[#DCE3ED] bg-[#F8FAFC] p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800 sm:p-8">
               <div className="mb-7">
                 <h2 className="text-2xl font-semibold text-[#172033] dark:text-slate-50">
                   Welcome Back

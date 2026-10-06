@@ -20,6 +20,7 @@
     "seed:export-history": "tsx src/scripts/export-safe-seed-data.ts --history-only",
     "sync:locations": "tsx src/scripts/sync-locations.ts",
     "sync:departments": "npm run sync:locations",
+    "assign:rental-laptops:itsm": "tsx src/scripts/assign-rental-laptops-to-itsm.ts",
     "clear:rooms": "tsx src/scripts/clear-rooms.ts",
     "check:auth-migration": "tsx src/scripts/check-auth-migration.ts",
     "verify:smtp": "tsx src/scripts/verify-smtp.ts",

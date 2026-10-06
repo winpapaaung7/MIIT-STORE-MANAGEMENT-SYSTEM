@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, LogOut, User } from "lucide-react";
+import { HoverCard } from "radix-ui";
 import msmLogo from "@/assets/MSM logo_r.png";
 import { useAuth } from "@/auth/AuthContext";
 import { allowedNavigation } from "@/routes/routePermissions";
@@ -51,22 +52,44 @@ export function Sidebar({
             {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
           </button>
         </div>
-        <div
-          className={`mx-1 my-3 rounded-lg border border-[#1e293b]/50 bg-[#0f172a]/60 dark:border-[#587898] dark:bg-[#365778] ${collapsed ? "flex h-16 items-center justify-center" : "h-16 p-3"}`}
-        >
-          {collapsed ? (
-            <User size={18} />
-          ) : (
-            <>
-              <p className="truncate text-[10px] font-bold uppercase text-[#f59e0b]">
-                {user?.role.name}
-              </p>
-              <p className="mt-1 truncate text-xs font-semibold text-slate-300 dark:text-slate-100">
-                {user?.name}
-              </p>
-            </>
-          )}
-        </div>
+        <HoverCard.Root openDelay={150} closeDelay={200}>
+          <HoverCard.Trigger asChild>
+            <button
+              type="button"
+              aria-label={`View profile details for ${user?.name ?? "current user"}`}
+              className={`mx-1 my-3 w-[calc(100%-0.5rem)] rounded-lg border border-[#1e293b]/50 bg-[#0f172a]/60 text-left dark:border-[#587898] dark:bg-[#365778] ${collapsed ? "flex h-16 items-center justify-center" : "h-16 p-3"}`}
+            >
+              {collapsed ? (
+                <User size={18} />
+              ) : (
+                <>
+                  <p className="truncate text-[10px] font-bold uppercase text-[#f59e0b]">
+                    {user?.role.name}
+                  </p>
+                  <p className="mt-1 truncate text-xs font-semibold text-slate-300 dark:text-slate-100">
+                    {user?.name}
+                  </p>
+                </>
+              )}
+            </button>
+          </HoverCard.Trigger>
+          <HoverCard.Portal>
+            <HoverCard.Content
+              side="right"
+              align="start"
+              sideOffset={10}
+              className="z-50 w-72 rounded-xl border border-slate-200 bg-white p-4 text-slate-900 shadow-xl outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+            >
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">Profile details</p>
+              <dl className="mt-3 space-y-3 text-sm">
+                <div><dt className="text-xs text-slate-500 dark:text-slate-400">Name</dt><dd className="mt-0.5 font-semibold">{user?.name ?? "-"}</dd></div>
+                <div><dt className="text-xs text-slate-500 dark:text-slate-400">Email</dt><dd className="mt-0.5 break-all font-medium">{user?.email ?? "-"}</dd></div>
+                <div><dt className="text-xs text-slate-500 dark:text-slate-400">Role</dt><dd className="mt-0.5 font-medium">{user?.role.name ?? "-"}</dd></div>
+              </dl>
+              <HoverCard.Arrow className="fill-white dark:fill-slate-900" />
+            </HoverCard.Content>
+          </HoverCard.Portal>
+        </HoverCard.Root>
         <nav className="mt-2 space-y-1">
           {menuItems.map((item) => {
             const Icon = item.icon,

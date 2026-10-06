@@ -22,13 +22,26 @@ const statusBucket = (status: string) => {
   return "damagedMaintenance";
 };
 
+async function getScopedDepartmentId(prisma: PrismaLike, req: Request) {
+  if (req.auth?.role.code === "DEPARTMENT_HEAD") return req.auth.department?.id;
+  if (req.auth?.role.code !== "LAPTOP_RENTAL") return undefined;
+  const itsm = await prisma.department.findFirst({
+    where: { OR: [{ department_code: "ITSM" }, { department_name: { contains: "(ITSM)" } }] },
+    select: { department_id: true },
+  });
+  return itsm?.department_id ?? null;
+}
+
 export function createDashboardRouter(prisma: PrismaLike) {
   const router = Router();
 
   router.get("/overview", async (req: Request, res: Response) => {
     try {
-      const mineRequested = req.query.scope === "mine";
-      const scopedDepartmentId = mineRequested && req.auth?.role.code === "DEPARTMENT_HEAD" ? req.auth.department?.id : undefined;
+      // Department Heads always receive their own department's data.  The
+      // query parameter is a UI convenience for administrators, never an
+      // authorization boundary.
+      const scopedDepartmentId = await getScopedDepartmentId(prisma, req);
+      if (scopedDepartmentId === null) return res.status(503).json({ ok: false, message: "ITSM department is not configured." });
       const academicYearId = positiveInt(req.query.academicYearId, "academicYearId");
       const departmentId = scopedDepartmentId ?? positiveInt(req.query.departmentId, "departmentId");
       const activeDepartmentId = scopedDepartmentId ?? positiveInt(req.query.activeDepartmentId, "activeDepartmentId");
@@ -67,11 +80,14 @@ export function createDashboardRouter(prisma: PrismaLike) {
       // It changes only when a department is selected in the overview chart.
       const selectedDepartmentId = activeDepartmentId;
       const departmentItemsWhere = selectedDepartmentId ? { current_department_id: selectedDepartmentId } : undefined;
-      const [totalItems, statusCounts, departmentCounts, itemGroups, academicYears, departments, categories, rooms, recentItems, departmentHistoryData] = await Promise.all([
+      const includeRentalLaptops = req.auth?.role.code === "LAPTOP_RENTAL" && Boolean(scopedDepartmentId);
+      const [totalItems, statusCounts, departmentCounts, itemGroups, rentalLaptopStatusCounts, rentalLaptopQuantity, academicYears, departments, categories, rooms, recentItems, departmentHistoryData] = await Promise.all([
         prisma.item_detail.count({ where }),
         prisma.item_detail.groupBy({ by: ["status"], where, _count: { _all: true } }),
         prisma.item_detail.groupBy({ by: ["current_department_id", "status"], where, _count: { _all: true } }),
         departmentItemsWhere ? prisma.item_detail.groupBy({ by: ["item_id", "status"], where: departmentItemsWhere, _count: { _all: true } }) : [],
+        includeRentalLaptops ? prisma.item_detail.groupBy({ by: ["status"], where: { item: { category: { rental_allowed: true } }, OR: [{ current_department_id: { not: scopedDepartmentId! } }, { current_department_id: null }] }, _count: { _all: true } }) : [],
+        includeRentalLaptops ? prisma.item_detail.count({ where: { item: { category: { rental_allowed: true } } } }) : 0,
         prisma.budget_year.findMany({ select: { budget_year_id: true, year_name: true }, orderBy: { start_date: "desc" } }),
         prisma.department.findMany({ where: scopedDepartmentId ? { department_id: scopedDepartmentId } : undefined, select: { department_id: true, department_name: true, department_code: true }, orderBy: { department_name: "asc" } }),
         prisma.category.findMany({ select: { category_id: true, category_name: true }, orderBy: { category_name: "asc" } }),
@@ -103,18 +119,26 @@ export function createDashboardRouter(prisma: PrismaLike) {
         if (aCurrent !== bCurrent) return aCurrent ? -1 : 1;
         return String(b.year_name).localeCompare(String(a.year_name));
       });
-      const summary = { totalItems, available: 0, inUse: 0, damagedMaintenance: 0 };
-      for (const entry of statusCounts) {
+      // Rental laptops are centrally managed and may not be physically stored
+      // in ITSM. Include those units in the ITSM rental dashboard once, while
+      // excluding laptops already counted in the department inventory.
+      const externallyLocatedLaptopQuantity = rentalLaptopStatusCounts.reduce((total: number, entry: any) => total + entry._count._all, 0);
+      const combinedStatusCounts = [...statusCounts, ...rentalLaptopStatusCounts];
+      const combinedDepartmentCounts = includeRentalLaptops
+        ? [...departmentCounts, ...rentalLaptopStatusCounts.map((entry: any) => ({ ...entry, current_department_id: scopedDepartmentId }))]
+        : departmentCounts;
+      const summary = { totalItems: totalItems + externallyLocatedLaptopQuantity, laptopQuantity: rentalLaptopQuantity, available: 0, inUse: 0, damagedMaintenance: 0 };
+      for (const entry of combinedStatusCounts) {
         summary[statusBucket(entry.status)] += entry._count._all;
       }
       // A count of item_detail rows is the source of truth for physical units.
       if (summary.totalItems !== summary.available + summary.inUse + summary.damagedMaintenance) {
         throw new Error("Dashboard summary counts are inconsistent");
       }
-      const pct = (value: number) => totalItems ? Math.round((value / totalItems) * 1000) / 10 : 0;
+      const pct = (value: number) => summary.totalItems ? Math.round((value / summary.totalItems) * 1000) / 10 : 0;
       const departmentMap = new Map(departments.map((d: any) => [d.department_id, d]));
       const overview = new Map<number, any>();
-      for (const row of departmentCounts) {
+      for (const row of combinedDepartmentCounts) {
         if (row.current_department_id === null) continue;
         const id = row.current_department_id;
         if (!overview.has(id)) overview.set(id, { departmentId: id, departmentName: (departmentMap.get(id) as any)?.department_name ?? "Unassigned", available: 0, inUse: 0, damagedMaintenance: 0, total: 0 });
@@ -126,7 +150,7 @@ export function createDashboardRouter(prisma: PrismaLike) {
       for (const departmentRow of departments) overview.set(departmentRow.department_id, overview.get(departmentRow.department_id) ?? { departmentId: departmentRow.department_id, departmentName: departmentRow.department_name, available: 0, inUse: 0, damagedMaintenance: 0, total: 0 });
       // Items without a current location remain part of the dashboard totals.  They are
       // represented only in this response, never inserted into the department table.
-      const unassignedRows = departmentCounts.filter((row: any) => row.current_department_id === null);
+      const unassignedRows = combinedDepartmentCounts.filter((row: any) => row.current_department_id === null);
       if (unassignedRows.length) {
         const unassigned = { departmentId: null, departmentName: "Unassigned", available: 0, inUse: 0, damagedMaintenance: 0, total: 0 };
         for (const row of unassignedRows) {

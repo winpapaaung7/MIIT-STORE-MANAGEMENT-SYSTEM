@@ -51,6 +51,7 @@ interface TransferModalProps {
   departmentRoomMap: Record<Department, readonly string[]>;
   items: AccessoryItem[];
   initialFromDepartment?: Department;
+  lockFromDepartment?: boolean;
   onTransfer: (payload: TransferRequestPayload) => Promise<{
     ok: boolean;
     message?: string;
@@ -89,6 +90,7 @@ export default function TransferModal({
   departmentRoomMap,
   items,
   initialFromDepartment,
+  lockFromDepartment = false,
   onTransfer,
 }: TransferModalProps) {
   const roomsForDepartment = (department: Department) =>
@@ -210,6 +212,12 @@ export default function TransferModal({
       departments.map((department) => ({ id: department, label: department })),
     [departments],
   );
+  const fromDepartmentOptions = useMemo(
+    () => lockFromDepartment
+      ? departmentOptions.filter((department) => department.id === defaultFromDepartment)
+      : departmentOptions,
+    [defaultFromDepartment, departmentOptions, lockFromDepartment],
+  );
 
   const fromRoomOptions = useMemo(
     () => roomsForDepartment(formState.fromDepartment),
@@ -308,9 +316,9 @@ export default function TransferModal({
     setFormState((current) => ({
       ...current,
       [key]: department,
-      [roomKey]: departmentRooms.some((room) => room === current[roomKey])
-        ? current[roomKey]
-        : (departmentRooms[0] ?? ""),
+      // A destination belongs to the selected department, so immediately
+      // choose that department's first registered room.
+      [roomKey]: departmentRooms[0] ?? "",
       selectedItems: key === "fromDepartment" ? [] : current.selectedItems,
     }));
   };
@@ -427,8 +435,9 @@ export default function TransferModal({
               <SelectField
                 label="From Department"
                 value={formState.fromDepartment}
-                options={departmentOptions}
+                options={fromDepartmentOptions}
                 placeholder="Select department"
+                disabled={lockFromDepartment}
                 onValueChange={(department) =>
                   selectDepartment(
                     "fromDepartment",
@@ -653,6 +662,7 @@ interface SelectFieldProps {
   value: string;
   options: readonly { id: string; label: string }[];
   placeholder: string;
+  disabled?: boolean;
   onValueChange: (value: string) => void;
 }
 
@@ -661,6 +671,7 @@ function SelectField({
   value,
   options,
   placeholder,
+  disabled = false,
   onValueChange,
 }: SelectFieldProps) {
   const selectedLabel = options.find((option) => option.id === value)?.label ?? value;
@@ -668,7 +679,7 @@ function SelectField({
   return (
     <div className="grid min-w-0 gap-2">
       <Label>{label}</Label>
-      <Select value={value} onValueChange={onValueChange}>
+      <Select value={value} onValueChange={onValueChange} disabled={disabled}>
         <SelectTrigger
           title={selectedLabel || placeholder}
           className={cn(

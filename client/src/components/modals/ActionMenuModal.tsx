@@ -10,6 +10,7 @@ import ItemModal, {
 } from "@/components/modals/ItemModal"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { useState } from "react"
 
 export interface ActionMenuModalProps {
   activeAction: ActiveAccessoryAction | null
@@ -19,6 +20,7 @@ export interface ActionMenuModalProps {
   departmentRoomMap: Record<Department, readonly string[]>
   onClose: () => void
   onSubmitEdit: (payload: ItemSubmitPayload) => void
+  onConfirmDelete: () => Promise<{ ok: boolean; message?: string }>
 }
 
 export default function ActionMenuModal({
@@ -29,12 +31,25 @@ export default function ActionMenuModal({
   departmentRoomMap,
   onClose,
   onSubmitEdit,
+  onConfirmDelete,
 }: ActionMenuModalProps) {
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState("")
   const actionTitle = activeAction
     ? `${activeAction.type[0].toUpperCase()}${activeAction.type.slice(1)} Accessory`
     : "Accessory Action"
   const isEditOpen = activeAction?.type === "edit"
   const isDetailOpen = activeAction !== null && activeAction.type !== "edit"
+  const confirmDelete = async () => {
+    setDeleteError("")
+    setIsDeleting(true)
+    try {
+      const result = await onConfirmDelete()
+      if (!result.ok) setDeleteError(result.message ?? "Failed to delete item.")
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   return (
     <>
@@ -81,20 +96,22 @@ export default function ActionMenuModal({
               type="button"
               variant="outline"
               onClick={onClose}
+              disabled={isDeleting}
               className="w-full sm:w-auto"
             >
               Cancel
             </Button>
             <Button
               type="button"
-              onClick={onClose}
+              onClick={activeAction?.type === "delete" ? () => void confirmDelete() : onClose}
+              disabled={isDeleting}
               className={cn(
                 "w-full bg-slate-950 text-white hover:bg-slate-800 sm:w-auto",
                 activeAction?.type === "delete" &&
                   "bg-rose-700 hover:bg-rose-800"
               )}
             >
-              {activeAction?.type === "delete" ? "Confirm Delete" : "Done"}
+              {activeAction?.type === "delete" ? (isDeleting ? "Deleting..." : "Confirm Delete") : "Done"}
             </Button>
           </>
         }
@@ -125,9 +142,11 @@ export default function ActionMenuModal({
             )}
 
             {activeAction.type === "delete" && (
-              <div className="rounded-lg border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
-                Delete placeholder opened. Wire this confirmation to your API
-                delete mutation when backend integration is ready.
+              <div className="space-y-3">
+                <div className="rounded-lg border border-rose-100 bg-rose-50 p-4 text-sm text-rose-700">
+                  Delete this item unit permanently? Units with rental or transfer history cannot be deleted.
+                </div>
+                {deleteError ? <p className="text-sm font-medium text-rose-700">{deleteError}</p> : null}
               </div>
             )}
           </div>

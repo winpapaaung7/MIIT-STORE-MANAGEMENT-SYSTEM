@@ -36,10 +36,15 @@ export function apiAuthorization(prisma: any) {
       const role = req.auth!.role.code;
       if (role === "ADMIN") return next();
       const rental = req.path.startsWith("/laptop-rentals") || req.path.startsWith("/students") || req.path.startsWith("/teachers");
-      if (role === "LAPTOP_RENTAL" && rental) return next();
-      const headRead = req.method === "GET" && (req.path.startsWith("/dashboard") || req.path === "/items" || req.path === "/item-details" || req.path === "/departments" || req.path.startsWith("/qr-codes/") || req.path.startsWith("/transfers"));
+      const rentalDashboardRead = req.method === "GET" && (req.path.startsWith("/dashboard") || req.path === "/items" || req.path === "/items/filter-options" || req.path === "/item-details" || req.path === "/categories" || req.path === "/departments" || req.path === "/academic-years" || req.path === "/activity-log");
+      const rentalProfile = (req.method === "GET" && req.path === "/profile")
+        || (req.method === "PUT" && (req.path === "/profile" || req.path === "/profile/password" || req.path === "/profile/two-step-verification" || req.path === "/preferences/language"));
+      if (role === "LAPTOP_RENTAL" && (rental || rentalDashboardRead || rentalProfile)) return next();
+      const headRead = req.method === "GET" && (req.path.startsWith("/dashboard") || req.path === "/items" || req.path === "/item-details" || req.path === "/categories" || req.path === "/departments" || req.path === "/activity-log" || req.path.startsWith("/qr-codes/") || req.path.startsWith("/transfers"));
       const headTransfer = req.method === "POST" && req.path === "/transfers";
-      if (role === "DEPARTMENT_HEAD" && (headRead || headTransfer)) return next();
+      const headProfile = (req.method === "GET" && req.path === "/profile")
+        || (req.method === "PUT" && (req.path === "/profile" || req.path === "/profile/password" || req.path === "/profile/two-step-verification" || req.path === "/preferences/language"));
+      if (role === "DEPARTMENT_HEAD" && (headRead || headTransfer || headProfile)) return next();
       return res.status(403).json({ ok: false, message: "Permission denied" });
     });
   };

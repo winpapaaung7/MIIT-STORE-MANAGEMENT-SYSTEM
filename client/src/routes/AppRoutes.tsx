@@ -3,6 +3,8 @@ import MainLayout from "../components/layout/MainLayout";
 import InventoryPage from "../screens/Inventory/InventoryPage";
 import DepartmentPage from "../screens/Departments/DepartmentPage";
 import DepartmentRoomsPage from "../screens/Departments/DepartmentRoomsPage";
+import MyDepartmentPage from "../screens/Departments/MyDepartmentPage";
+import ItsmDepartmentPage from "../screens/Departments/ItsmDepartmentPage";
 import AccessoryDetailsPage from "../screens/AccessoryDetails/AccessoryDetailsPage";
 import PublicAccessoryScanPage from "../screens/AccessoryDetails/PublicAccessoryScanPage";
 import LaptopRentalPage from "../screens/LaptopRental/LaptopRentalpage";
@@ -22,9 +24,9 @@ export default function AppRoutes() { return <Routes>
     <Route element={<ProtectedRoute roles={rolesFor("/")} />}><Route path="dashboard" element={<DashboardPage />} /></Route>
     <Route element={<ProtectedRoute roles={rolesFor("/inventory")} />}><Route path="inventory" element={<InventoryPage />} /></Route>
     <Route element={<ProtectedRoute roles={rolesFor("/accessories")} />}><Route path="accessories" element={<AccessoryDetailsPage />} /></Route>
-    <Route element={<ProtectedRoute roles={rolesFor("/my-department")} />}><Route path="my-department" element={<DashboardPage scope="mine" />} /></Route>
+    <Route element={<ProtectedRoute roles={rolesFor("/my-department")} />}><Route path="my-department" element={<MyDepartmentPage />} /><Route path="my-department/dashboard" element={<DashboardPage scope="mine" />} /></Route>
     <Route element={<ProtectedRoute roles={rolesFor("/laptop-rental")} />}><Route path="laptop-rental" element={<LaptopRentalPage />} /></Route>
-    <Route element={<ProtectedRoute roles={rolesFor("/rental-dashboard")} />}><Route path="rental-dashboard" element={<Navigate to="/laptop-rental" replace />} /></Route>
+    <Route element={<ProtectedRoute roles={rolesFor("/rental-dashboard")} />}><Route path="rental-dashboard" element={<ItsmDepartmentPage />} /><Route path="rental-dashboard/room" element={<DashboardPage scope="rental" />} /></Route>
     <Route element={<ProtectedRoute roles={rolesFor("/departments")} />}><Route path="departments" element={<DepartmentPage />} /></Route>
     <Route element={<ProtectedRoute roles={rolesFor("/departments")} />}><Route path="departments/:departmentId" element={<DepartmentRoomsPage />} /></Route>
     <Route element={<ProtectedRoute roles={rolesFor("/departments")} />}><Route path="departments/:departmentId/dashboard" element={<DashboardPage />} /></Route>
@@ -33,7 +35,6 @@ export default function AppRoutes() { return <Routes>
     <Route element={<ProtectedRoute roles={rolesFor("/students")} />}><Route path="students" element={<Navigate to="/laptop-rental" replace />} /></Route>
     <Route element={<ProtectedRoute roles={rolesFor("/teachers")} />}><Route path="teachers" element={<Navigate to="/laptop-rental" replace />} /></Route>
     <Route element={<ProtectedRoute roles={rolesFor("/returns")} />}><Route path="returns" element={<Navigate to="/laptop-rental" replace />} /></Route>
-    <Route element={<ProtectedRoute roles={rolesFor("/transfers")} />}><Route path="transfers" element={<Navigate to="/inventory" replace />} /></Route>
   </Route></Route>
   <Route path="*" element={<Navigate to="/" replace />} />
 </Routes>; }

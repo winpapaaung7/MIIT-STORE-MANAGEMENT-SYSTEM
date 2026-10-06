@@ -5,6 +5,7 @@ import {
   CheckCheck,
   CalendarDays,
   Clock3,
+  Info,
   Languages,
   ShieldCheck,
   UserRound,
@@ -23,6 +24,7 @@ import SettingProfile from "./Settingprofile";
 import AcedemicYear from "./AcedemicYear";
 import History from "./History";
 import Preferences from "./Preferences";
+import About from "./About";
 import type { ProfileDetails } from "./EditProfileModal";
 
 const settingTabs = [
@@ -31,6 +33,7 @@ const settingTabs = [
   { id: "academic", label: "Academic Year", icon: CalendarDays },
   { id: "history", label: "History", icon: Clock3 },
   { id: "preferences", label: "Preferences", icon: Languages },
+  { id: "about", label: "About", icon: Info },
 ] as const;
 
 type SettingTab = (typeof settingTabs)[number]["id"];
@@ -82,6 +85,10 @@ export default function SettingPage() {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const isMyanmar = language === "mm";
+  const isAdmin = user?.role.code === "ADMIN";
+  const visibleSettingTabs = isAdmin
+    ? settingTabs
+    : settingTabs.filter((tab) => tab.id === "profile" || tab.id === "security" || tab.id === "history" || tab.id === "preferences" || tab.id === "about");
   const [activeTab, setActiveTab] = useState<SettingTab>("profile");
   const [profile, setProfile] = useState<ProfileDetails | null>(null);
   const [profileError, setProfileError] = useState("");
@@ -254,9 +261,10 @@ export default function SettingPage() {
       }
       return <section><h2 className="text-xl font-semibold text-slate-950 dark:text-slate-50">My Profile</h2><p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Loading profile...</p></section>;
     }
-    if (activeTab === "academic") return <AcedemicYear />;
+    if (activeTab === "academic" && isAdmin) return <AcedemicYear />;
     if (activeTab === "history") return <History />;
     if (activeTab === "preferences") return <Preferences />;
+    if (activeTab === "about") return <About />;
 
     return (
       <section>
@@ -344,7 +352,7 @@ export default function SettingPage() {
       </div>
 
       {/* FIX 2: Added 'min-h-0' alongside flex structural settings to strictly cut off page extension */}
-      <div className="grid min-h-0 flex-1 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm lg:grid-cols-[260px_1fr] dark:border-slate-800 dark:bg-slate-900">
+      <div className="grid min-h-0 flex-1 overflow-hidden rounded-3xl border border-slate-200 bg-slate-50 shadow-sm lg:grid-cols-[260px_1fr] dark:border-slate-800 dark:bg-slate-900">
         {/* FIX 3: Replaced 'overflow-y-auto' with 'overflow-hidden' on the side options layout wrapper */}
         <aside className="flex shrink-0 flex-col overflow-hidden border-b border-slate-100 p-5 lg:border-r lg:border-b-0 dark:border-slate-800 dark:bg-[#050814]">
           {/* Identity Card Block */}
@@ -378,11 +386,11 @@ export default function SettingPage() {
 
           {/* Links Selection Navigation */}
           <nav className="flex-1 space-y-1 overflow-y-auto scrollbar-thin [scrollbar-color:#cbd5e1_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-white [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-thumb:hover]:bg-slate-400 [&::-webkit-scrollbar-track]:bg-transparent">
-            {settingTabs.map((item) => {
+            {visibleSettingTabs.map((item) => {
               const Icon = item.icon;
               const active = activeTab === item.id;
               const labels: Record<SettingTab, string> = isMyanmar
-                ? { profile: "ကိုယ်ရေးအချက်အလက်", security: "လုံခြုံရေး", academic: "ပညာသင်နှစ်", history: "မှတ်တမ်း", preferences: "နှစ်သက်ရာများ" }
+                ? { profile: "ကိုယ်ရေးအချက်အလက်", security: "လုံခြုံရေး", academic: "ပညာသင်နှစ်", history: "မှတ်တမ်း", preferences: "နှစ်သက်ရာများ", about: "အကြောင်း" }
                 : Object.fromEntries(settingTabs.map((tab) => [tab.id, tab.label])) as Record<SettingTab, string>;
 
               return (

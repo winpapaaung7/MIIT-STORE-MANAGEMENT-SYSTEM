@@ -30,7 +30,7 @@ async function imageUrlToDataUrl(url: string) {
   });
 }
 
-export async function downloadQrCodePdf(codes: readonly string[]) {
+async function createQrCodePdf(codes: readonly string[]) {
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const logoDataUrl = await imageUrlToDataUrl(miitLogo);
   const columns = 3;
@@ -54,7 +54,9 @@ export async function downloadQrCodePdf(codes: readonly string[]) {
     const png = await QRCode.toDataURL(accessoryScanUrl(code), {
       errorCorrectionLevel: "H",
       margin: 1,
-      width: 360,
+      // 600 px at the printed 46 mm label size is roughly 330 DPI, which
+      // keeps the QR modules crisp on standard office and label printers.
+      width: 600,
       color: { dark: "#020617", light: "#f8fafc" },
     });
 
@@ -69,5 +71,29 @@ export async function downloadQrCodePdf(codes: readonly string[]) {
     pdf.text(code, x + 28, y + 53, { align: "center" });
   }
 
+  return pdf;
+}
+
+export async function downloadQrCodePdf(codes: readonly string[]) {
+  const pdf = await createQrCodePdf(codes);
   pdf.save("MIIT-Store-QR-Codes.pdf");
+}
+
+export async function printQrCodePdf(codes: readonly string[]) {
+  const pdf = await createQrCodePdf(codes);
+  const printUrl = URL.createObjectURL(pdf.output("blob"));
+  const frame = document.createElement("iframe");
+
+  frame.className = "fixed bottom-0 right-0 h-0 w-0 border-0 opacity-0";
+  frame.src = printUrl;
+  frame.onload = () => {
+    frame.contentWindow?.focus();
+    frame.contentWindow?.print();
+    window.setTimeout(() => {
+      frame.remove();
+      URL.revokeObjectURL(printUrl);
+    }, 1_000);
+  };
+
+  document.body.appendChild(frame);
 }

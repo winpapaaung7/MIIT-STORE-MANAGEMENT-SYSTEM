@@ -11,6 +11,7 @@ import { useLanguage } from "@/context/LanguageContext"
 
 export interface AccessoriesFilterBarProps {
   compact?: boolean
+  showLocationFilters?: boolean
   hasActiveFilters: FilterChoice | Date | undefined
   resetFilters: () => void
   selectedCategory: FilterChoice
@@ -47,6 +48,7 @@ export interface AccessoriesFilterBarProps {
 
 export default function AccessoriesFilterBar({
   compact = false,
+  showLocationFilters = false,
   hasActiveFilters,
   resetFilters,
   selectedCategory,
@@ -114,7 +116,7 @@ export default function AccessoriesFilterBar({
             selectRoom={selectRoom}
             isNoneFilter={isNoneFilter}
             noneFilterValue={noneFilterValue}
-            limited={compact}
+            limited={!showLocationFilters}
           />
 
           <ActionButtons onTransferClick={onTransferClick} label={t("transfer")} />

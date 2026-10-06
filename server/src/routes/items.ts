@@ -3,6 +3,16 @@ import { Router } from "express";
 const normalizeString = (value: unknown) =>
   typeof value === "string" ? value.trim() : "";
 
+async function getScopedDepartmentId(prisma: any, req: any) {
+  if (req.auth?.role.code === "DEPARTMENT_HEAD") return req.auth.department?.id;
+  if (req.auth?.role.code !== "LAPTOP_RENTAL") return undefined;
+  const itsm = await prisma.department.findFirst({
+    where: { OR: [{ department_code: "ITSM" }, { department_name: { contains: "(ITSM)" } }] },
+    select: { department_id: true },
+  });
+  return itsm?.department_id ?? null;
+}
+
 async function generateNextItemId(prisma: any) {
   const latestItem = await prisma.item.findFirst({ orderBy: { item_id: "desc" } });
   const nextNumeric = latestItem ? Math.max(Number(latestItem.item_id) || 0, 0) + 1 : 1;
@@ -34,7 +44,10 @@ export function createItemsRouter(prisma: any) {
   // detail rows on the current Accessories page.
   router.get("/filter-options", async (_req, res) => {
     try {
+      const scopedDepartmentId = await getScopedDepartmentId(prisma, _req);
+      if (scopedDepartmentId === null) return res.status(503).json({ ok: false, message: "ITSM department is not configured." });
       const items = await prisma.item.findMany({
+        where: scopedDepartmentId ? { item_detail: { some: { current_department_id: scopedDepartmentId } } } : undefined,
         select: {
           item_name: true,
           category: { select: { category_name: true } },
@@ -57,10 +70,64 @@ export function createItemsRouter(prisma: any) {
   router.get("/", async (req, res) => {
     try {
       const search = normalizeString(req.query.search), category = normalizeString(req.query.category), department = normalizeString(req.query.department), room = normalizeString(req.query.room), page = Math.max(1, Number(req.query.page) || 1), limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
-      const detailWhere = department || room ? { ...(department ? { department: { department_name: department } } : {}), ...(room ? { room: { building_name: room === "Room number not assigned" ? null : room } } : {}) } : undefined;
-      const where = { ...(search ? { OR: [{ item_id: { contains: search } }, { item_name: { contains: search } }] } : {}), ...(category ? { category: { category_name: category } } : {}), ...(detailWhere ? { item_detail: { some: detailWhere } } : {}) };
-      const [items, total] = await Promise.all([prisma.item.findMany({ where, include: { category: true, _count: { select: { item_detail: detailWhere ? { where: detailWhere } : true } } }, orderBy: { item_id: "asc" }, skip: (page - 1) * limit, take: limit }), prisma.item.count({ where })]);
-      return res.json({ ok: true, items: items.map((item: any) => ({ item_id: item.item_id, item_name: item.item_name, category_name: item.category.category_name, image_url: item.image_url, quantity: item._count.item_detail })), pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) } });
+      const scopedDepartmentId = await getScopedDepartmentId(prisma, req);
+      if (scopedDepartmentId === null) return res.status(503).json({ ok: false, message: "ITSM department is not configured." });
+      const isRentalDashboard = req.auth?.role.code === "LAPTOP_RENTAL" && Boolean(scopedDepartmentId);
+      const departmentDetailWhere = scopedDepartmentId || department || room
+        ? {
+            ...(scopedDepartmentId ? { current_department_id: scopedDepartmentId } : department ? { department: { department_name: department } } : {}),
+            ...(room ? { room: { building_name: room === "Room number not assigned" ? null : room } } : {}),
+          }
+        : undefined;
+      // Rental laptops can be issued from locations outside ITSM.  The rental
+      // dashboard must therefore show both the selected ITSM room inventory
+      // and all centrally managed laptop units (with their item images).
+      const rentalLaptopDetailWhere = isRentalDashboard
+        ? { OR: [{ current_department_id: { not: scopedDepartmentId } }, { current_department_id: null }] }
+        : undefined;
+      const where = {
+        ...(search ? { OR: [{ item_id: { contains: search } }, { item_name: { contains: search } }] } : {}),
+        ...(category ? { category: { category_name: category } } : {}),
+        ...(isRentalDashboard
+          ? {
+              OR: [
+                ...(departmentDetailWhere ? [{ item_detail: { some: departmentDetailWhere } }] : []),
+                { category: { rental_allowed: true }, item_detail: { some: rentalLaptopDetailWhere } },
+              ],
+            }
+          : departmentDetailWhere ? { item_detail: { some: departmentDetailWhere } } : {}),
+      };
+      const itemDetailWhere = isRentalDashboard
+        ? { OR: [departmentDetailWhere, rentalLaptopDetailWhere].filter(Boolean) }
+        : departmentDetailWhere;
+      const [items, total] = await Promise.all([
+        prisma.item.findMany({
+          where,
+          include: { category: true, item_detail: { where: itemDetailWhere } },
+          orderBy: { item_id: "asc" },
+          skip: (page - 1) * limit,
+          take: limit,
+        }),
+        prisma.item.count({ where }),
+      ]);
+      return res.json({
+        ok: true,
+        items: items.map((item: any) => {
+          const localUnits = item.item_detail.filter((detail: any) =>
+            !scopedDepartmentId || detail.current_department_id === scopedDepartmentId,
+          );
+          return {
+            item_id: item.item_id,
+            item_name: item.item_name,
+            category_name: item.category.category_name,
+            image_url: item.image_url,
+            quantity: isRentalDashboard && item.category.rental_allowed
+              ? item.item_detail.length
+              : localUnits.length,
+          };
+        }),
+        pagination: { page, limit, total, totalPages: Math.max(1, Math.ceil(total / limit)) },
+      });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ ok: false, message: "Failed to fetch items", error: error instanceof Error ? error.message : String(error) });

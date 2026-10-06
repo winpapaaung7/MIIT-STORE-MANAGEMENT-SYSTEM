@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Download } from "lucide-react";
+import { Download, Printer } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 
 import miitLogo from "@/assets/MIIT_LOGO.jpg";
 import { type AccessoryItem } from "@/screens/AccessoryDetails/types";
-import { accessoryScanUrl, downloadQrCodePdf } from "@/lib/qr";
+import { accessoryScanUrl, downloadQrCodePdf, printQrCodePdf } from "@/lib/qr";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,6 +23,7 @@ interface QrSheetModalProps {
 
 export default function QrSheetModal({ items, open, onClose }: QrSheetModalProps) {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isPrinting, setIsPrinting] = useState(false);
 
   const handleDownload = async () => {
     setIsDownloading(true);
@@ -30,6 +31,15 @@ export default function QrSheetModal({ items, open, onClose }: QrSheetModalProps
       await downloadQrCodePdf(items.map((item) => item.id));
     } finally {
       setIsDownloading(false);
+    }
+  };
+
+  const handlePrint = async () => {
+    setIsPrinting(true);
+    try {
+      await printQrCodePdf(items.map((item) => item.id));
+    } finally {
+      setIsPrinting(false);
     }
   };
 
@@ -71,6 +81,10 @@ export default function QrSheetModal({ items, open, onClose }: QrSheetModalProps
           <Button type="button" variant="outline" onClick={handleDownload} disabled={isDownloading} className="w-full sm:w-auto">
             <Download className="size-4" />
             {isDownloading ? "Preparing PDF..." : "Download QR Sheet"}
+          </Button>
+          <Button type="button" variant="outline" onClick={() => void handlePrint()} disabled={isPrinting} className="w-full sm:w-auto">
+            <Printer className="size-4" />
+            {isPrinting ? "Preparing PDF..." : "Print QR Sheet"}
           </Button>
           <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto sm:min-w-28">
             Close

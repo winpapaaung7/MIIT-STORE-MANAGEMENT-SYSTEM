@@ -291,6 +291,24 @@ app.get("/api/activity-log", async (req, res) => {
     const where: string[] = [];
     const values: unknown[] = [];
 
+    if (req.auth?.role.code === "DEPARTMENT_HEAD") {
+      // Department heads can audit their own profile changes and transfers to
+      // or from their assigned department, never the institution-wide log.
+      const departmentName = req.auth.department?.name ?? "";
+      where.push("((module = 'Profile' AND target_id = ?) OR (module = 'Transfer' AND (details LIKE ? OR details LIKE ?)))");
+      values.push(
+        String(req.auth.id),
+        `%\"from_department\":\"${departmentName}\"%`,
+        `%\"to_department\":\"${departmentName}\"%`,
+      );
+    }
+    if (req.auth?.role.code === "LAPTOP_RENTAL") {
+      // Rental staff can review their own profile changes and the rental
+      // activity they manage, without gaining access to institution-wide logs.
+      where.push("((module = 'Profile' AND target_id = ?) OR module = 'Laptop Rental')");
+      values.push(String(req.auth.id));
+    }
+
     if (["created", "updated", "deleted", "transferred"].includes(action)) {
       where.push("action = ?");
       values.push(action);
@@ -351,6 +369,19 @@ app.get("/api/activity-log", async (req, res) => {
       offset,
     );
 
+    // The legacy audit table stores the performer name, not their email.
+    // Resolve it from the active user account so existing history entries can
+    // show the performer email without modifying historical audit text.
+    const actorNames = [...new Set(rows.map((row) => row.actor_name).filter((name) => name && name !== "System"))];
+    const actorEmailByName = new Map<string, string>();
+    if (actorNames.length) {
+      const actors = await prisma.users.findMany({
+        where: { full_name: { in: actorNames } },
+        select: { full_name: true, email: true },
+      });
+      actors.forEach((actor) => actorEmailByName.set(actor.full_name, actor.email));
+    }
+
     // Older rental audit entries did not store the assigned laptop QR code.
     // Resolve it from the rental so the activity details can still show a QR
     // label for those existing records.
@@ -374,7 +405,11 @@ app.get("/api/activity-log", async (req, res) => {
       activities: rows.map((row) => {
         const details = parseActivityDetails(row.details);
         const qrCode = row.module === "Laptop Rental" && row.target_id ? rentalQrCodes.get(Number(row.target_id)) : undefined;
-        return { ...row, details: qrCode && !Array.isArray(details?.qr_codes) ? { ...(details ?? {}), qr_codes: [qrCode] } : details };
+        return {
+          ...row,
+          actor_email: actorEmailByName.get(row.actor_name) ?? null,
+          details: qrCode && !Array.isArray(details?.qr_codes) ? { ...(details ?? {}), qr_codes: [qrCode] } : details,
+        };
       }),
       pagination: { page: currentPage, limit, total, totalPages },
     });
@@ -446,7 +481,11 @@ app.put("/api/profile", async (req, res) => {
       return res.status(404).json({ ok: false, message: "No active user profile was found." });
     }
 
-    const department = departmentName ? await findOrCreateDepartment(departmentName) : null;
+    // A department head can edit personal contact details, but must never
+    // change the department that defines their access scope from this page.
+    const department = req.auth?.role.code === "DEPARTMENT_HEAD"
+      ? null
+      : departmentName ? await findOrCreateDepartment(departmentName) : null;
     const imageUrl = image === ""
       ? null
       : image?.startsWith("data:image/")
@@ -459,7 +498,9 @@ app.put("/api/profile", async (req, res) => {
         full_name: name,
         email,
         phone: phone || null,
-        department_id: department?.department_id ?? null,
+        department_id: req.auth?.role.code === "DEPARTMENT_HEAD"
+          ? currentUser.department_id
+          : department?.department_id ?? null,
         ...(imageUrl !== undefined ? { image_url: imageUrl } : {}),
       },
       include: { role: true, department: true },
@@ -762,8 +803,21 @@ app.get("/api/departments", async (req, res) => {
     // The dashboard is based on department records, whereas this endpoint
     // previously returned only rooms. Query departments first so both pages
     // include the same departments, even when no room has been assigned yet.
+    const rentalItsmDepartment = req.auth?.role.code === "LAPTOP_RENTAL"
+      ? await prisma.department.findFirst({ where: { OR: [{ department_code: "ITSM" }, { department_name: { contains: "(ITSM)" } }] }, select: { department_id: true } })
+      : null;
+    if (req.auth?.role.code === "LAPTOP_RENTAL" && !rentalItsmDepartment) return res.status(503).json({ ok: false, message: "ITSM department is not configured." });
+    // Transfers may be sent to any registered department. Keep regular
+    // department reads scoped, but expose all destination locations when the
+    // client explicitly requests them for the transfer picker.
+    const isTransferDestinationLookup = req.query.forTransfer === "true";
+    const departmentId = isTransferDestinationLookup
+      ? undefined
+      : req.auth?.role.code === "DEPARTMENT_HEAD"
+        ? req.auth.department!.id
+        : rentalItsmDepartment?.department_id;
     const departments = await prisma.department.findMany({
-      where: req.auth?.role.code === "DEPARTMENT_HEAD" ? { department_id: req.auth.department!.id } : undefined,
+      where: departmentId ? { department_id: departmentId } : undefined,
       include: { room: { orderBy: { room_id: "asc" } } },
       orderBy: { department_name: "asc" },
     });
@@ -836,7 +890,10 @@ app.post("/api/departments", async (req, res) => {
     await recordActivity("created", "Department", {
       type: "Department room",
       id: room.room_id,
+      /*
       name: `${room.department.department_name} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ${room.building_name ?? "Unassigned room"}`,
+      */
+      name: `${room.department.department_name} · Room ${room.building_name ?? "Room number not assigned"}`,
     }, { status: room.status ? "Available" : "Closed" });
 
     res.status(201).json({
@@ -1848,6 +1905,7 @@ app.post("/api/transfers", async (req, res) => {
       to_room: toRoom.building_name ?? "Not set",
       item_count: itemDetails.length,
       item_detail_codes: itemDetails.map((detail) => detail.detail_code).join(", "),
+      qr_codes: itemDetails.map((detail) => detail.detail_code),
       transfer_date: transferDate,
       remarks,
     });
@@ -1882,7 +1940,7 @@ app.delete("/api/items/:id", async (req, res) => {
 
     const existingItem = await prisma.item.findUnique({
       where: { item_id: itemId },
-      include: { item_detail: { select: { item_detail_id: true } } },
+      include: { item_detail: { select: { item_detail_id: true, detail_code: true } } },
     });
 
     if (!existingItem) {
@@ -1925,7 +1983,11 @@ app.delete("/api/items/:id", async (req, res) => {
       type: "Item",
       id: existingItem.item_id,
       name: existingItem.item_name,
-    }, { removed_units: existingItem.item_detail.length });
+    }, {
+      removed_units: existingItem.item_detail.length,
+      // Preserve the deleted units' QR values in the immutable audit record.
+      qr_codes: existingItem.item_detail.map((detail) => detail.detail_code),
+    });
 
     res.json({
       ok: true,
@@ -2210,7 +2272,11 @@ app.post("/api/items/import", async (req, res) => {
       return { importedRows: resolvedRows.length, importedUnits: detailRows.length, qrCodes, qrItems };
     });
 
-    await recordActivity("created", "Inventory", { type: "Bulk import", name: "Excel inventory import" }, { imported_rows: result.importedRows, imported_units: result.importedUnits });
+    await recordActivity("created", "Inventory", { type: "Bulk import", name: "Excel inventory import" }, {
+      imported_rows: result.importedRows,
+      imported_units: result.importedUnits,
+      qr_codes: result.qrCodes,
+    });
     return res.status(201).json({ ok: true, imported_rows: result.importedRows, imported_units: result.importedUnits, qr_codes: result.qrCodes, qr_items: result.qrItems });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to import inventory items";
@@ -2533,6 +2599,47 @@ app.put("/api/departments/entity/:id", async (req, res) => {
   }
 });
 
+app.delete("/api/departments/entity/:id", async (req, res) => {
+  try {
+    const departmentId = Number(req.params.id);
+    if (!Number.isInteger(departmentId) || departmentId <= 0) {
+      return res.status(400).json({ ok: false, message: "Invalid department id" });
+    }
+
+    const [department, rooms, items, users, heads, transfersFrom, transfersTo] = await Promise.all([
+      prisma.department.findUnique({ where: { department_id: departmentId }, select: { department_id: true, department_name: true } }),
+      prisma.room.count({ where: { department_id: departmentId } }),
+      prisma.item_detail.count({ where: { current_department_id: departmentId } }),
+      prisma.users.count({ where: { department_id: departmentId } }),
+      prisma.users.count({ where: { department_head_of_id: departmentId } }),
+      prisma.transfer.count({ where: { from_department_id: departmentId } }),
+      prisma.transfer.count({ where: { to_department_id: departmentId } }),
+    ]);
+    if (!department) return res.status(404).json({ ok: false, message: "Department not found" });
+
+    const blockers = [
+      rooms ? `${rooms} room${rooms === 1 ? "" : "s"}` : "",
+      items ? `${items} inventory item${items === 1 ? "" : "s"}` : "",
+      users ? `${users} assigned user${users === 1 ? "" : "s"}` : "",
+      heads ? `${heads} department head assignment${heads === 1 ? "" : "s"}` : "",
+      transfersFrom + transfersTo ? `${transfersFrom + transfersTo} transfer record${transfersFrom + transfersTo === 1 ? "" : "s"}` : "",
+    ].filter(Boolean);
+    if (blockers.length) {
+      return res.status(409).json({
+        ok: false,
+        message: `Department cannot be deleted. Remove its ${blockers.join(", ")} first.`,
+      });
+    }
+
+    await prisma.department.delete({ where: { department_id: departmentId } });
+    await recordActivity("deleted", "Department", { type: "Department", id: departmentId, name: department.department_name });
+    return res.json({ ok: true });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ ok: false, message: "Failed to delete department" });
+  }
+});
+
 app.put("/api/departments/:id", async (req, res) => {
   try {
     const roomId = Number(req.params.id);
@@ -2599,7 +2706,10 @@ app.put("/api/departments/:id", async (req, res) => {
     await recordActivity("updated", "Department", {
       type: "Department room",
       id: room.room_id,
+      /*
       name: `${room.department.department_name} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ${room.building_name ?? "Unassigned room"}`,
+      */
+      name: `${room.department.department_name} · Room ${room.building_name ?? "Room number not assigned"}`,
     }, {
       department: { from: previousRoom.department.department_name, to: room.department.department_name },
       classroom: { from: previousRoom.building_name ?? "", to: room.building_name ?? "" },
@@ -2678,6 +2788,26 @@ app.delete("/api/departments/:id", async (req, res) => {
       return;
     }
 
+    const [items, transfersFrom, transfersTo] = await Promise.all([
+      prisma.item_detail.count({ where: { current_room_id: roomId } }),
+      prisma.transfer.count({ where: { from_room_id: roomId } }),
+      prisma.transfer.count({ where: { to_room_id: roomId } }),
+    ]);
+    const blockers = [
+      items ? `${items} inventory item${items === 1 ? "" : "s"}` : "",
+      transfersFrom + transfersTo
+        ? `${transfersFrom + transfersTo} transfer record${transfersFrom + transfersTo === 1 ? "" : "s"}`
+        : "",
+    ].filter(Boolean);
+
+    if (blockers.length) {
+      res.status(409).json({
+        ok: false,
+        message: `Room cannot be deleted. Remove its ${blockers.join(", ")} first.`,
+      });
+      return;
+    }
+
     await prisma.room.delete({
       where: { room_id: roomId },
     });
@@ -2685,7 +2815,10 @@ app.delete("/api/departments/:id", async (req, res) => {
     await recordActivity("deleted", "Department", {
       type: "Department room",
       id: room.room_id,
+      /*
       name: `${room.department.department_name} ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ${room.building_name ?? "Unassigned room"}`,
+      */
+      name: `${room.department.department_name} · Room ${room.building_name ?? "Room number not assigned"}`,
     }, { status: room.status ? "Available" : "Closed" });
 
     res.json({ ok: true });

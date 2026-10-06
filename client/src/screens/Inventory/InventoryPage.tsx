@@ -169,6 +169,7 @@ export default function InventoryPage({ departmentName, roomName, embedded = fal
   const navigate = useNavigate();
   const authHeaders = { Authorization: `Bearer ${accessToken ?? ""}` };
   const isDepartmentHead = user?.role.code === "DEPARTMENT_HEAD";
+  const canTransferDepartmentItems = user?.role.code !== "LAPTOP_RENTAL";
 
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
 
@@ -309,7 +310,7 @@ export default function InventoryPage({ departmentName, roomName, embedded = fal
 
     const loadDepartments = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/departments`, { headers: authHeaders });
+        const response = await fetch(`${API_BASE_URL}/api/departments?forTransfer=true`, { headers: authHeaders });
         const data = (await response.json()) as DepartmentApiResponse;
 
         if (!response.ok || !data.ok) {
@@ -977,8 +978,9 @@ export default function InventoryPage({ departmentName, roomName, embedded = fal
               selectedCategory={selectedCategory}
               setSelectedCategory={(value) => { setPage(1); setSelectedCategory(value); }}
               onAddCategory={handleAddCategory}
+              canAddCategory={!embedded}
             />
-            {embedded && <Button type="button" onClick={() => setIsTransferOpen(true)} className="h-10 gap-2 sm:ml-auto"><ArrowLeftRight className="size-4" />Transfer items</Button>}
+            {embedded && canTransferDepartmentItems && <Button type="button" onClick={() => setIsTransferOpen(true)} className="h-10 gap-2 sm:ml-auto"><ArrowLeftRight className="size-4" />Transfer items</Button>}
           </div>
           <div className="flex h-11 w-full min-w-0 items-center gap-3 rounded-lg border border-slate-300 bg-white px-4 text-left shadow-sm transition hover:bg-slate-50 focus-within:border-slate-900 focus-within:ring-3 focus-within:ring-slate-200">
             <Search className="pointer-events-none size-5 shrink-0 text-slate-400" />
@@ -1014,8 +1016,8 @@ export default function InventoryPage({ departmentName, roomName, embedded = fal
         onOpenItem={handleOpenItemDetails}
         onDeleteItem={handleDeleteItem}
         onEditItem={handleEditItem}
-        readOnly={embedded}
-        onViewDetails={embedded ? openDepartmentAccessoryDetails : undefined}
+        readOnly={embedded || isDepartmentHead}
+        onViewDetails={embedded ? openDepartmentAccessoryDetails : isDepartmentHead ? handleOpenItemDetails : undefined}
       />
       {pagination.totalPages > 1 && <div className="flex items-center justify-between text-sm text-slate-600"><span>Page {pagination.page} of {pagination.totalPages}</span><div className="flex gap-2"><button className="rounded border px-3 py-1 disabled:opacity-50" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>Previous</button><button className="rounded border px-3 py-1 disabled:opacity-50" disabled={page >= pagination.totalPages} onClick={() => setPage((current) => current + 1)}>Next</button></div></div>}
 
@@ -1033,7 +1035,7 @@ export default function InventoryPage({ departmentName, roomName, embedded = fal
         existingInventory={inventory}
         onSubmit={handleAddInventoryItem}
       />}
-      {embedded && departmentName && <TransferModal
+      {embedded && departmentName && canTransferDepartmentItems && <TransferModal
         isOpen={isTransferOpen}
         onClose={() => setIsTransferOpen(false)}
         categories={categories.filter((category) => category !== "All")}
@@ -1041,6 +1043,7 @@ export default function InventoryPage({ departmentName, roomName, embedded = fal
         departmentRoomMap={departmentRoomMapState as Record<Department, readonly string[]>}
         items={transferItems}
         initialFromDepartment={departmentName}
+        lockFromDepartment={isDepartmentHead}
         onTransfer={handleDepartmentTransfer}
       />}
       <ScanModal

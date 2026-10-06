@@ -142,11 +142,11 @@ interface TransferRequestPayload {
 }
 
 export function useAccessoryDetails({ departmentName }: { departmentName?: string } = {}) {
-  const { accessToken, loading: authLoading } = useAuth();
+  const { accessToken, loading: authLoading, user } = useAuth();
   const authHeaders = { Authorization: `Bearer ${accessToken ?? ""}` };
   const [searchParams] = useSearchParams();
   const initialCategory = searchParams.get("category");
-  const initialItemName = searchParams.get("item");
+  const initialItemName = searchParams.get("itemName") ?? searchParams.get("item");
   const initialDepartment = departmentName ?? searchParams.get("department");
   const initialRoom = searchParams.get("room");
   const insertFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -559,7 +559,7 @@ export function useAccessoryDetails({ departmentName }: { departmentName?: strin
 
     const loadDepartments = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/departments`, { headers: authHeaders });
+        const response = await fetch(`${API_BASE_URL}/api/departments?forTransfer=true`, { headers: authHeaders });
         const result = (await response.json()) as DepartmentApiResponse;
 
         if (!response.ok || !result.ok) {
@@ -574,10 +574,13 @@ export function useAccessoryDetails({ departmentName }: { departmentName?: strin
               current[departmentName] = new Set<string>();
             }
 
-            // Virtual rows for departments without rooms must not become a
-            // selectable room name in the transfer dialog.
-            if (room.has_room && room.classroom && room.classroom !== "Unknown") {
-              current[departmentName].add(room.classroom);
+            // A real room may intentionally have no number. Preserve it as
+            // a selectable transfer destination; only virtual rows have
+            // has_room set to false.
+            if (room.has_room) {
+              current[departmentName].add(
+                room.classroom || "Room number not assigned",
+              );
             }
 
             return current;
@@ -589,8 +592,8 @@ export function useAccessoryDetails({ departmentName }: { departmentName?: strin
 
         for (const room of result.departments) {
           nextDepartmentIds[room.department] = room.department_id;
-          if (room.has_room && room.classroom && room.classroom !== "Unknown") {
-            nextRoomIds[`${room.department}\u0000${room.classroom}`] = room.id;
+          if (room.has_room) {
+            nextRoomIds[`${room.department}\u0000${room.classroom || "Room number not assigned"}`] = room.id;
           }
         }
 
@@ -814,6 +817,31 @@ export function useAccessoryDetails({ departmentName }: { departmentName?: strin
     }
   };
 
+  const deleteAccessoryItem = async (): Promise<{ ok: boolean; message?: string }> => {
+    const activeItem = activeAction?.item;
+    if (!activeItem) return { ok: false, message: "No item is selected." };
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/item-details/${encodeURIComponent(activeItem.id)}`,
+        { method: "DELETE", headers: authHeaders },
+      );
+      const data = await response.json();
+      if (!response.ok || !data.ok) {
+        return { ok: false, message: data.message ?? "Failed to delete item." };
+      }
+
+      await Promise.all([loadAccessoryDetails(), loadItemFilterOptions()]);
+      setActiveAction(null);
+      return { ok: true };
+    } catch (error) {
+      return {
+        ok: false,
+        message: error instanceof Error ? error.message : "Failed to delete item.",
+      };
+    }
+  };
+
   const openAddItemModal = () => {
     const defaultDepartment = "" as Department;
     const defaultRoom =
@@ -919,6 +947,7 @@ export function useAccessoryDetails({ departmentName }: { departmentName?: strin
       departmentRoomMap: departmentRoomMapState,
       onClose: () => setActiveAction(null),
       onSubmitEdit: updateAccessoryItem,
+      onConfirmDelete: deleteAccessoryItem,
     },
     transferModalProps: {
       isOpen: toolbarAction === "transfer",
@@ -927,7 +956,8 @@ export function useAccessoryDetails({ departmentName }: { departmentName?: strin
       departments: transferDepartments,
       departmentRoomMap: transferDepartmentRoomMap,
       items: accessoryItems,
-      initialFromDepartment: departmentName,
+      initialFromDepartment: departmentName ?? user?.department?.name as Department | undefined,
+      lockFromDepartment: user?.role.code === "DEPARTMENT_HEAD",
       onTransfer: handleTransfer,
     },
     qrScanModalProps: {
