@@ -3,6 +3,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../config/api_config.dart';
 import '../services/accessory_service.dart';
+import '../services/scanned_accessory_code.dart';
 import 'accessory_detail_screen.dart';
 
 class ScannerScreen extends StatefulWidget {
@@ -36,12 +37,13 @@ class _ScannerScreenState extends State<ScannerScreen> {
     final qrCode = capture.barcodes.firstOrNull?.rawValue?.trim();
     if (qrCode == null || qrCode.isEmpty) {
       setState(
-        () =>
-            _errorMessage = 'This QR code or barcode does not contain an accessory code.',
+        () => _errorMessage =
+            'This QR code or barcode does not contain an accessory code.',
       );
       return;
     }
 
+    final accessoryCode = accessoryCodeFromScan(qrCode);
     setState(() {
       _isLookingUpAccessory = true;
       _errorMessage = null;
@@ -49,7 +51,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     await _controller.stop();
 
     try {
-      final accessory = await _accessoryService.getByCode(qrCode);
+      final accessory = await _accessoryService.getByCode(accessoryCode);
       if (!mounted) return;
 
       await Navigator.of(context).push(
@@ -59,7 +61,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
       );
     } on AccessoryNotFoundException {
       if (mounted) {
-        setState(() => _errorMessage = 'Accessory not found for code: $qrCode');
+        setState(
+          () => _errorMessage = 'Accessory not found for code: $accessoryCode',
+        );
       }
     } on AccessoryConnectionException {
       if (mounted) {
@@ -103,9 +107,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('MIIT Store Scanner'),
-      ),
+      appBar: AppBar(title: const Text('MIIT Store Scanner')),
       body: Column(
         children: [
           Expanded(
@@ -153,7 +155,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
                       ],
                     )
                   : Text(
-                      _errorMessage ?? 'Place the QR code or barcode inside the frame.',
+                      _errorMessage ??
+                          'Place the QR code or barcode inside the frame.',
                       textAlign: TextAlign.center,
                     ),
             ),
