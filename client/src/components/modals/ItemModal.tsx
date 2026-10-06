@@ -334,9 +334,9 @@ function ItemModalContent({
   };
 
   const selectRoom = (room: string) => {
-    const matchingDepartment = Object.entries(departmentRooms).find(
-      ([, rooms]) => rooms.includes(room),
-    )?.[0];
+    const matchingDepartment = (departmentRooms[formState.values.department] ?? []).includes(room)
+      ? formState.values.department
+      : Object.entries(departmentRooms).find(([, rooms]) => rooms.includes(room))?.[0];
 
     setFormState((current) => ({
       ...current,

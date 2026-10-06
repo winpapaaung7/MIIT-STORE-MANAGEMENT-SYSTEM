@@ -19,7 +19,7 @@ router.get("/", async (req, res) => {
       ...(category ? { item: { category: { category_name: category } } } : {}),
       ...(itemName ? { item: { item_name: itemName } } : {}),
       ...(department ? { department: { department_name: department } } : {}),
-      ...(room ? { room: { building_name: room === "Unknown" ? null : room } } : {}),
+      ...(room ? { room: { building_name: room === "Room number not assigned" || room === "Unknown" ? null : room } } : {}),
       ...(academicYear ? { budget_year: { year_name: academicYear } } : {}),
       ...(dateStart && dateEnd ? { AND: [{ OR: [
         { purchase_date: { gte: dateStart, lt: dateEnd } },

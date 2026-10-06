@@ -771,8 +771,8 @@ app.get("/api/departments", async (req, res) => {
     res.json({
       ok: true,
       departments: departments.flatMap((department) => department.room.length
-        ? department.room.map((room) => ({ id: room.room_id, department_id: department.department_id, department: department.department_name, classroom: room.building_name ?? "Unknown", status: room.status ? "Available" : "Closed", has_room: true }))
-        : [{ id: -department.department_id, department_id: department.department_id, department: department.department_name, classroom: "No room assigned", status: "Unassigned", has_room: false }]),
+        ? department.room.map((room) => ({ id: room.room_id, department_id: department.department_id, department: department.department_name, classroom: room.building_name ?? "", status: room.status ? "Available" : "Closed", has_room: true }))
+        : [{ id: -department.department_id, department_id: department.department_id, department: department.department_name, classroom: "", status: "Available", has_room: false }]),
     });
   } catch (error) {
     console.error(error);
@@ -790,35 +790,42 @@ app.post("/api/departments", async (req, res) => {
       typeof req.body.department === "string" ? req.body.department.trim() : "";
     const classroom =
       typeof req.body.classroom === "string" ? req.body.classroom.trim() : "";
+    const roomNumberNotAssigned = req.body.roomNumberNotAssigned === true;
     const status = req.body.status === "Closed" ? false : true;
 
-    if (!departmentName || !classroom) {
+    if (!departmentName) {
       res.status(400).json({
         ok: false,
-        message: "department and classroom are required",
+        message: "department is required",
       });
       return;
     }
 
+    if (!classroom && !roomNumberNotAssigned) {
+      const department = await findOrCreateDepartment(departmentName);
+      await recordActivity("created", "Department", { type: "Department", id: department.department_id, name: department.department_name }, { status: "Available", room: null });
+      res.status(201).json({ ok: true, department: { id: -department.department_id, department_id: department.department_id, department: department.department_name, classroom: "", status: "Available", has_room: false } });
+      return;
+    }
+
+    const department = await findOrCreateDepartment(departmentName);
     const existingRoom = await prisma.room.findFirst({
-      where: { building_name: classroom },
+      where: roomNumberNotAssigned ? { department_id: department.department_id, building_name: null } : { building_name: classroom },
       select: { room_id: true },
     });
 
     if (existingRoom) {
       res.status(409).json({
         ok: false,
-        message: "This room is already assigned to another department.",
+        message: roomNumberNotAssigned ? "This department already has a room with no number assigned." : "This room is already assigned to another department.",
       });
       return;
     }
 
-    const department = await findOrCreateDepartment(departmentName);
-
     const room = await prisma.room.create({
       data: {
         department_id: department.department_id,
-        building_name: classroom,
+        building_name: roomNumberNotAssigned ? null : classroom,
         status,
       },
       include: {
@@ -1710,9 +1717,9 @@ app.post("/api/transfers", async (req, res) => {
     }
     if (!requireDepartmentScope(fromDepartment.department_id, res, req.auth)) return;
 
-    const fromRoom = fromRoomName ? await prisma.room.findFirst({ where: { department_id: fromDepartment.department_id, building_name: fromRoomName } }) : null;
+    const fromRoom = fromRoomName ? await prisma.room.findFirst({ where: { department_id: fromDepartment.department_id, building_name: fromRoomName === "Room number not assigned" ? null : fromRoomName } }) : null;
 
-    const toRoom = await prisma.room.findFirst({ where: { department_id: toDepartment.department_id, building_name: toRoomName } });
+    const toRoom = await prisma.room.findFirst({ where: { department_id: toDepartment.department_id, building_name: toRoomName === "Room number not assigned" ? null : toRoomName } });
     if ((fromRoomName && !fromRoom) || !toRoom) {
       res.status(404).json({ ok: false, message: "Room not found" });
       return;
@@ -2497,6 +2504,35 @@ app.post("/api/items", async (req, res) => {
   }
 });
 
+app.put("/api/departments/entity/:id", async (req, res) => {
+  try {
+    const departmentId = Number(req.params.id);
+    const departmentName = typeof req.body.department === "string" ? req.body.department.trim() : "";
+    if (!Number.isInteger(departmentId) || departmentId <= 0 || !departmentName) {
+      res.status(400).json({ ok: false, message: "A valid department name is required" });
+      return;
+    }
+    const [department, conflict] = await Promise.all([
+      prisma.department.findUnique({ where: { department_id: departmentId } }),
+      prisma.department.findFirst({ where: { department_name: departmentName, department_id: { not: departmentId } } }),
+    ]);
+    if (!department) {
+      res.status(404).json({ ok: false, message: "Department not found" });
+      return;
+    }
+    if (conflict) {
+      res.status(409).json({ ok: false, message: "A department with this name already exists" });
+      return;
+    }
+    const updated = await prisma.department.update({ where: { department_id: departmentId }, data: { department_name: departmentName } });
+    await recordActivity("updated", "Department", { type: "Department", id: departmentId, name: updated.department_name }, { department: { from: department.department_name, to: updated.department_name } });
+    res.json({ ok: true, department: { id: updated.department_id, name: updated.department_name } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ ok: false, message: "Failed to update department" });
+  }
+});
+
 app.put("/api/departments/:id", async (req, res) => {
   try {
     const roomId = Number(req.params.id);
@@ -2504,6 +2540,7 @@ app.put("/api/departments/:id", async (req, res) => {
       typeof req.body.department === "string" ? req.body.department.trim() : "";
     const classroom =
       typeof req.body.classroom === "string" ? req.body.classroom.trim() : "";
+    const roomNumberNotAssigned = req.body.roomNumberNotAssigned === true;
     const status = req.body.status === "Closed" ? false : true;
 
     if (!Number.isInteger(roomId) || roomId <= 0) {
@@ -2514,10 +2551,10 @@ app.put("/api/departments/:id", async (req, res) => {
       return;
     }
 
-    if (!departmentName || !classroom) {
+    if (!departmentName || (!classroom && !roomNumberNotAssigned)) {
       res.status(400).json({
         ok: false,
-        message: "department and classroom are required",
+        message: "department and a room number (or an unnumbered room) are required",
       });
       return;
     }
@@ -2531,29 +2568,27 @@ app.put("/api/departments/:id", async (req, res) => {
       return;
     }
 
+    const department = await findOrCreateDepartment(departmentName);
     const conflictingRoom = await prisma.room.findFirst({
-      where: {
-        building_name: classroom,
-        room_id: { not: roomId },
-      },
+      where: roomNumberNotAssigned
+        ? { department_id: department.department_id, building_name: null, room_id: { not: roomId } }
+        : { building_name: classroom, room_id: { not: roomId } },
       select: { room_id: true },
     });
 
     if (conflictingRoom) {
       res.status(409).json({
         ok: false,
-        message: "This room is already assigned to another department.",
+        message: roomNumberNotAssigned ? "This department already has a room with no number assigned." : "This room is already assigned to another department.",
       });
       return;
     }
-
-    const department = await findOrCreateDepartment(departmentName);
 
     const room = await prisma.room.update({
       where: { room_id: roomId },
       data: {
         department_id: department.department_id,
-        building_name: classroom,
+        building_name: roomNumberNotAssigned ? null : classroom,
         status,
       },
       include: {

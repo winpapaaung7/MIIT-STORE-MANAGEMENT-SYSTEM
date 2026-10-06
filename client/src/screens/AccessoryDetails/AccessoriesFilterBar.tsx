@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 import { useLanguage } from "@/context/LanguageContext"
 
 export interface AccessoriesFilterBarProps {
+  compact?: boolean
   hasActiveFilters: FilterChoice | Date | undefined
   resetFilters: () => void
   selectedCategory: FilterChoice
@@ -45,6 +46,7 @@ export interface AccessoriesFilterBarProps {
 }
 
 export default function AccessoriesFilterBar({
+  compact = false,
   hasActiveFilters,
   resetFilters,
   selectedCategory,
@@ -112,12 +114,13 @@ export default function AccessoriesFilterBar({
             selectRoom={selectRoom}
             isNoneFilter={isNoneFilter}
             noneFilterValue={noneFilterValue}
+            limited={compact}
           />
 
           <ActionButtons onTransferClick={onTransferClick} label={t("transfer")} />
         </div>
 
-        <SearchBar
+        {!compact && <SearchBar
           searchType={searchType}
           searchQuery={searchQuery}
           selectedAcademicYear={selectedAcademicYear}
@@ -133,7 +136,7 @@ export default function AccessoriesFilterBar({
           onDateInputChange={onDateInputChange}
           onCalendarViewDateChange={onCalendarViewDateChange}
           formatDate={formatDate}
-        />
+        />}
       </div>
     </div>
   )

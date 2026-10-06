@@ -6,141 +6,64 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Pencil, Trash2 } from "lucide-react";
+import { ChevronRight, DoorOpen } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
-interface Department {
-  id: number;
-  department: string;
-  classroom: string;
-  status: "Available" | "Closed";
-}
-
-interface DepartmentTableProps {
-  data: Department[];
-  onOpen: (department: Department) => void;
-  onEdit: (department: Department) => void;
-  onDelete: (department: Department) => void;
+export interface DepartmentSummary {
+  departmentId: number;
+  name: string;
+  roomCount: number;
+  availableRooms: number;
 }
 
 export default function DepartmentTable({
   data,
   onOpen,
-  onEdit,
-  onDelete,
-}: DepartmentTableProps) {
+}: {
+  data: DepartmentSummary[];
+  onOpen: (department: DepartmentSummary) => void;
+}) {
   const { t } = useLanguage();
-  return (
-    <Card className="workspace-table-card mt-6 overflow-hidden border-slate-200 shadow-sm">
-      <div className="max-h-[420px] overflow-auto">
-        <Table className="workspace-table w-full min-w-[760px] text-sm">
-          <colgroup>
-            <col className="w-[70px]" />
-            <col className="w-[220px]" />
-            <col className="w-[140px]" />
-            <col className="w-[140px]" />
-            <col className="w-[120px]" />
-          </colgroup>
 
+  return (
+    <Card className="workspace-table-card overflow-hidden border-slate-200 shadow-sm">
+      <div className="max-h-[420px] overflow-auto">
+        <Table className="workspace-table w-full min-w-[620px] text-sm">
           <TableHeader className="workspace-table-head border-b bg-slate-50 text-left text-xs text-slate-500">
             <TableRow className="hover:bg-transparent">
-              <TableHead className="px-4 py-3 text-left text-xs font-medium text-slate-500">No.</TableHead>
-              <TableHead className="px-4 py-3 text-left text-xs font-medium text-slate-500">{t("departmentClassroom")}</TableHead>
-              <TableHead className="px-4 py-3 text-left text-xs font-medium text-slate-500">{t("room")}</TableHead>
-              <TableHead className="px-4 py-3 text-left text-xs font-medium text-slate-500">{t("status")}</TableHead>
-              <TableHead className="px-4 py-3 text-center text-xs font-medium text-slate-500">{t("actions")}</TableHead>
+              <TableHead className="w-20 px-4 py-3">No.</TableHead>
+              <TableHead className="px-4 py-3">{t("department")}</TableHead>
+              <TableHead className="w-40 px-4 py-3">{t("room")}</TableHead>
+              <TableHead className="w-40 px-4 py-3">{t("status")}</TableHead>
+              <TableHead className="w-12 px-4 py-3" aria-label="Open" />
             </TableRow>
           </TableHeader>
-
           <TableBody>
-            {data.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="h-80 px-4 py-6 text-center text-muted-foreground"
-                >
-                  {t("noDepartments")}
-                </TableCell>
+            {!data.length ? (
+              <TableRow><TableCell colSpan={5} className="h-80 text-center text-muted-foreground">{t("noDepartments")}</TableCell></TableRow>
+            ) : data.map((department, index) => (
+              <TableRow
+                key={department.departmentId}
+                role="button"
+                tabIndex={0}
+                onClick={() => onOpen(department)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onOpen(department);
+                  }
+                }}
+                className="workspace-table-row cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
+              >
+                <TableCell className="px-4 py-4 font-mono text-xs text-slate-600">{index + 1}</TableCell>
+                <TableCell className="px-4 py-4 font-medium text-slate-950">{department.name}</TableCell>
+                <TableCell className="px-4 py-4 text-slate-600"><span className="inline-flex items-center gap-2"><DoorOpen className="size-4" />{department.roomCount} {department.roomCount === 1 ? "room" : "rooms"}</span></TableCell>
+                <TableCell className="px-4 py-4"><Badge variant={department.availableRooms ? "default" : "secondary"} className="h-7 rounded-full px-3 text-sm font-semibold">{department.availableRooms ? t("available") : t("closed")}</Badge></TableCell>
+                <TableCell className="px-4 py-4 text-right text-slate-500"><ChevronRight className="ml-auto size-5" /></TableCell>
               </TableRow>
-            ) : (
-              data.map((department, index) => (
-                <TableRow
-                  key={department.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => onOpen(department)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      onOpen(department);
-                    }
-                  }}
-                  className="workspace-table-row cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-300"
-                >
-                  <TableCell className="px-4 py-4 text-left font-mono text-xs text-slate-600">
-                    {index + 1}
-                  </TableCell>
-
-              <TableCell className="max-w-0 overflow-hidden px-4 py-4 text-left font-medium text-slate-950">
-                <span className="block truncate" title={department.department}>
-                  {department.department}
-                </span>
-              </TableCell>
-
-                  <TableCell className="px-4 py-4 text-left text-sm text-slate-500">
-                    {department.classroom}
-                  </TableCell>
-
-                  <TableCell className="px-4 py-4 text-left">
-                    <Badge
-                      variant={
-                        department.status === "Available"
-                          ? "default"
-                          : "secondary"
-                      }
-                      className="h-7 rounded-full px-3 text-sm font-semibold"
-                    >
-                      {department.status === "Available" ? t("available") : department.status === "Closed" ? t("closed") : department.status}
-                    </Badge>
-                  </TableCell>
-
-                  <TableCell
-                    className="px-4 py-4 text-center"
-                    onClick={(event) => event.stopPropagation()}
-                  >
-                    <div className="flex justify-center gap-2">
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        className="size-9 rounded-lg border-slate-200 bg-white shadow-sm hover:bg-slate-50"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onEdit(department);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-
-                      <Button
-                        size="icon"
-                        variant="destructive"
-                        className="size-9 rounded-lg"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onDelete(department);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
+            ))}
           </TableBody>
         </Table>
       </div>

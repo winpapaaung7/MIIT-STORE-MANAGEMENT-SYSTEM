@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { ChevronDown, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -50,6 +50,7 @@ interface TransferModalProps {
   departments: Department[];
   departmentRoomMap: Record<Department, readonly string[]>;
   items: AccessoryItem[];
+  initialFromDepartment?: Department;
   onTransfer: (payload: TransferRequestPayload) => Promise<{
     ok: boolean;
     message?: string;
@@ -87,6 +88,7 @@ export default function TransferModal({
   departments,
   departmentRoomMap,
   items,
+  initialFromDepartment,
   onTransfer,
 }: TransferModalProps) {
   const roomsForDepartment = (department: Department) =>
@@ -99,7 +101,9 @@ export default function TransferModal({
       ]),
     );
 
-  const defaultFromDepartment = departments[0] ?? "Store";
+  // A transfer started from a department dashboard should begin at that
+  // department, rather than at the first department returned by the API.
+  const defaultFromDepartment = initialFromDepartment ?? departments[0] ?? "Store";
   const defaultToDepartment =
     departments.find((department) => department !== defaultFromDepartment) ??
     defaultFromDepartment;
@@ -139,9 +143,31 @@ export default function TransferModal({
   }));
   const [itemsOpen, setItemsOpen] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const wasOpen = useRef(false);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      wasOpen.current = false;
+      return;
+    }
+
+    if (!wasOpen.current) {
+      wasOpen.current = true;
+      setFormState({
+        fromDepartment: defaultFromDepartment,
+        fromRoom: defaultFromRoom,
+        toDepartment: defaultToDepartment,
+        toRoom: defaultToRoom,
+        category: defaultCategory,
+        itemName: defaultItemName,
+        selectedItems: [],
+        transferDate: formatDate(new Date()),
+        remarks: "",
+      });
+      setItemsOpen(false);
+      setSubmitError("");
+      return;
+    }
 
     // API data can arrive after the dialog opens. Fill a missing room, but
     // never overwrite a room the user has deliberately selected.
@@ -167,7 +193,17 @@ export default function TransferModal({
         selectedItems: [],
       };
     });
-  }, [isOpen, departmentRoomMap, items]);
+  }, [
+    isOpen,
+    departmentRoomMap,
+    items,
+    defaultFromDepartment,
+    defaultFromRoom,
+    defaultToDepartment,
+    defaultToRoom,
+    defaultCategory,
+    defaultItemName,
+  ]);
 
   const departmentOptions = useMemo(
     () =>
@@ -361,7 +397,6 @@ export default function TransferModal({
 
   const canSubmit =
     formState.fromDepartment.length > 0 &&
-    effectiveFromRoom.length > 0 &&
     formState.toDepartment.length > 0 &&
     effectiveToRoom.length > 0 &&
     formState.selectedItems.length > 0 &&
@@ -406,7 +441,7 @@ export default function TransferModal({
                 label="From Room"
                 value={effectiveFromRoom}
                 options={toSelectOptions(fromRoomOptions)}
-                placeholder="Select room"
+                placeholder={fromRoomOptions.length ? "Select room" : "No room assigned"}
                 onValueChange={(room) =>
                   selectRoom("fromDepartment", "fromRoom", room)
                 }

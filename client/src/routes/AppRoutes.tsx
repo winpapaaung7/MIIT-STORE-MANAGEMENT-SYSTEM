@@ -2,7 +2,9 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import MainLayout from "../components/layout/MainLayout";
 import InventoryPage from "../screens/Inventory/InventoryPage";
 import DepartmentPage from "../screens/Departments/DepartmentPage";
+import DepartmentRoomsPage from "../screens/Departments/DepartmentRoomsPage";
 import AccessoryDetailsPage from "../screens/AccessoryDetails/AccessoryDetailsPage";
+import PublicAccessoryScanPage from "../screens/AccessoryDetails/PublicAccessoryScanPage";
 import LaptopRentalPage from "../screens/LaptopRental/LaptopRentalpage";
 import LoginPage from "../screens/Login/LoginPage";
 import OtpVerificationPage from "../screens/Login/OtpVerificationPage";
@@ -13,6 +15,7 @@ import { ForbiddenPage, ProtectedRoute, RoleDefaultRedirect } from "./ProtectedR
 import { rolesFor } from "./routePermissions";
 
 export default function AppRoutes() { return <Routes>
+  <Route path="scan/:code" element={<PublicAccessoryScanPage />} />
   <Route path="login" element={<LoginPage />} /><Route path="verify-otp" element={<OtpVerificationPage />} /><Route path="forbidden" element={<ForbiddenPage />} />
   <Route element={<ProtectedRoute />}><Route path="/" element={<MainLayout />}>
     <Route index element={<RoleDefaultRedirect />} />
@@ -23,6 +26,8 @@ export default function AppRoutes() { return <Routes>
     <Route element={<ProtectedRoute roles={rolesFor("/laptop-rental")} />}><Route path="laptop-rental" element={<LaptopRentalPage />} /></Route>
     <Route element={<ProtectedRoute roles={rolesFor("/rental-dashboard")} />}><Route path="rental-dashboard" element={<Navigate to="/laptop-rental" replace />} /></Route>
     <Route element={<ProtectedRoute roles={rolesFor("/departments")} />}><Route path="departments" element={<DepartmentPage />} /></Route>
+    <Route element={<ProtectedRoute roles={rolesFor("/departments")} />}><Route path="departments/:departmentId" element={<DepartmentRoomsPage />} /></Route>
+    <Route element={<ProtectedRoute roles={rolesFor("/departments")} />}><Route path="departments/:departmentId/dashboard" element={<DashboardPage />} /></Route>
     <Route element={<ProtectedRoute roles={rolesFor("/settings")} />}><Route path="settings" element={<SettingsPage />} /></Route>
     <Route element={<ProtectedRoute roles={rolesFor("/users")} />}><Route path="users" element={<UsersPage />} /></Route>
     <Route element={<ProtectedRoute roles={rolesFor("/students")} />}><Route path="students" element={<Navigate to="/laptop-rental" replace />} /></Route>

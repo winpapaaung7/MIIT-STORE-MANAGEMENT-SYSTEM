@@ -6,6 +6,7 @@ import ExportButton from "@/components/buttons/ExportButton";
 import ImportButton from "@/components/buttons/ImportButton";
 import AddItemButton from "@/components/buttons/AddItemButton";
 import AddItemModal from "@/components/modals/AddItemModal";
+import TransferModal from "@/components/modals/TransferModal";
 import ScanModal from "@/components/modals/ScanModal";
 import QrSheetModal from "@/components/modals/QrSheetModal";
 import { type ItemSubmitPayload } from "@/components/modals/ItemModal";
@@ -13,7 +14,7 @@ import { Input } from "@/components/ui/input";
 
 import FilterCategories from "./FilterCategories";
 import InventoryTable from "./InventoryTable";
-import { FileDown, Search } from "lucide-react";
+import { ArrowLeftRight, FileDown, Search } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/auth/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -68,6 +69,34 @@ interface ItemResponse {
   items: ApiInventoryItem[];
   pagination?: { page: number; totalPages: number; total: number };
   message?: string;
+}
+
+interface AccessoryDetailsResponse {
+  ok: boolean;
+  items: {
+    id: string;
+    item_name: string;
+    category_name: string;
+    status: AccessoryStatus;
+    department: string;
+    room: string;
+    academic_year: string;
+    registered_date: string;
+    created_at: string;
+    remark: string;
+  }[];
+  message?: string;
+}
+
+interface TransferRequestPayload {
+  fromDepartment: string;
+  fromRoom: string;
+  toDepartment: string;
+  toRoom: string;
+  itemName: string;
+  itemDetailIds: string[];
+  transferDate: string;
+  remarks?: string | null;
 }
 
 interface CreateItemResponse {
@@ -128,12 +157,13 @@ interface DepartmentApiResponse {
     department_id: number;
     department: string;
     classroom: string;
-    status: "Available" | "Closed";
+    status: "Available" | "Closed" | "Unassigned";
+    has_room: boolean;
   }[];
   message?: string;
 }
 
-export default function InventoryPage() {
+export default function InventoryPage({ departmentName, roomName, embedded = false }: { departmentName?: string; roomName?: string; embedded?: boolean }) {
   const { t } = useLanguage();
   const { accessToken, user } = useAuth();
   const navigate = useNavigate();
@@ -163,11 +193,20 @@ export default function InventoryPage() {
   const [importSuccess, setImportSuccess] = useState("");
 
   const [isAddItemOpen, setIsAddItemOpen] = useState(false);
+  const [isTransferOpen, setIsTransferOpen] = useState(false);
+  const [transferItems, setTransferItems] = useState<AccessoryItem[]>([]);
   const [qrQueue, setQrQueue] = useState<AccessoryItem[]>([]);
 
   const [newAccessory, setNewAccessory] = useState<NewAccessoryForm>(
     emptyNewAccessoryForm,
   );
+
+  const storageDepartment = departments.find((department) =>
+    ["store", "storage"].includes(department.trim().toLowerCase()),
+  ) ?? "";
+  const storageDepartmentRoomMap = storageDepartment
+    ? { [storageDepartment]: departmentRoomMapState[storageDepartment] ?? [] }
+    : {};
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -176,6 +215,8 @@ export default function InventoryPage() {
       const params = new URLSearchParams({ page: String(page), limit: "50" });
       if (searchQuery.trim()) params.set("search", searchQuery.trim());
       if (selectedCategory !== "All") params.set("category", selectedCategory);
+      if (departmentName) params.set("department", departmentName);
+      if (roomName) params.set("room", roomName);
       const response = await fetch(`${API_BASE_URL}/api/items?${params}`, { headers: authHeaders });
       const data = (await response.json()) as ItemResponse;
       if (!response.ok || !data.ok) {
@@ -188,6 +229,47 @@ export default function InventoryPage() {
       setInventoryError(
         error instanceof Error ? error.message : "Failed to load inventory items",
       );
+    }
+  };
+
+  const fetchTransferItems = async () => {
+    if (!embedded || !departmentName) return;
+
+    const params = new URLSearchParams({ page: "1", limit: "1000", department: departmentName });
+    if (roomName) params.set("room", roomName);
+    const response = await fetch(`${API_BASE_URL}/api/item-details?${params}`, { headers: authHeaders });
+    const data = (await response.json()) as AccessoryDetailsResponse;
+    if (!response.ok || !data.ok) throw new Error(data.message ?? "Failed to load transferable items");
+
+    setTransferItems(data.items.map((item) => ({
+      id: item.id,
+      itemName: item.item_name,
+      subCategory: item.category_name,
+      status: item.status,
+      department: item.department as Department,
+      room: item.room,
+      academicYear: item.academic_year,
+      registeredDate: item.registered_date,
+      createdAt: item.created_at,
+      remark: item.remark,
+    })));
+  };
+
+  const handleDepartmentTransfer = async (payload: TransferRequestPayload) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/transfers`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) return { ok: false, message: data.message ?? "Failed to complete transfer." };
+
+      await Promise.all([fetchInventory(), fetchTransferItems()]);
+      window.dispatchEvent(new Event("inventory-transfer-complete"));
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, message: error instanceof Error ? error.message : "Failed to complete transfer." };
     }
   };
 
@@ -239,11 +321,11 @@ export default function InventoryPage() {
         const nextRoomIds: Record<string, number> = {};
 
         for (const department of data.departments) {
-          const room = department.classroom;
+          const room = department.classroom || "Room number not assigned";
           if (!map[department.department]) {
             map[department.department] = new Set();
           }
-          if (room) {
+          if (department.has_room) {
             map[department.department].add(room);
             nextRoomIds[`${department.department}\u0000${room}`] = department.id;
           }
@@ -273,7 +355,10 @@ export default function InventoryPage() {
     void loadCategories();
     void loadDepartments();
     void loadInventory();
-  }, [page, selectedCategory, searchQuery]);
+    void fetchTransferItems().catch((error) => {
+      setInventoryError(error instanceof Error ? error.message : "Failed to load transferable items");
+    });
+  }, [page, selectedCategory, searchQuery, departmentName, roomName]);
 
   // =========================
   // Filter Items
@@ -448,8 +533,6 @@ export default function InventoryPage() {
         "category_name",
         "quantity",
         "image_url",
-        "department",
-        "room",
         "academic_year",
         "status",
         "registered_date",
@@ -460,8 +543,6 @@ export default function InventoryPage() {
         "Laptop",
         1,
         "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=640&auto=format&fit=crop&q=80",
-        "Store",
-        "Storage",
         "2026-2027",
         "Available",
         "2026-10-03",
@@ -473,8 +554,6 @@ export default function InventoryPage() {
       { wch: 20 },
       { wch: 12 },
       { wch: 48 },
-      { wch: 22 },
-      { wch: 18 },
       { wch: 18 },
       { wch: 16 },
       { wch: 18 },
@@ -525,8 +604,7 @@ export default function InventoryPage() {
       ["category_name", "Yes", "An existing category name, for example: Laptop"],
       ["quantity", "Yes", "A whole number greater than 0, for example: 1"],
       ["image_url", "Optional", "A public image link, for example: https://example.com/laptop.jpg"],
-      ["department", "Yes", "An existing department name, for example: Store"],
-      ["room", "Yes", "An existing room for that department, for example: Storage"],
+      ["Storage location", "System assigned", "Every imported item is added to Storage. Use Transfer to send it to a department."],
       ["academic_year", "Yes", "Academic year in YYYY-YYYY format, for example: 2026-2027"],
       ["status", "Yes", "Use exactly one of: Available, In Use, Damaged"],
       ["registered_date", "Optional", "Date in YYYY-MM-DD format, for example: 2026-10-03"],
@@ -652,7 +730,7 @@ export default function InventoryPage() {
 
   const handleAddItem = () => {
     const firstCategory = categories.find((category) => category !== "All");
-    const defaultDepartment = departments[0] ?? "";
+    const defaultDepartment = storageDepartment;
     const defaultRoom =
       departmentRoomMapState[defaultDepartment]?.[0] ?? "";
 
@@ -669,6 +747,12 @@ export default function InventoryPage() {
     setIsAddItemOpen(true);
   };
 
+  const openDepartmentAccessoryDetails = (item: InventoryItem) => {
+    if (!departmentName) return;
+    const params = new URLSearchParams({ department: departmentName, item: item.name });
+    navigate(`/accessories?${params.toString()}`);
+  };
+
   const handleAddInventoryItem = async (payload: ItemSubmitPayload) => {
     const quantity = Math.max(1, payload.quantity);
     const itemName = payload.itemName.trim();
@@ -678,10 +762,10 @@ export default function InventoryPage() {
       !itemName ||
       !categoryName ||
       categoryName === "All" ||
-      ((!payload.departmentId || !payload.roomId) &&
-        !(payload.department.toLowerCase() === "store" &&
-          payload.room.toLowerCase() === "storage"))
+      !payload.room ||
+      !["store", "storage"].includes(payload.department.trim().toLowerCase())
     ) {
+      setCategoryError("New inventory can only be added to Storage. Transfer it to a department after it is created.");
       return;
     }
 
@@ -851,10 +935,10 @@ export default function InventoryPage() {
   };
 
   return (
-    <div className="inventory-page flex h-[calc(100vh-3rem)] min-h-0 w-full min-w-0 flex-col gap-6 overflow-hidden">
+    <div className={`inventory-page flex min-h-0 w-full min-w-0 flex-col gap-4 ${embedded ? "overflow-visible" : "h-[calc(100vh-3rem)] gap-6 overflow-hidden"}`}>
       {/* Header */}
 
-      <header className="shrink-0">
+      {!embedded && <header className="shrink-0">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold tracking-normal text-slate-950 sm:text-3xl">
@@ -881,18 +965,21 @@ export default function InventoryPage() {
             {!isDepartmentHead && <AddItemButton onClick={handleAddItem} label={t("addItem")} />}
           </div>
         </div>
-      </header>
+      </header>}
 
       {/* Filters mirror the Accessories Details toolbar: actions first, then a full-width search field. */}
       <section className="shrink-0 rounded-lg border border-border bg-card p-3 shadow-sm dark:shadow-none sm:p-4">
         <div className="flex flex-col gap-4">
-          <FilterCategories
-            categories={categories}
-            inventory={inventory}
-            selectedCategory={selectedCategory}
-            setSelectedCategory={(value) => { setPage(1); setSelectedCategory(value); }}
-            onAddCategory={handleAddCategory}
-          />
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <FilterCategories
+              categories={categories}
+              inventory={inventory}
+              selectedCategory={selectedCategory}
+              setSelectedCategory={(value) => { setPage(1); setSelectedCategory(value); }}
+              onAddCategory={handleAddCategory}
+            />
+            {embedded && <Button type="button" onClick={() => setIsTransferOpen(true)} className="h-10 gap-2 sm:ml-auto"><ArrowLeftRight className="size-4" />Transfer items</Button>}
+          </div>
           <div className="flex h-11 w-full min-w-0 items-center gap-3 rounded-lg border border-slate-300 bg-white px-4 text-left shadow-sm transition hover:bg-slate-50 focus-within:border-slate-900 focus-within:ring-3 focus-within:ring-slate-200">
             <Search className="pointer-events-none size-5 shrink-0 text-slate-400" />
             <Input
@@ -927,22 +1014,34 @@ export default function InventoryPage() {
         onOpenItem={handleOpenItemDetails}
         onDeleteItem={handleDeleteItem}
         onEditItem={handleEditItem}
+        readOnly={embedded}
+        onViewDetails={embedded ? openDepartmentAccessoryDetails : undefined}
       />
       {pagination.totalPages > 1 && <div className="flex items-center justify-between text-sm text-slate-600"><span>Page {pagination.page} of {pagination.totalPages}</span><div className="flex gap-2"><button className="rounded border px-3 py-1 disabled:opacity-50" disabled={page <= 1} onClick={() => setPage((current) => current - 1)}>Previous</button><button className="rounded border px-3 py-1 disabled:opacity-50" disabled={page >= pagination.totalPages} onClick={() => setPage((current) => current + 1)}>Next</button></div></div>}
 
-      {!isDepartmentHead && <AddItemModal
+      {!embedded && !isDepartmentHead && <AddItemModal
         isOpen={isAddItemOpen}
         onClose={() => setIsAddItemOpen(false)}
         newAccessory={newAccessory}
         categories={categories.filter((category) => category !== "All")}
         categoryIds={categoryIds}
         statuses={Object.keys(statusClasses) as AccessoryStatus[]}
-        departments={departments as Department[]}
-        departmentRoomMap={departmentRoomMapState as Record<Department, readonly string[]>}
+        departments={storageDepartment ? [storageDepartment] as Department[] : []}
+        departmentRoomMap={storageDepartmentRoomMap as Record<Department, readonly string[]>}
         departmentIds={departmentIds}
         roomIds={roomIds}
         existingInventory={inventory}
         onSubmit={handleAddInventoryItem}
+      />}
+      {embedded && departmentName && <TransferModal
+        isOpen={isTransferOpen}
+        onClose={() => setIsTransferOpen(false)}
+        categories={categories.filter((category) => category !== "All")}
+        departments={departments as Department[]}
+        departmentRoomMap={departmentRoomMapState as Record<Department, readonly string[]>}
+        items={transferItems}
+        initialFromDepartment={departmentName}
+        onTransfer={handleDepartmentTransfer}
       />}
       <ScanModal
         selectedQrItem={qrQueue.length === 1 ? qrQueue[0] : null}

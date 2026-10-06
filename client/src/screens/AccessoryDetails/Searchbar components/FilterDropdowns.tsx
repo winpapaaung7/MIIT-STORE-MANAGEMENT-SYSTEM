@@ -20,6 +20,7 @@ interface FilterDropdownConfig {
 }
 
 export interface FilterDropdownsProps {
+  limited?: boolean
   selectedCategory: FilterChoice
   selectedItemName: FilterChoice
   selectedDepartment: FilterChoice
@@ -105,6 +106,7 @@ function FilterDropdown({
 }
 
 export default function FilterDropdowns({
+  limited = false,
   selectedCategory,
   selectedItemName,
   selectedDepartment,
@@ -135,7 +137,7 @@ export default function FilterDropdowns({
       onChange: setSelectedItemName,
       className: "sm:min-w-44",
     },
-    {
+    ...(!limited ? [{
       label: t("department"),
       value: selectedDepartment,
       options: departmentOptions,
@@ -146,7 +148,7 @@ export default function FilterDropdowns({
       value: selectedRoom,
       options: rooms,
       onChange: selectRoom,
-    },
+    }] : []),
   ]
 
   return (

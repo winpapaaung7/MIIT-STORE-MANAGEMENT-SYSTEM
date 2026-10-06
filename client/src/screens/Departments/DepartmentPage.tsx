@@ -6,16 +6,18 @@ import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/context/LanguageContext";
 import AddDepartmentModal from "./AddDepartmentModal";
 import AddNewDeptButton from "./AddNewDeptButton";
-import DepartmentTable from "./DepartmentTable";
+import DepartmentTable, { type DepartmentSummary } from "./DepartmentTable";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5000";
 
 interface Department {
   id: number;
+  department_id: number;
   department: string;
   classroom: string;
-  status: "Available" | "Closed";
+  status: "Available" | "Closed" | "Unassigned";
+  has_room: boolean;
 }
 
 interface DepartmentResponse {
@@ -68,25 +70,34 @@ export default function DepartmentPage() {
     void loadDepartments();
   }, []);
 
-  const filteredDepartments = useMemo(() => {
+  const departmentSummaries = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
 
-    if (!query) {
-      return departments;
+    const summaries = new Map<number, DepartmentSummary>();
+    for (const department of departments) {
+      const summary = summaries.get(department.department_id) ?? {
+        departmentId: department.department_id,
+        name: department.department,
+        roomCount: 0,
+        availableRooms: 0,
+      };
+      if (department.has_room) {
+        summary.roomCount += 1;
+        if (department.status === "Available") summary.availableRooms += 1;
+      }
+      summaries.set(department.department_id, summary);
     }
 
-    return departments.filter((department) => {
-      const departmentName = department.department.toLowerCase();
-      const roomNumber = department.classroom.toLowerCase();
-
-      return departmentName.includes(query) || roomNumber.includes(query);
-    });
+    return [...summaries.values()]
+      .filter((summary) => !query || summary.name.toLowerCase().includes(query) || departments.some((department) => department.department_id === summary.departmentId && department.classroom.toLowerCase().includes(query)))
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [departments, searchQuery]);
 
   const handleSaveDepartment = async (
     values: {
       department: string;
       classroom: string;
+      roomNumberNotAssigned: boolean;
       status: "Available" | "Closed";
     },
     departmentId?: number,
@@ -95,10 +106,11 @@ export default function DepartmentPage() {
       const payload = {
         department: values.department,
         classroom: values.classroom,
+        roomNumberNotAssigned: values.roomNumberNotAssigned,
         status: values.status,
       };
 
-      if (departmentId) {
+      if (departmentId && selectedDepartment?.has_room) {
         const response = await fetch(
           `${API_BASE_URL}/api/departments/${departmentId}`,
           {
@@ -136,7 +148,10 @@ export default function DepartmentPage() {
           throw new Error(result.message ?? "Failed to create department");
         }
 
-        setDepartments((current) => [...current, result.department]);
+        setDepartments((current) => [
+          ...current.filter((department) => department.id !== departmentId),
+          result.department,
+        ]);
       }
 
       setSelectedDepartment(null);
@@ -149,80 +164,29 @@ export default function DepartmentPage() {
     }
   };
 
-  const handleEditDepartment = (department: Department) => {
-    setSelectedDepartment(department);
-    setIsModalOpen(true);
-  };
-
-  const handleDeleteDepartment = async (department: Department) => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/departments/${department.id}`,
-        {
-          method: "DELETE",
-        },
-      );
-
-      const result = await response.json();
-
-      if (!response.ok || !result.ok) {
-        throw new Error(result.message ?? "Failed to delete department");
-      }
-
-      setDepartments((current) =>
-        current.filter((item) => item.id !== department.id),
-      );
-      setDepartmentError("");
-    } catch (error) {
-      setDepartmentError(
-        error instanceof Error ? error.message : "Failed to delete department",
-      );
-    }
-  };
-
-  const handleOpenDepartmentDetails = (department: Department) => {
-    const params = new URLSearchParams({
-      department: department.department,
-      room: department.classroom,
-    });
-
-    navigate(`/accessories?${params.toString()}`);
+  const handleOpenDepartmentDetails = (department: DepartmentSummary) => {
+    navigate(`/departments/${department.departmentId}`);
   };
 
   return (
-    <div className="department-page space-y-6">
-      <div className="flex flex-col gap-4">
-        <h1 className="text-3xl font-bold">{t("departments")}</h1>
+    <div className="department-page space-y-5 pb-4">
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div><h1 className="text-3xl font-bold text-slate-950">{t("departments")}</h1></div>
+        <AddNewDeptButton onClick={() => { setSelectedDepartment(null); setIsModalOpen(true); }} />
+      </header>
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative w-full sm:max-w-md">
-            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder={t("searchDepartments")}
-              className="h-11 pl-9"
-            />
-          </div>
+      <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+        <label className="relative block">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder={t("searchDepartments")} className="h-10 w-full rounded-lg border-slate-200 bg-white pl-10 pr-3 text-sm" />
+        </label>
+      </section>
 
-          <AddNewDeptButton
-            onClick={() => {
-              setSelectedDepartment(null);
-              setIsModalOpen(true);
-            }}
-          />
-        </div>
-      </div>
-
-      {departmentError ? (
-        <p className="text-sm font-medium text-red-600">{departmentError}</p>
-      ) : null}
+      {departmentError ? <p className="rounded-md bg-red-50 p-3 text-sm text-red-700">{departmentError}</p> : null}
 
       <DepartmentTable
-        data={filteredDepartments}
+        data={departmentSummaries}
         onOpen={handleOpenDepartmentDetails}
-        onEdit={handleEditDepartment}
-        onDelete={handleDeleteDepartment}
       />
 
       <AddDepartmentModal
@@ -234,13 +198,14 @@ export default function DepartmentPage() {
           }
         }}
         onSubmit={handleSaveDepartment}
-        mode={selectedDepartment ? "edit" : "create"}
+        mode={selectedDepartment ? (selectedDepartment.has_room ? "edit" : "assign") : "create"}
         initialValues={
           selectedDepartment
             ? {
                 department: selectedDepartment.department,
-                classroom: selectedDepartment.classroom,
-                status: selectedDepartment.status,
+                classroom: selectedDepartment.has_room ? selectedDepartment.classroom : "",
+                roomNumberNotAssigned: !selectedDepartment.has_room || !selectedDepartment.classroom,
+                status: selectedDepartment.status === "Closed" ? "Closed" : "Available",
               }
             : null
         }

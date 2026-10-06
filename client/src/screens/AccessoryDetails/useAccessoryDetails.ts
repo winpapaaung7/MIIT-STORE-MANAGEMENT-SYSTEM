@@ -124,7 +124,8 @@ interface DepartmentApiResponse {
     department_id: number;
     department: string;
     classroom: string;
-    status: "Available" | "Closed";
+    status: "Available" | "Closed" | "Unassigned";
+    has_room: boolean;
   }[];
   message?: string;
 }
@@ -140,13 +141,13 @@ interface TransferRequestPayload {
   remarks?: string | null;
 }
 
-export function useAccessoryDetails() {
+export function useAccessoryDetails({ departmentName }: { departmentName?: string } = {}) {
   const { accessToken, loading: authLoading } = useAuth();
   const authHeaders = { Authorization: `Bearer ${accessToken ?? ""}` };
   const [searchParams] = useSearchParams();
   const initialCategory = searchParams.get("category");
   const initialItemName = searchParams.get("item");
-  const initialDepartment = searchParams.get("department");
+  const initialDepartment = departmentName ?? searchParams.get("department");
   const initialRoom = searchParams.get("room");
   const insertFileInputRef = useRef<HTMLInputElement | null>(null);
   const [accessoryItems, setAccessoryItems] = useState<AccessoryItem[]>([]);
@@ -204,9 +205,9 @@ export function useAccessoryDetails() {
   // Keep the filters aligned with a location selected from the Departments
   // page (for example, /accessories?department=Faculty...&room=101).
   useEffect(() => {
-    setSelectedDepartment(initialDepartment);
+    setSelectedDepartment(departmentName ?? initialDepartment);
     setSelectedRoom(initialRoom);
-  }, [initialDepartment, initialRoom]);
+  }, [departmentName, initialDepartment, initialRoom]);
 
   // The room API is the source of truth, while item locations provide a safe
   // fallback during loading or after a newly completed transfer.
@@ -359,7 +360,7 @@ export function useAccessoryDetails() {
   const hasActiveFilters =
     selectedCategory ||
     selectedItemName ||
-    selectedDepartment ||
+    (!departmentName && selectedDepartment) ||
     selectedRoom ||
     selectedAcademicYear ||
     selectedDate;
@@ -372,7 +373,7 @@ export function useAccessoryDetails() {
     setDateInput("");
     setSelectedCategory(null);
     setSelectedItemName(null);
-    setSelectedDepartment(null);
+    setSelectedDepartment(departmentName ?? null);
     setSelectedRoom(null);
   };
 
@@ -573,7 +574,9 @@ export function useAccessoryDetails() {
               current[departmentName] = new Set<string>();
             }
 
-            if (room.classroom) {
+            // Virtual rows for departments without rooms must not become a
+            // selectable room name in the transfer dialog.
+            if (room.has_room && room.classroom && room.classroom !== "Unknown") {
               current[departmentName].add(room.classroom);
             }
 
@@ -586,7 +589,7 @@ export function useAccessoryDetails() {
 
         for (const room of result.departments) {
           nextDepartmentIds[room.department] = room.department_id;
-          if (room.classroom) {
+          if (room.has_room && room.classroom && room.classroom !== "Unknown") {
             nextRoomIds[`${room.department}\u0000${room.classroom}`] = room.id;
           }
         }
@@ -638,6 +641,7 @@ export function useAccessoryDetails() {
       }
 
       await Promise.all([loadAccessoryDetails(), loadItemFilterOptions()]);
+      window.dispatchEvent(new Event("inventory-transfer-complete"));
       return { ok: true };
     } catch (error) {
       return {
@@ -923,6 +927,7 @@ export function useAccessoryDetails() {
       departments: transferDepartments,
       departmentRoomMap: transferDepartmentRoomMap,
       items: accessoryItems,
+      initialFromDepartment: departmentName,
       onTransfer: handleTransfer,
     },
     qrScanModalProps: {

@@ -86,9 +86,9 @@ const translations = {
     item: "ပစ္စည်း", image: "ပုံ", quantity: "အရေအတွက်", actions: "လုပ်ဆောင်ချက်များ", damaged: "ပျက်စီး", total: "စုစုပေါင်း", noItemRecords: "ဤဌာနအတွက် ပစ္စည်းစာရင်း မတွေ့ပါ။",
     page: "စာမျက်နှာ", of: "မှ", recentlyAddedItems: "မကြာသေးမီက ထည့်သွင်းထားသော ပစ္စည်းများ", viewAll: "အားလုံးကြည့်ရန်", itemId: "ပစ္စည်း ID", itemName: "ပစ္စည်းအမည်", dateAdded: "ထည့်သွင်းသည့်ရက်", noRecentItems: "မကြာသေးမီက ထည့်သွင်းထားသော ပစ္စည်းမရှိသေးပါ။",
     items: "ပစ္စည်းများ", light: "အလင်း", dark: "အမှောင်",
-    inventory: "ပစ္စည်းစာရင်း", accessories: "ပစ္စည်းအသေးစိတ်", laptopRental: "လက်ပ်တော့ ငှားရမ်းဝန်ဆောင်မှု", settings: "ဆက်တင်များ", administrator: "စီမံခန့်ခွဲသူ", fullSystemAccess: "စနစ်အပြည့်အစုံ အသုံးပြုခွင့်", signOut: "ထွက်ရန်",
+    inventory: "ပစ္စည်းစာရင်း", accessories: "ပစ္စည်းစာရင်း အသေးစိတ်", laptopRental: "လက်ပ်တော့ ငှားရမ်းဝန်ဆောင်မှု", settings: "ဆက်တင်များ", administrator: "စီမံခန့်ခွဲသူ", fullSystemAccess: "စနစ်အပြည့်အစုံ အသုံးပြုခွင့်", signOut: "ထွက်ရန်",
     import: "တင်သွင်းရန်", export: "ထုတ်ယူရန်", addItem: "ပစ္စည်းထည့်ရန်", allCategories: "အမျိုးအစားအားလုံး", addCategory: "အမျိုးအစားထည့်ရန်", categoryName: "အမျိုးအစားအမည်", cancel: "မလုပ်တော့ပါ", add: "ထည့်ရန်", searchInventory: "ပစ္စည်းစာရင်း ရှာရန်...", noInventoryItems: "ပစ္စည်းစာရင်း မတွေ့ပါ။", noImage: "ပုံမရှိ", units: "ခု", outOfStock: "လက်ကျန်မရှိ", preview: "အစမ်းကြည့်ရန်",
-    manageAccessoryRecords: "ပစ္စည်းအသေးစိတ်နှင့် စာရင်းများကို စီမံခန့်ခွဲပါ", room: "အခန်း", transfer: "လွှဲပြောင်းရန်", search: "ရှာရန်", searchById: "ID ဖြင့်ရှာရန်", selectDate: "ရက်စွဲရွေးရန်", allAcademicYears: "ပညာသင်နှစ်အားလုံး", selectRegistrationYear: "မှတ်ပုံတင်နှစ်ကို ရွေးပါ။", chooseRegistrationDate: "မှတ်ပုံတင်ရက်ကို ရွေးပါ", pickRegistrationDate: "မှတ်ပုံတင်ရက်ကို ရွေးချယ်ပါ။", none: "မရှိ", remark: "မှတ်ချက်", edit: "ပြင်ဆင်ရန်", delete: "ဖျက်ရန်", qrCode: "QR ကုဒ်", action: "လုပ်ဆောင်ချက်",
+    manageAccessoryRecords: "ပစ္စည်းစာရင်း အသေးစိတ်နှင့် မှတ်တမ်းများကို စီမံခန့်ခွဲပါ", room: "အခန်း", transfer: "လွှဲပြောင်းရန်", search: "ရှာရန်", searchById: "ID ဖြင့်ရှာရန်", selectDate: "ရက်စွဲရွေးရန်", allAcademicYears: "ပညာသင်နှစ်အားလုံး", selectRegistrationYear: "မှတ်ပုံတင်နှစ်ကို ရွေးပါ။", chooseRegistrationDate: "မှတ်ပုံတင်ရက်ကို ရွေးပါ", pickRegistrationDate: "မှတ်ပုံတင်ရက်ကို ရွေးချယ်ပါ။", none: "မရှိ", remark: "မှတ်ချက်", edit: "ပြင်ဆင်ရန်", delete: "ဖျက်ရန်", qrCode: "QR ကုဒ်", action: "လုပ်ဆောင်ချက်",
     manageRentalRecords: "လက်ပ်တော့ ငှားရမ်းတောင်းဆိုမှုများနှင့် စာရင်းများကို စီမံခန့်ခွဲပါ", studentList: "ကျောင်းသားစာရင်း", teacherList: "ဆရာစာရင်း", issueRental: "ငှားရမ်းထုတ်ပေးရန်", allQuantity: "စုစုပေါင်း အရေအတွက်", pendingQuantity: "စောင့်ဆိုင်းနေသော အရေအတွက်", inUseQuantity: "အသုံးပြုနေသော အရေအတွက်", availableQuantity: "ရရှိနိုင်သော အရေအတွက်", role: "အခန်းကဏ္ဍ", borrower: "ငှားယူသူ", laptop: "လက်ပ်တော့", inventoryQr: "ပစ္စည်းစာရင်း QR", returnDate: "ပြန်အပ်ရက်", approved: "အတည်ပြုပြီး", pending: "စောင့်ဆိုင်းနေသည်", returned: "ပြန်အပ်ပြီး", rejected: "ငြင်းပယ်ပြီး", searchRentals: "ငှားယူသူအမည်၊ ခုံအမှတ်၊ လက်ပ်တော့ သို့မဟုတ် QR ဖြင့် ရှာရန်...", noRentalRecords: "လက်ရှိ စစ်ထုတ်မှုနှင့် ကိုက်ညီသော ငှားရမ်းမှတ်တမ်း မရှိပါ။", loadingRentalRecords: "ငှားရမ်းမှတ်တမ်းများ ဖွင့်နေသည်...",
   },
 } as const;
@@ -102,9 +102,9 @@ const translations = {
 const myanmarUiText: Record<string, string> = {
   "Dashboard": "ဒက်ရှ်ဘုတ်",
   "Inventory": "ပစ္စည်းစာရင်း",
-  "Accessories": "အပိုပစ္စည်းများ",
-  "Accessories Detail": "အပိုပစ္စည်း အသေးစိတ်",
-  "Accessories Details": "အပိုပစ္စည်း အသေးစိတ်",
+  "Accessories": "ပစ္စည်းစာရင်း",
+  "Accessories Detail": "ပစ္စည်းစာရင်း အသေးစိတ်",
+  "Accessories Details": "ပစ္စည်းစာရင်း အသေးစိတ်",
   "Laptop Rental": "လက်ပ်တော့ ငှားရမ်းမှု",
   "Laptop Rental Service": "လက်ပ်တော့ ငှားရမ်းမှု",
   "Departments": "ဌာနများ",
@@ -162,7 +162,7 @@ const myanmarUiText: Record<string, string> = {
   "Out of Stock": "လက်ကျန်မရှိပါ",
   "No Image": "ပုံမရှိပါ",
   "No inventory items found.": "ပစ္စည်းစာရင်း မတွေ့ပါ။",
-  "Manage accessory details and records": "အပိုပစ္စည်း အသေးစိတ်နှင့် မှတ်တမ်းများကို စီမံခန့်ခွဲပါ",
+  "Manage accessory details and records": "ပစ္စည်းစာရင်း အသေးစိတ်နှင့် မှတ်တမ်းများကို စီမံခန့်ခွဲပါ",
   "Manage laptop rental requests and records": "လက်ပ်တော့ ငှားရမ်းမှု တောင်းဆိုချက်များနှင့် မှတ်တမ်းများကို စီမံခန့်ခွဲပါ",
   "Student List": "ကျောင်းသားစာရင်း",
   "Teacher List": "ဆရာ/ဆရာမစာရင်း",
@@ -322,7 +322,7 @@ const myanmarUiText: Record<string, string> = {
   "No matching activity yet.": "ကိုက်ညီသော လုပ်ဆောင်မှုမှတ်တမ်း မရှိသေးပါ။",
   "New additions, edits, and deletions will appear here.": "ထည့်သွင်းမှု၊ ပြင်ဆင်မှုနှင့် ဖျက်မှုအသစ်များကို ဤနေရာတွင် ပြသပါမည်။",
   "No additional details recorded.": "ထပ်ဆောင်းအသေးစိတ် မမှတ်တမ်းတင်ထားပါ။",
-  "Accessory Action": "အပိုပစ္စည်း လုပ်ဆောင်ချက်",
+  "Accessory Action": "ပစ္စည်းစာရင်း လုပ်ဆောင်ချက်",
   "Confirm Delete": "ဖျက်ရန် အတည်ပြုပါ",
   "Done": "ပြီးပါပြီ",
   "Current Department": "လက်ရှိဌာန",
@@ -330,18 +330,18 @@ const myanmarUiText: Record<string, string> = {
   "No room assigned.": "အခန်း မသတ်မှတ်ထားပါ။",
   "No remark added.": "မှတ်ချက် မထည့်သွင်းထားပါ။",
   "Edit Item": "ပစ္စည်း ပြင်ဆင်ရန်",
-  "Update the selected accessory record.": "ရွေးချယ်ထားသော အပိုပစ္စည်းမှတ်တမ်းကို ပြင်ဆင်ပါ။",
-  "Create one or more accessory records with generated IDs.": "ထုတ်ပေးထားသော ID များဖြင့် အပိုပစ္စည်းမှတ်တမ်း တစ်ခု သို့မဟုတ် အများအပြား ဖန်တီးပါ။",
-  "Accessory name": "အပိုပစ္စည်းအမည်",
+  "Update the selected accessory record.": "ရွေးချယ်ထားသော ပစ္စည်းစာရင်းမှတ်တမ်းကို ပြင်ဆင်ပါ။",
+  "Create one or more accessory records with generated IDs.": "ထုတ်ပေးထားသော ID များဖြင့် ပစ္စည်းစာရင်းမှတ်တမ်း တစ်ခု သို့မဟုတ် အများအပြား ဖန်တီးပါ။",
+  "Accessory name": "ပစ္စည်းအမည်",
   "Select room": "အခန်း ရွေးပါ",
   "Created Date": "ဖန်တီးသည့်ရက်",
   "Add a note for this item": "ဤပစ္စည်းအတွက် မှတ်ချက်ထည့်ပါ",
-  "Insert Accessories": "အပိုပစ္စည်းများ ထည့်သွင်းရန်",
-  "Export Accessories": "အပိုပစ္စည်းများ ထုတ်ယူရန်",
+  "Insert Accessories": "ပစ္စည်းစာရင်းများ ထည့်သွင်းရန်",
+  "Export Accessories": "ပစ္စည်းစာရင်းများ ထုတ်ယူရန်",
   "Exported Records": "ထုတ်ယူမည့် မှတ်တမ်းများ",
   "File Name": "ဖိုင်အမည်",
   "No file selected": "ဖိုင် မရွေးချယ်ရသေးပါ",
-  "Accessory QR Code Scan": "အပိုပစ္စည်း QR ကုဒ် စကင်ဖတ်ရန်",
+  "Accessory QR Code Scan": "ပစ္စည်းစာရင်း QR ကုဒ် စကင်ဖတ်ရန်",
   "Access restricted": "အသုံးပြုခွင့် ကန့်သတ်ထားသည်",
   "Go to my workspace": "ကျွန်ုပ်၏ လုပ်ငန်းခွင်သို့ သွားရန်",
   "Checking your session…": "သင့်အသုံးပြုမှုကို စစ်ဆေးနေသည်...",
@@ -465,9 +465,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   };
 
   const t = (key: TranslationKey) => {
-    // Render the canonical source string. The observer above translates it after
-    // React commits, which also lets hard-coded and `t()` labels switch together.
-    return translations.eng[key];
+    // Translate `t()` labels during React rendering. The observer above still
+    // covers older hard-coded English JSX that has not yet been migrated to `t()`.
+    return translations[language][key];
   };
 
   return <LanguageContext.Provider value={{ language, setLanguage: changeLanguage, t }}>{children}</LanguageContext.Provider>;
